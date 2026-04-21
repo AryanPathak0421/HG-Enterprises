@@ -30,7 +30,8 @@ import {
     MapPin,
     RefreshCw,
     AlertTriangle,
-    FileBarChart
+    FileBarChart,
+    Percent
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
@@ -45,7 +46,6 @@ const AdminSidebar = () => {
     const [comboProductsExpanded, setComboProductsExpanded] = useState(location.pathname.startsWith('/admin/combo-products'));
     const [productsExpanded, setProductsExpanded] = useState(location.pathname.startsWith('/admin/products'));
     const [notificationsExpanded, setNotificationsExpanded] = useState(location.pathname.startsWith('/admin/notifications'));
-    const [supportExpanded, setSupportExpanded] = useState(location.pathname.startsWith('/admin/support') || location.pathname.startsWith('/admin/contact'));
     const [inventoryExpanded, setInventoryExpanded] = useState(location.pathname.startsWith('/admin/inventory'));
     const [categoriesExpanded, setCategoriesExpanded] = useState(location.pathname.startsWith('/admin/categories') || location.search.includes('category='));
 
@@ -78,6 +78,7 @@ const AdminSidebar = () => {
     const secondaryMenuItems = [
         { icon: Ticket, label: 'Coupons', path: '/admin/coupons' },
         { icon: Monitor, label: 'Banners', path: '/admin/banners' },
+        { icon: LayoutDashboard, label: 'Platform Config', path: '/admin/platform-settings' },
         { icon: Share2, label: 'Referrals', path: '/admin/referrals' },
     ];
 
@@ -86,15 +87,14 @@ const AdminSidebar = () => {
     const isProductsActive = location.pathname.startsWith('/admin/products');
     const isOrdersActive = location.pathname.startsWith('/admin/orders');
     const isNotificationsActive = location.pathname.startsWith('/admin/notifications');
-    const isSupportActive = location.pathname.startsWith('/admin/support') || location.pathname.startsWith('/admin/contact');
     const isInventoryActive = location.pathname.startsWith('/admin/inventory');
 
     return (
         <div className="w-64 h-screen bg-primary text-white flex flex-col fixed left-0 top-0 z-50 border-r border-white/5">
             {/* Logo Section with Gold Gradient */}
             <div className="p-8 border-b border-white/5 flex flex-col items-center gap-4 shrink-0 bg-gold-dark/40">
-            <img src={logo} alt="HG Admin" className="h-12 w-auto object-contain mix-blend-screen drop-shadow-lg" />
-            <div className="flex flex-col items-center">
+                <img src={logo} alt="HG Admin" className="h-12 w-auto object-contain mix-blend-screen drop-shadow-lg" />
+                <div className="flex flex-col items-center">
                     <span className="font-serif font-black text-xs tracking-[0.3em] uppercase text-gold">HG Enterprises</span>
                     <span className="text-[8px] font-bold text-gray-500 uppercase tracking-[0.4em] mt-1 italic">Administrative Portal</span>
                 </div>
@@ -140,7 +140,7 @@ const AdminSidebar = () => {
                         <div className="mt-2 ml-4 pl-4 border-l border-gold/20 space-y-1 animate-in slide-in-from-top-1 duration-200 font-outfit">
                             {[
                                 { name: 'Jewellery', slug: 'jewellery' },
-                                { name: 'Machines', slug: 'machine' },
+                                { name: 'Machines', slug: 'machines' },
                                 { name: 'Tools', slug: 'tools' }
                             ].map((cat) => (
                                 <Link
@@ -300,47 +300,7 @@ const AdminSidebar = () => {
                     )}
                 </div>
 
-                {/* Support Section - Expandable */}
-                <div className="mt-1">
-                    <button
-                        onClick={() => setSupportExpanded(!supportExpanded)}
-                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 ${isSupportActive
-                            ? 'bg-gold/10 text-gold border border-gold/20'
-                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                            }`}
-                    >
-                        <Headphones size={18} strokeWidth={isSupportActive ? 2.5 : 2} className={isSupportActive ? 'text-gold' : 'group-hover:text-gold transition-colors'} />
-                        <span className="font-bold text-[11px] uppercase tracking-wider flex-1 text-left">Support</span>
-                        <div className={`transition-transform duration-300 ${supportExpanded ? 'rotate-180' : ''}`}>
-                            <ChevronDown size={14} />
-                        </div>
-                    </button>
 
-                    {supportExpanded && (
-                        <div className="mt-2 ml-4 pl-4 border-l border-gold/20 space-y-1 animate-in slide-in-from-top-1 duration-200">
-                            <Link
-                                to="/admin/support"
-                                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${location.pathname === '/admin/support'
-                                    ? 'text-white bg-white/5 shadow-inner'
-                                    : 'text-gray-500 hover:text-white'
-                                    }`}
-                            >
-                                <Ticket size={14} />
-                                <span>Support Tickets</span>
-                            </Link>
-                            <Link
-                                to="/admin/support/inquiries"
-                                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${location.pathname === '/admin/support/inquiries'
-                                    ? 'text-white bg-white/5 shadow-inner'
-                                    : 'text-gray-500 hover:text-white'
-                                    }`}
-                            >
-                                <MessageSquare size={14} />
-                                <span>Contact Inquiries</span>
-                            </Link>
-                        </div>
-                    )}
-                </div>
 
                 {/* Order Management Section */}
                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 mt-10 px-4">Fulfillment Core</p>

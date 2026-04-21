@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { banners } from '../data/data';
+import { useShop } from '../../../context/ShopContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const HeroSection = () => {
+    const { banners } = useShop();
     const [current, setCurrent] = useState(0);
 
     useEffect(() => {
+        if (!banners || banners.length === 0) return;
         const timer = setInterval(() => {
             setCurrent((prev) => (prev + 1) % banners.length);
         }, 5000);
         return () => clearInterval(timer);
-    }, []);
+    }, [banners]);
 
-    const nextSlide = () => setCurrent((prev) => (prev + 1) % banners.length);
-    const prevSlide = () => setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
+    const nextSlide = () => banners && banners.length > 0 && setCurrent((prev) => (prev + 1) % banners.length);
+    const prevSlide = () => banners && banners.length > 0 && setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
+
+    if (!banners || banners.length === 0) return null;
 
     return (
         <div className="relative h-[500px] md:h-[750px] overflow-hidden bg-dark group">
@@ -52,8 +56,8 @@ const HeroSection = () => {
                             <h1 className="text-5xl md:text-8xl font-serif font-normal leading-tight mb-8">
                                 {banners[current].title}
                             </h1>
-                            <Link 
-                                to="/shop" 
+                            <Link
+                                to="/shop"
                                 className="inline-flex items-center space-x-3 bg-secondary text-white px-10 py-4 rounded-none font-medium hover:bg-white hover:text-dark transition-all transform hover:-translate-y-1 shadow-2xl"
                             >
                                 <span className="uppercase tracking-widest text-sm">Discover Collection</span>
@@ -66,14 +70,14 @@ const HeroSection = () => {
 
             {/* Navigation Arrows */}
             <div className="absolute bottom-12 right-12 z-20 flex gap-4">
-                <button 
+                <button
                     onClick={prevSlide}
                     aria-label="Previous slide"
                     className="p-3 border border-white/30 text-white hover:bg-white hover:text-dark transition-all"
                 >
                     <ChevronLeft className="w-5 h-5" />
                 </button>
-                <button 
+                <button
                     onClick={nextSlide}
                     aria-label="Next slide"
                     className="p-3 border border-white/30 text-white hover:bg-white hover:text-dark transition-all"

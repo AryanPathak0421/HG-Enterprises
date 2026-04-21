@@ -2,26 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Download, PieChart, TrendingUp, DollarSign, Package } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 
+import api from '../../../../utils/api';
+import toast from 'react-hot-toast';
+
 const InventoryReportsPage = () => {
     const [activeTab, setActiveTab] = useState('category'); // 'category' or 'sales'
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [reportData, setReportData] = useState(null);
 
-    // Mock Data
-    const categoryData = [
-        { category: 'Necklaces', uniqueProducts: 24, totalQty: 1250, value: 450000 },
-        { category: 'Earrings', uniqueProducts: 12, totalQty: 500, value: 120000 },
-        { category: 'Bracelets', uniqueProducts: 18, totalQty: 800, value: 240000 },
-        { category: 'Rings', uniqueProducts: 8, totalQty: 300, value: 45000 },
-        { category: 'Anklets', uniqueProducts: 15, totalQty: 600, value: 90000 },
-    ];
+    useEffect(() => {
+        fetchReports();
+    }, []);
 
-    const salesData = [
-        { name: 'GOLD PLATED NECKLACE', category: 'Necklaces', sold: 450, avgPrice: 350, revenue: 157500 },
-        { name: 'DIAMOND STUD EARRINGS', category: 'Earrings', sold: 380, avgPrice: 400, revenue: 152000 },
-        { name: 'SILVER ANKLET', category: 'Anklets', sold: 320, avgPrice: 400, revenue: 128000 },
-        { name: 'ROSE GOLD BRACELET', category: 'Bracelets', sold: 280, avgPrice: 850, revenue: 238000 },
-        { name: 'PEARL CHOKER', category: 'Necklaces', sold: 150, avgPrice: 1100, revenue: 165000 },
-    ];
+    const fetchReports = async () => {
+        setLoading(true);
+        try {
+            const { data } = await api.get('/inventory-reports');
+            setReportData(data);
+        } catch (error) {
+            console.error('Error fetching reports:', error);
+            toast.error('Failed to load real-time analytics');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="w-10 h-10 border-4 border-gold border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    if (!reportData) return null;
+
+    const { categoryData, salesData, summary } = reportData;
 
     return (
         <div className="space-y-6 font-outfit pb-12 animate-in fade-in duration-500">
@@ -33,11 +49,11 @@ const InventoryReportsPage = () => {
                 </div>
                 <div className="flex gap-2">
                     <button className="px-6 py-3 bg-white border border-black/10 text-gray-400 rounded-none text-[10px] font-black uppercase tracking-widest hover:border-black hover:text-black hover:bg-gray-50 shadow-sm flex items-center gap-3 transition-all">
-                        <Calendar size={14} strokeWidth={2.5} /> 
+                        <Calendar size={14} strokeWidth={2.5} />
                         <span>Period Selection</span>
                     </button>
                     <button className="px-6 py-3 bg-black text-white rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-primary shadow-xl shadow-black/20 transition-all flex items-center gap-3 active:scale-95 group">
-                        <Download size={14} className="group-hover:translate-y-0.5 transition-transform" /> 
+                        <Download size={14} className="group-hover:translate-y-0.5 transition-transform" />
                         <span>Download Analysis</span>
                     </button>
                 </div>
@@ -67,14 +83,14 @@ const InventoryReportsPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="bg-white p-4 rounded-none border border-black/5 shadow-sm">
                             <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Inventory Valuation</p>
-                            <h3 className="text-2xl font-serif font-black text-black tracking-tighter">₹9,45,000</h3>
+                            <h3 className="text-2xl font-serif font-black text-black tracking-tighter">₹{summary.totalValuation.toLocaleString()}</h3>
                             <div className="w-full bg-gray-100 h-1 rounded-none mt-3 overflow-hidden">
                                 <div className="bg-emerald-500 h-full w-[75%]"></div>
                             </div>
                         </div>
                         <div className="bg-white p-4 rounded-none border border-black/5 shadow-sm">
                             <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Registry Volume</p>
-                            <h3 className="text-2xl font-serif font-black text-black tracking-tighter">03,450</h3>
+                            <h3 className="text-2xl font-serif font-black text-black tracking-tighter">{summary.totalQty.toLocaleString()}</h3>
                             <div className="w-full bg-gray-100 h-1 rounded-none mt-3 overflow-hidden">
                                 <div className="bg-blue-500 h-full w-[60%]"></div>
                             </div>
@@ -82,8 +98,8 @@ const InventoryReportsPage = () => {
                         <div className="bg-white p-4 rounded-none border border-black/5 shadow-sm flex flex-col justify-center">
                             <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Dominant Sector</p>
                             <div className="flex items-center gap-3">
-                                <span className="px-2 py-0.5 bg-black text-white text-[8px] font-serif font-black uppercase tracking-[0.2em] rounded-none">NECKLACES</span>
-                                <span className="text-lg font-serif italic text-gray-400">45% <span className="text-[8px] font-outfit uppercase tracking-tighter not-italic">Concentration</span></span>
+                                <span className="px-2 py-0.5 bg-black text-white text-[8px] font-serif font-black uppercase tracking-[0.2em] rounded-none">{summary.dominantSector}</span>
+                                <span className="text-lg font-serif italic text-gray-400">{summary.concentration}% <span className="text-[8px] font-outfit uppercase tracking-tighter not-italic">Concentration</span></span>
                             </div>
                         </div>
                     </div>
@@ -124,7 +140,7 @@ const InventoryReportsPage = () => {
                             <div className="relative z-10 flex justify-between items-end">
                                 <div>
                                     <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-3">Gross Revenue</p>
-                                    <h2 className="text-5xl font-serif font-black text-white tracking-tighter italic">₹8,51,500</h2>
+                                    <h2 className="text-5xl font-serif font-black text-white tracking-tighter italic">₹{summary.totalRevenue.toLocaleString()}</h2>
                                 </div>
                                 <div className="p-4 bg-emerald-500/20 border border-emerald-500/20 text-emerald-400">
                                     <DollarSign size={32} strokeWidth={1} />
@@ -136,7 +152,7 @@ const InventoryReportsPage = () => {
                             <div className="relative z-10 flex justify-between items-end">
                                 <div>
                                     <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-3">Liquidation Volume</p>
-                                    <h2 className="text-5xl font-serif font-black text-white tracking-tighter">02,150</h2>
+                                    <h2 className="text-5xl font-serif font-black text-white tracking-tighter">{summary.totalUnitsSold.toLocaleString()}</h2>
                                 </div>
                                 <div className="p-4 bg-blue-500/20 border border-blue-500/20 text-blue-400">
                                     <Package size={32} strokeWidth={1} />

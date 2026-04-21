@@ -5,7 +5,7 @@ import {
     Bell, ChevronRight, ChevronDown, Star, HelpCircle, LogOut, Menu, X, ListTree,
     FileText, MessageSquare, Ticket, Settings, Plus, List, BookOpen,
     Clock, RefreshCw, RefreshCcw, RotateCcw, Boxes, ClipboardList, MapPin, Truck, CheckCircle2, XCircle,
-    AlertTriangle, FileBarChart
+    AlertTriangle, FileBarChart, Percent
 } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 import logo from '../../user/assets/logo_final.jpg';
@@ -17,8 +17,8 @@ const AdminLayout = ({ children }) => {
     const navigate = useNavigate();
     const { orders } = useShop();
 
-    const allOrders = useMemo(() => Object.values(orders || {}).flat(), [orders]);
-    const getCount = (status) => allOrders.filter(o => o.status === status).length;
+    const allOrders = orders || [];
+    const getCount = (status) => allOrders.filter(o => o.status?.toLowerCase() === status.toLowerCase()).length;
 
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
@@ -48,11 +48,9 @@ const AdminLayout = ({ children }) => {
             path: '/admin/orders',
             subItems: [
                 { name: `All Orders (${allOrders.length})`, path: '/admin/orders?status=all', icon: ShoppingCart },
-                { name: `Pending (${getCount('Processing')})`, path: '/admin/orders?status=pending', icon: Clock },
-                { name: `Received (${getCount('Received')})`, path: '/admin/orders?status=received', icon: CheckCircle2 },
-                { name: `Processed (${getCount('Processed')})`, path: '/admin/orders?status=processed', icon: ClipboardList },
+                { name: `Pending (${getCount('Pending')})`, path: '/admin/orders?status=pending', icon: Clock },
+                { name: `Processing (${getCount('Processing')})`, path: '/admin/orders?status=processing', icon: ClipboardList },
                 { name: `Shipped (${getCount('Shipped')})`, path: '/admin/orders?status=shipped', icon: Truck },
-                { name: `Out for Delivery (${getCount('Out For Delivery')})`, path: '/admin/orders?status=out-for-delivery', icon: MapPin },
                 { name: `Delivered (${getCount('Delivered')})`, path: '/admin/orders?status=delivered', icon: CheckCircle2 },
                 { name: `Cancelled (${getCount('Cancelled')})`, path: '/admin/orders?status=cancelled', icon: XCircle },
             ]
@@ -74,15 +72,7 @@ const AdminLayout = ({ children }) => {
         { name: 'Reviews', icon: Star, path: '/admin/reviews' },
         { name: 'Banners', icon: ImageIcon, path: '/admin/banners' },
         { name: 'Notifications', icon: Bell, path: '/admin/notifications' },
-        {
-            name: 'Support',
-            icon: HelpCircle,
-            path: '/admin/support',
-            subItems: [
-                { name: 'Support Tickets', path: '/admin/support', icon: Ticket },
-                { name: 'Contact Inquiries', path: '/admin/support/inquiries', icon: MessageSquare }
-            ]
-        },
+
         { name: 'FAQ', icon: MessageSquare, path: '/admin/faq' },
         {
             name: 'Pages',
@@ -103,6 +93,7 @@ const AdminLayout = ({ children }) => {
         },
         { name: 'Blogs', icon: BookOpen, path: '/admin/blogs' },
         { name: 'Sections', icon: LayoutDashboard, path: '/admin/sections' },
+        { name: 'Platform Config', icon: LayoutDashboard, path: '/admin/platform-settings' },
         { name: 'Global Settings', icon: Settings, path: '/admin/settings' },
     ];
 
@@ -283,7 +274,7 @@ const AdminLayout = ({ children }) => {
                             <Menu className="w-4 h-4 text-gray-500" />
                         </button>
                         <h2 className="text-xs font-serif font-black text-black uppercase tracking-widest line-clamp-1">
-                            {menuItems.find(i => i.path === location.pathname)?.name || 'Control Panel'}
+                            {menuItems.find(i => i.path === location.pathname)?.name || 'Platform Config'}
                         </h2>
                     </div>
 

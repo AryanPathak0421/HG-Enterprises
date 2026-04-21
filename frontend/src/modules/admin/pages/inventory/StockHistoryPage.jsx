@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Download, Filter, ArrowUpRight, ArrowDownLeft, RefreshCcw, FileText } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
+import api from '../../../../utils/api';
+import toast from 'react-hot-toast';
 
 const StockHistoryPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -8,64 +10,38 @@ const StockHistoryPage = () => {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Mock Data Load
-    useEffect(() => {
+    const fetchHistory = async () => {
         setLoading(true);
-        setTimeout(() => {
-            setHistory([
-                {
-                    id: 1,
-                    date: '2025-02-07 14:30',
-                    product: { name: 'GOLD PLATED NECKLACE', image: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=100&h=100&fit=crop' },
-                    type: 'Manual Adjustment',
-                    change: 50,
-                    effect: { from: 70, to: 120 },
-                    user: 'Admin (Aditi)',
-                    reason: 'New Stock Arrival'
+        try {
+            const res = await api.get('/products/admin/inventory/logs');
+            const normalized = res.data.map(log => ({
+                id: log._id,
+                date: new Date(log.createdAt).toLocaleString('en-GB', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                }),
+                product: {
+                    name: log.productId?.name || 'Unknown Asset',
+                    image: log.productId?.image || 'https://via.placeholder.com/100'
                 },
-                {
-                    id: 2,
-                    date: '2025-02-07 12:15',
-                    product: { name: 'DIAMOND STUD EARRINGS', image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100&h=100&fit=crop' },
-                    type: 'Order Fulfilled',
-                    change: -2,
-                    effect: { from: 47, to: 45 },
-                    user: 'System',
-                    reason: 'Order #ORD-5001'
-                },
-                {
-                    id: 3,
-                    date: '2025-02-06 09:45',
-                    product: { name: 'SILVER ANKLET', image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1520e?w=100&h=100&fit=crop' },
-                    type: 'Return Restock',
-                    change: 5,
-                    effect: { from: 10, to: 15 },
-                    user: 'Admin (Aditi)',
-                    reason: 'Return #RTN-105 (Unopened)'
-                },
-                {
-                    id: 4,
-                    date: '2025-02-05 16:20',
-                    product: { name: 'ROSE GOLD BRACELET', image: 'https://images.unsplash.com/photo-1530124560676-4ce5784914f6?w=100&h=100&fit=crop' },
-                    type: 'Order Fulfilled',
-                    change: -10,
-                    effect: { from: 10, to: 0 },
-                    user: 'System',
-                    reason: 'Order #ORD-4998'
-                },
-                {
-                    id: 5,
-                    date: '2025-02-05 10:00',
-                    product: { name: 'PEARL CHOKER', image: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=100&h=100&fit=crop' },
-                    type: 'Manual Adjustment',
-                    change: -5,
-                    effect: { from: 90, to: 85 },
-                    user: 'Admin (Aditi)',
-                    reason: 'Damaged Item'
-                },
-            ]);
+                type: log.reason.startsWith('Order') ? 'Order Fulfilled' :
+                    log.reason.startsWith('Return') ? 'Return Restock' : 'Manual Adjustment',
+                change: log.change,
+                effect: { from: log.oldStock, to: log.newStock },
+                user: log.adminId?.name || (log.reason.startsWith('Order') ? 'System' : 'Admin'),
+                reason: log.reason
+            }));
+            setHistory(normalized);
+        } catch (error) {
+            console.error("Error fetching inventory history:", error);
+            toast.error("Failed to load audit registry");
+        } finally {
             setLoading(false);
-        }, 500);
+        }
+    };
+
+    useEffect(() => {
+        fetchHistory();
     }, []);
 
     const getTypeStyle = (type) => {
@@ -107,7 +83,7 @@ const StockHistoryPage = () => {
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-0.5">Audit Trail of Global Inventory Movements</p>
                 </div>
                 <button className="px-5 py-2.5 bg-black text-white rounded-none text-[9px] font-black uppercase tracking-widest hover:bg-primary shadow-xl shadow-black/20 transition-all flex items-center gap-3 active:scale-95 group">
-                    <Download size={12} className="group-hover:translate-y-0.5 transition-transform" /> 
+                    <Download size={12} className="group-hover:translate-y-0.5 transition-transform" />
                     <span>Export Registry CSV</span>
                 </button>
             </div>

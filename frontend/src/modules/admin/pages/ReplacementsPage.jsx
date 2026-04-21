@@ -1,20 +1,61 @@
-import React, { useState } from 'react';
-import { RefreshCcw, Search, RefreshCw, Clock, Truck, Filter, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AdminStatsCard from '../components/AdminStatsCard';
+import api from '../../../utils/api';
+import { useShop } from '../../../context/ShopContext';
+import {
+    Search,
+    Filter,
+    ArrowUpRight,
+    MoreVertical,
+    Clock,
+    CheckCircle2,
+    XCircle,
+    Truck,
+    Package,
+    Shield,
+    Database,
+    Cpu,
+    RefreshCw,
+    ArrowRight
+} from 'lucide-react';
+
+const AdminStatsCard = ({ label, value, icon: Icon, color, bgColor }) => (
+    <div className={`${bgColor} p-4 border border-black/5 rounded-none shadow-sm flex items-center gap-4 group hover:border-gold/30 transition-all cursor-default`}>
+        <div className={`p-2 rounded-none ${color} bg-white/50 border border-black/5 transition-transform group-hover:scale-110`}>
+            <Icon size={18} />
+        </div>
+        <div>
+            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
+            <p className="text-xl font-serif font-black text-black leading-none">{value}</p>
+        </div>
+    </div>
+);
 
 const ReplacementsPage = () => {
     const navigate = useNavigate();
+    const { showNotification } = useShop();
     const [searchTerm, setSearchTerm] = useState('');
+    const [replacements, setReplacements] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const mockReplacements = [
-        { id: 'RPL-203', orderId: 'ORD-6003', customer: 'Rahul Roy', reason: 'Damaged', date: '06/02/2025', status: 'SHIPPED' },
-        { id: 'RPL-202', orderId: 'ORD-6002', customer: 'Neha Gupta', reason: 'Defective', date: '04/02/2025', status: 'PENDING' },
-        { id: 'RPL-201', orderId: 'ORD-6001', customer: 'Priya Verma', reason: 'Wrong Color', date: '02/02/2025', status: 'APPROVED' },
-    ];
+    useEffect(() => {
+        fetchReplacements();
+    }, []);
+
+    const fetchReplacements = async () => {
+        try {
+            const res = await api.get('/returns?type=exchange');
+            setReplacements(res.data);
+        } catch (error) {
+            console.error('[FETCH REPLACEMENTS ERROR]', error);
+            showNotification("Failed to fetch exchange protocols.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getStatusStyle = (status) => {
-        switch (status) {
+        switch (status?.toUpperCase()) {
             case 'SHIPPED': return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
             case 'APPROVED': return 'bg-blue-50 text-blue-600 border border-blue-100';
             case 'PENDING': return 'bg-amber-50 text-amber-600 border border-amber-100';
@@ -22,6 +63,15 @@ const ReplacementsPage = () => {
             default: return 'bg-gray-50 text-gray-600 border border-gray-100';
         }
     };
+
+    const filteredReplacements = replacements.filter(item => {
+        const matchesSearch =
+            item.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item._id?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        return matchesSearch;
+    });
 
     return (
         <div className="space-y-4 animate-in fade-in duration-500 font-outfit text-left">
@@ -43,21 +93,21 @@ const ReplacementsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <AdminStatsCard
                     label="TOTAL EXCHANGES"
-                    value="03"
+                    value={replacements.length}
                     icon={RefreshCw}
                     color="text-footerBg"
                     bgColor="bg-gray-50"
                 />
                 <AdminStatsCard
                     label="PENDING PROTOCOLS"
-                    value="01"
+                    value={replacements.filter(r => r.status === 'Pending').length}
                     icon={Clock}
                     color="text-amber-600"
                     bgColor="bg-amber-50"
                 />
                 <AdminStatsCard
                     label="DISPATCHED SHIPMENTS"
-                    value="01"
+                    value={replacements.filter(r => r.status === 'Shipped').length}
                     icon={Truck}
                     color="text-emerald-600"
                     bgColor="bg-emerald-50"
@@ -93,15 +143,23 @@ const ReplacementsPage = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/5 text-[10px] font-black uppercase tracking-tight text-gray-900 font-outfit">
-                            {mockReplacements.map((item, idx) => (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="7" className="px-6 py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest italic animate-pulse">Synchronizing Exchange Matrix...</td>
+                                </tr>
+                            ) : filteredReplacements.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="px-6 py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest italic">No exchange protocols identified.</td>
+                                </tr>
+                            ) : filteredReplacements.map((item, idx) => (
                                 <tr key={idx} className="hover:bg-[#FDF5F6]/20 transition-colors group">
                                     <td className="px-6 py-3">
-                                        <span className="font-serif font-black tracking-tight text-sm">{item.id}</span>
+                                        <span className="font-serif font-black tracking-tight text-sm">#{item._id.slice(-5)}</span>
                                     </td>
-                                    <td className="px-6 py-3 text-gold font-black tracking-widest">{item.orderId}</td>
-                                    <td className="px-6 py-3 font-black uppercase">{item.customer}</td>
+                                    <td className="px-6 py-3 text-gold font-black tracking-widest">#{item.orderId?.replace('ORD-', '')}</td>
+                                    <td className="px-6 py-3 font-black uppercase">{item.userId?.name || 'Patron Unknown'}</td>
                                     <td className="px-6 py-3 italic font-serif text-gray-500">{item.reason}</td>
-                                    <td className="px-6 py-3 text-gray-400 font-serif font-black">{item.date}</td>
+                                    <td className="px-6 py-3 text-gray-400 font-serif font-black">{new Date(item.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-3">
                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest border ${getStatusStyle(item.status)}`}>
                                             <span className="w-1 h-1 rounded-none bg-current"></span>
@@ -110,7 +168,7 @@ const ReplacementsPage = () => {
                                     </td>
                                     <td className="px-6 py-3 text-right">
                                         <button
-                                            onClick={() => navigate(`/admin/replacements/${item.id}`)}
+                                            onClick={() => navigate(`/admin/replacements/${item._id}`)}
                                             className="bg-black text-white px-3 py-1.5 rounded-none text-[8px] font-black uppercase tracking-widest hover:bg-gold hover:text-black transition-all flex items-center justify-center gap-2 ml-auto active:scale-95"
                                         >
                                             INSPECT <ArrowRight size={10} />

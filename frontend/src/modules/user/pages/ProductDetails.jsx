@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { products } from '../data/data';
 import { useShop } from '../../../context/ShopContext';
 import ProductCard from '../components/ProductCard';
-import { 
-    Heart, ShoppingBag, Star, Share2, Plus, Minus, Truck, 
-    ShieldCheck, Smile, Gift, ChevronDown, SlidersHorizontal, 
-    X, Camera, Check, ArrowLeft, ChevronRight, Info, 
+import {
+    Heart, ShoppingBag, Star, Share2, Plus, Minus, Truck,
+    ShieldCheck, Smile, Gift, ChevronDown, SlidersHorizontal,
+    X, Camera, Check, ArrowLeft, ChevronRight, Info,
     Clock, RefreshCw, Award, Zap, Search, UserCircle, Home
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,16 +13,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 const ProductDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { addToCart, wishlist, addToWishlist, removeFromWishlist, showNotification } = useShop();
-    const product = products.find(p => p.id === id);
+    const { products, addToCart, wishlist, addToWishlist, removeFromWishlist, showNotification, coupons } = useShop();
+    const product = products.find(p => p.id === id || p._id === id);
     const [appliedCoupon, setAppliedCoupon] = useState(null);
 
     // Gallery State
     const [selectedImgIdx, setSelectedImgIdx] = useState(0);
-    const productImages = product?.images && product.images.length > 0 
-        ? product.images 
+    const productImages = product?.images && product.images.length > 0
+        ? product.images
         : [product?.image, product?.image, product?.image];
-    
+
     // UI states
     const [showSuccessSheet, setShowSuccessSheet] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -60,10 +59,21 @@ const ProductDetails = () => {
         else addToWishlist(product);
     };
 
-    const handleApplyCoupon = (code) => {
-        setAppliedCoupon(code);
-        showNotification(`${code} applied successfully!`);
+    const handleApplyCoupon = (coupon) => {
+        setAppliedCoupon(coupon);
+        showNotification(`${coupon.code} applied! Check final price.`);
     };
+
+    const getDiscountedPrice = () => {
+        if (!appliedCoupon) return currentPrice;
+        if (appliedCoupon.type === 'percent') {
+            return currentPrice - (currentPrice * appliedCoupon.value / 100);
+        } else {
+            return Math.max(0, currentPrice - appliedCoupon.value);
+        }
+    };
+
+    const finalPrice = getDiscountedPrice();
 
     return (
         <div className="min-h-screen bg-[#FDF5F6] font-body text-[#1A1A1A] pb-12 selection:bg-[#8B4356] selection:text-white overflow-x-hidden">
@@ -77,7 +87,7 @@ const ProductDetails = () => {
                         <span className="opacity-20">/</span>
                         <span className="text-[#8B4356]/60 tracking-[0.2em] font-black">{product.name}</span>
                     </div>
-                    
+
                     <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-3 relative px-1">
                         <div className="flex flex-col gap-2 flex-1">
                             <h1 className="text-2xl md:text-3xl lg:text-4xl font-serif font-black text-black tracking-tight uppercase leading-none">{product.name}</h1>
@@ -86,7 +96,7 @@ const ProductDetails = () => {
                                 <p className="text-[7.5px] md:text-[8px] font-bold uppercase tracking-[0.6em] text-[#8B4356]/40 leading-none">Heritage Particular Selection</p>
                             </div>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setIsDrawerOpen(true)}
                             className="w-11 h-11 rounded-full border border-zinc-100 flex items-center justify-center bg-white text-[#8B4356] shadow-md active:scale-95 transition-all hover:bg-[#8B4356] hover:text-white group"
                         >
@@ -96,17 +106,17 @@ const ProductDetails = () => {
                 </div>
 
                 <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-10">
-                    
+
                     {/* 2. Left Column: Image Gallery - Compacted Spacing */}
                     <div className="relative lg:col-span-5">
                         <div className="px-4 lg:px-0">
                             <div className="aspect-[4/4.5] lg:aspect-[4/4] bg-white rounded-[1.2rem] lg:rounded-[2rem] overflow-hidden shadow-sm relative group border border-[#F5E6E8]/30 max-h-[450px] mx-auto">
-                                <motion.img 
+                                <motion.img
                                     key={selectedImgIdx}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    src={productImages[selectedImgIdx]} 
-                                    className="w-full h-full object-cover" 
+                                    src={productImages[selectedImgIdx]}
+                                    className="w-full h-full object-cover"
                                 />
                                 <button onClick={handleWishlist} className="absolute top-4 right-4 w-10 h-10 bg-white border border-[#F5E6E8]/50 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all z-10">
                                     <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-[#8B4356] text-[#8B4356]' : 'text-zinc-400'}`} strokeWidth={2.5} />
@@ -120,7 +130,7 @@ const ProductDetails = () => {
                         {/* Thumbnail Selector - Tighter Spacing */}
                         <div className="flex justify-center gap-3 py-3 px-4">
                             {['FRONT', 'SIDE', 'DETAIL'].map((label, idx) => (
-                                <button 
+                                <button
                                     key={idx}
                                     onClick={() => setSelectedImgIdx(idx % productImages.length)}
                                     className="flex flex-col items-center gap-1.5"
@@ -142,7 +152,7 @@ const ProductDetails = () => {
                                 <span className="text-[8.5px] font-black uppercase font-serif italic tracking-[.4em] text-[#8B4356]/60">Premium Selection</span>
                             </div>
                             <h1 className="text-[22px] md:text-2xl lg:text-2xl font-display font-black leading-tight text-black tracking-tight uppercase">{product.name}</h1>
-                            
+
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1 bg-white border border-[#F5E6E8] px-2 py-1 rounded-full shadow-sm">
                                     <span className="text-[10px] font-black text-black leading-none">{product.rating || 4.5}</span>
@@ -171,42 +181,48 @@ const ProductDetails = () => {
                                 </div>
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[22px] lg:text-[24px] font-display font-black text-black tracking-tighter leading-none">₹{currentPrice.toLocaleString()}</span>
+                                        <span className={`text-[22px] lg:text-[24px] font-display font-black tracking-tighter leading-none ${appliedCoupon ? 'text-emerald-600' : 'text-black'}`}>₹{finalPrice.toLocaleString()}</span>
                                         {appliedCoupon && (
                                             <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1 animate-in zoom-in-95 duration-300">
                                                 <Check className="w-2.5 h-2.5" />
-                                                <span className="text-[8px] font-bold uppercase tracking-wider">{appliedCoupon} Applied</span>
+                                                <span className="text-[8px] font-bold uppercase tracking-wider">{appliedCoupon.code} Applied</span>
                                             </div>
                                         )}
                                     </div>
-                                    {originalPrice > currentPrice && (
-                                        <span className="text-[8.5px] font-bold text-zinc-400 uppercase tracking-widest leading-none line-through mt-0.5">M.R.P.: ₹{originalPrice.toLocaleString()}</span>
-                                    )}
+                                    <div className="flex gap-2 items-center mt-0.5">
+                                        {(originalPrice > currentPrice || appliedCoupon) && (
+                                            <span className="text-[8.5px] font-bold text-zinc-400 uppercase tracking-widest leading-none line-through">₹{currentPrice.toLocaleString()}</span>
+                                        )}
+                                        {appliedCoupon && (
+                                            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest leading-none bg-emerald-50 px-1.5 py-0.5 rounded">Saved ₹{(currentPrice - finalPrice).toLocaleString()}</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <p className="text-[6.5px] font-black uppercase tracking-[.2em] text-[#8B4356] opacity-40 mt-1">Inclusive of all taxes</p>
                         </div>
 
-                        {/* Offers Section - Compact Card Stying */}
+                        {/* Offers Section - Dynamic Coupons */}
                         <div>
                             <h4 className="text-[9px] font-black uppercase tracking-[.4em] text-zinc-300 mb-4 flex items-center gap-3">Available Offers <div className="h-[1px] flex-grow bg-zinc-100/30"></div></h4>
                             <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
-                                {[
-                                    { tag: "COUPON", title: "HG25", desc: "Flat 25% Off on first order..." },
-                                    { tag: "COUPON", title: "WELCOME20", desc: "Flat ₹200 Off on orders..." }
-                                ].map((offer, oIdx) => (
-                                    <div key={oIdx} className="shrink-0 w-[140px] bg-white p-2.5 rounded-lg border border-[#F5E6E8] shadow-sm relative group">
-                                         <div className="absolute top-0 right-0 px-2 py-0.5 bg-[#FDF5F6] rounded-bl-md text-[4.5px] font-black text-[#8B4356]">{offer.tag}</div>
-                                         <h5 className="text-[10px] font-bold text-black mb-0.5 tracking-widest">{offer.title}</h5>
-                                         <p className="text-[7.5px] text-zinc-400 mb-1">{offer.desc}</p>
-                                         <button 
-                                            onClick={() => handleApplyCoupon(offer.title)}
-                                            className={`text-[6.5px] font-black uppercase tracking-widest border-b ${appliedCoupon === offer.title ? 'text-emerald-500 border-emerald-500' : 'text-[#8B4356] border-[#8B4356]/30'}`}
-                                         >
-                                            {appliedCoupon === offer.title ? 'Applied' : 'Apply'}
-                                         </button>
-                                    </div>
-                                ))}
+                                {coupons && coupons.filter(c => c.active).length > 0 ? (
+                                    coupons.filter(c => c.active).map((coupon, idx) => (
+                                        <div key={idx} className="shrink-0 w-[140px] bg-white p-2.5 rounded-lg border border-[#F5E6E8] shadow-sm relative group">
+                                            <div className="absolute top-0 right-0 px-2 py-0.5 bg-[#FDF5F6] rounded-bl-md text-[4.5px] font-black text-[#8B4356]">COUPON</div>
+                                            <h5 className="text-[10px] font-bold text-black mb-0.5 tracking-widest">{coupon.code}</h5>
+                                            <p className="text-[7.5px] text-zinc-400 mb-1 line-clamp-2">{coupon.description || coupon.desc || `${coupon.type === 'percent' ? coupon.value + '%' : '₹' + coupon.value} OFF`}</p>
+                                            <button
+                                                onClick={() => handleApplyCoupon(coupon)}
+                                                className={`text-[6.5px] font-black uppercase tracking-widest border-b ${appliedCoupon?.code === coupon.code ? 'text-emerald-500 border-emerald-500' : 'text-[#8B4356] border-[#8B4356]/30'}`}
+                                            >
+                                                {appliedCoupon?.code === coupon.code ? 'Applied' : 'Apply'}
+                                            </button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-[8px] text-zinc-300 uppercase tracking-widest py-2 italic px-1">Check back later for exclusive offers</div>
+                                )}
                             </div>
                         </div>
 
@@ -254,15 +270,15 @@ const ProductDetails = () => {
                                 </div>
                                 <span className="text-[12px] font-black text-black tracking-tighter">₹{currentPrice.toLocaleString()}</span>
                             </div>
-                            
+
                             <div className="hidden lg:grid grid-cols-2 gap-2">
-                                <button 
+                                <button
                                     onClick={handleAddToCart}
                                     className="bg-[#2a2a2a] text-white h-10 rounded-xl font-black uppercase tracking-[.2em] text-[9px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all hover:bg-black"
                                 >
                                     <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} /> Add to Bag
                                 </button>
-                                <button 
+                                <button
                                     onClick={handleBuyNow}
                                     className="bg-[#8B4356] text-white h-10 rounded-xl font-black uppercase tracking-[.2em] text-[9px] transition-all hover:bg-[#7a394b] active:scale-95 shadow-sm"
                                 >
@@ -292,13 +308,13 @@ const ProductDetails = () => {
 
             {/* Floating Action Bar - Ultra Compact rounded buttons */}
             <div className="lg:hidden fixed bottom-6 left-4 right-4 h-16 bg-white/95 backdrop-blur-xl border border-[#F5E6E8] p-2.5 z-[110] flex gap-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-full items-center">
-                <button 
+                <button
                     onClick={handleAddToCart}
                     className="flex-1 bg-[#2a2a2a] text-white h-full rounded-full font-black uppercase tracking-[.2em] text-[9.5px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
                 >
                     <ShoppingBag className="w-3.5 h-3.5" /> Add to Bag
                 </button>
-                <button 
+                <button
                     onClick={handleBuyNow}
                     className="flex-1 bg-[#8B4356] text-white h-full rounded-full font-black uppercase tracking-[.2em] text-[9.5px] transition-all hover:bg-[#7a394b] active:scale-95 shadow-sm"
                 >
@@ -348,25 +364,25 @@ const ProductDetails = () => {
 
                             {/* Action Buttons */}
                             <div className="flex flex-col gap-3">
-                                <button 
+                                <button
                                     onClick={() => navigate('/cart')}
                                     className="w-full bg-[#8B4356] text-white h-14 rounded-2xl font-black uppercase tracking-[.25em] text-[10px] shadow-xl active:scale-95 transition-all"
                                 >
                                     View My Bag
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setShowSuccessSheet(false)}
                                     className="w-full bg-white text-zinc-400 h-14 rounded-2xl font-black uppercase tracking-[.25em] text-[10px] border border-zinc-100 hover:bg-zinc-50 active:scale-95 transition-all"
                                 >
                                     Continue Shopping
                                 </button>
-                                
+
                                 <div className="flex items-center justify-between px-2 mt-4 pt-4 border-t border-zinc-50">
                                     <div className="flex flex-col">
                                         <span className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">Bag Subtotal</span>
                                         <span className="text-xl font-display font-black text-black tracking-tighter">₹{product.price.toLocaleString()}</span>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/checkout')}
                                         className="bg-[#8B4356] text-white h-12 px-8 rounded-full font-black uppercase tracking-widest text-[9px] shadow-lg active:scale-95 transition-all"
                                     >
@@ -417,8 +433,8 @@ const ProductDetails = () => {
 
                             <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-6">
                                 {[
-                                    { 
-                                        category: "Signature Collections", 
+                                    {
+                                        category: "Signature Collections",
                                         items: [
                                             { name: "Bridal Heritage", path: "bridal" },
                                             { name: "Daily Minimalist", path: "minimalist" },
@@ -426,8 +442,8 @@ const ProductDetails = () => {
                                             { name: "Contemporary", path: "modern" }
                                         ]
                                     },
-                                    { 
-                                        category: "Elite Gifts", 
+                                    {
+                                        category: "Elite Gifts",
                                         items: [
                                             { name: "For Her", path: "for-her" },
                                             { name: "For Him", path: "for-him" },
@@ -455,8 +471,8 @@ const ProductDetails = () => {
                             </div>
 
                             <div className="p-6 border-t border-zinc-50 bg-zinc-50/50">
-                                <Link 
-                                    to="/shop" 
+                                <Link
+                                    to="/shop"
                                     onClick={() => setIsDrawerOpen(false)}
                                     className="w-full h-12 bg-black text-white rounded-2xl flex items-center justify-center font-black uppercase tracking-widest text-[10px] shadow-lg hover:shadow-black/10 active:scale-95 transition-all"
                                 >

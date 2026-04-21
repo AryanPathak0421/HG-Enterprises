@@ -1,25 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ProductCard from '../components/ProductCard';
-import { products, categories as initialCategories } from '../data/data';
-import { 
-    Filter, ChevronDown, ArrowUpDown, ArrowLeft, Plus, Minus, 
-    UserCircle, ChevronRight, Search, X, SlidersHorizontal, Check, 
-    Home, Heart, RotateCcw, Diamond, Settings, Hammer, Image as ImageLucide 
+import { useShop } from '../../../context/ShopContext';
+import {
+    Filter, ChevronDown, ArrowUpDown, ArrowLeft, Plus, Minus,
+    UserCircle, ChevronRight, Search, X, SlidersHorizontal, Check,
+    Home, Heart, RotateCcw, Diamond, Settings, Hammer, Image as ImageLucide
 } from 'lucide-react';
 import { useLocation, useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Shop = () => {
+    const { products, categories } = useShop();
     const location = useLocation();
     const navigate = useNavigate();
     const { category: urlCategory } = useParams();
     const searchParams = new URLSearchParams(location.search);
     const filterParam = searchParams.get('filter');
-    
+    const categoryParam = searchParams.get('category');
+
     // States
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('Jewellery');
-    const [openCategory, setOpenCategory] = useState('Jewellery'); 
+    const [openCategory, setOpenCategory] = useState('Jewellery');
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [selectedType, setSelectedType] = useState('All');
     const [selectedGender, setSelectedGender] = useState('All');
@@ -30,13 +32,13 @@ const Shop = () => {
 
     // Sync with URL params & Normalize Category
     useEffect(() => {
-        const queryParam = urlCategory || filterParam;
+        const queryParam = urlCategory || filterParam || categoryParam;
         if (queryParam) {
             try {
                 const normalizedParam = decodeURIComponent(queryParam).toLowerCase();
-                
+
                 // Try to find if it matches a category
-                const catMatch = initialCategories.find(c => (c.name?.toLowerCase() === normalizedParam) || (c.id?.toLowerCase() === normalizedParam));
+                const catMatch = categories.find(c => (c.name?.toLowerCase() === normalizedParam) || (c.id?.toLowerCase() === normalizedParam));
                 if (catMatch) {
                     setSelectedCategory(catMatch.name || 'Jewellery');
                     setOpenCategory(catMatch.name || 'Jewellery');
@@ -45,12 +47,12 @@ const Shop = () => {
                 }
 
                 // Try to find if it matches a subcategory
-                const subMatch = initialCategories.flatMap(c => c.subcategories || []).find(s => 
-                    s.name?.toLowerCase() === normalizedParam || 
+                const subMatch = categories.flatMap(c => c.subcategories || []).find(s =>
+                    s.name?.toLowerCase() === normalizedParam ||
                     (s.path && s.path.toLowerCase() === normalizedParam.replace(' ', '-'))
                 );
                 if (subMatch) {
-                    const parent = initialCategories.find(c => (c.subcategories || []).some(s => s.name === subMatch.name));
+                    const parent = categories.find(c => (c.subcategories || []).some(s => s.name === subMatch.name));
                     setSelectedCategory(parent?.name || 'Jewellery');
                     setOpenCategory(parent?.name || 'Jewellery');
                     setSelectedSubCategory(subMatch.name);
@@ -77,7 +79,7 @@ const Shop = () => {
         }
 
         if (tagFilter) {
-            result = result.filter(p => 
+            result = result.filter(p =>
                 (p.category && p.category.toLowerCase().includes(tagFilter.toLowerCase())) ||
                 (p.subCategory && p.subCategory.toLowerCase().includes(tagFilter.toLowerCase())) ||
                 (p.name && p.name.toLowerCase().includes(tagFilter.toLowerCase()))
@@ -87,8 +89,8 @@ const Shop = () => {
         if (selectedCategory && selectedCategory !== 'All') {
             result = result.filter(p => p.category?.toLowerCase() === selectedCategory.toLowerCase());
             if (selectedSubCategory) {
-                result = result.filter(p => 
-                    (p.subCategory && p.subCategory.toLowerCase() === selectedSubCategory.toLowerCase()) || 
+                result = result.filter(p =>
+                    (p.subCategory && p.subCategory.toLowerCase() === selectedSubCategory.toLowerCase()) ||
                     (p.name && p.name.toLowerCase().includes(selectedSubCategory.toLowerCase()))
                 );
             }
@@ -96,7 +98,7 @@ const Shop = () => {
         if (selectedType !== 'All') result = result.filter(p => p.type?.toLowerCase() === selectedType.toLowerCase());
         if (selectedGender !== 'All') result = result.filter(p => p.gender?.toLowerCase() === selectedGender.toLowerCase());
         if (selectedMetal !== 'All') result = result.filter(p => p.metal?.toLowerCase() === selectedMetal.toLowerCase());
-        
+
         // Price Filter
         result = result.filter(p => p.price >= priceRange.min && p.price <= priceRange.max);
 
@@ -121,8 +123,8 @@ const Shop = () => {
     };
 
     const SidebarContent = () => {
-        const currentCatData = initialCategories.find(c => c.name === openCategory);
-        
+        const currentCatData = categories.find(c => c.name === openCategory);
+
         return (
             <div className="flex flex-col h-full bg-white font-body overflow-hidden relative">
                 {/* Fixed Header */}
@@ -136,40 +138,40 @@ const Shop = () => {
                 {/* Scrollable Middle Container */}
                 <div className="flex-1 overflow-y-auto scrollbar-hide px-5 pt-6 space-y-7 pb-32">
                     <div>
-                         <h4 className="text-[9.5px] font-bold uppercase tracking-[0.5em] text-zinc-500 mb-3.5 ml-1">Archive Hub</h4>
-                         <div className="flex flex-col gap-1.5">
-                             {initialCategories.map(cat => (
-                                 <button key={cat.id} onClick={() => handleCategoryToggle(cat.name)} className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center justify-between group ${openCategory === cat.name ? 'border-[#8B4356] bg-[#FDF5F6]/30 text-[#8B4356]' : 'border-zinc-50 text-zinc-800 hover:border-zinc-100 hover:bg-zinc-50'}`}>
-                                     <span className="text-[12px] font-serif uppercase tracking-widest">{cat.name}</span>
-                                     <ChevronRight className={`w-3 h-3 transition-transform ${openCategory === cat.name ? 'rotate-90 text-[#8B4356]' : 'text-zinc-300 group-hover:translate-x-1'}`} />
-                                 </button>
-                             ))}
-                         </div>
+                        <h4 className="text-[9.5px] font-bold uppercase tracking-[0.5em] text-zinc-500 mb-3.5 ml-1">Archive Hub</h4>
+                        <div className="flex flex-col gap-1.5">
+                            {categories.map(cat => (
+                                <button key={cat.id} onClick={() => handleCategoryToggle(cat.name)} className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center justify-between group ${openCategory === cat.name ? 'border-[#8B4356] bg-[#FDF5F6]/30 text-[#8B4356]' : 'border-zinc-50 text-zinc-800 hover:border-zinc-100 hover:bg-zinc-50'}`}>
+                                    <span className="text-[12px] font-serif uppercase tracking-widest">{cat.name}</span>
+                                    <ChevronRight className={`w-3 h-3 transition-transform ${openCategory === cat.name ? 'rotate-90 text-[#8B4356]' : 'text-zinc-300 group-hover:translate-x-1'}`} />
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div>
-                         <h4 className="text-[9.5px] font-bold uppercase tracking-[0.5em] text-zinc-500 mb-4 flex items-center gap-3">Discovery Map <div className="h-[1px] flex-grow bg-zinc-50"></div></h4>
-                         <div className="grid grid-cols-2 gap-4">
-                             {currentCatData?.subcategories.map(sub => (
-                                 <button key={sub.name} onClick={() => setSelectedSubCategory(sub.name === selectedSubCategory ? null : sub.name)} className={`relative group p-3 rounded-2xl border transition-all text-center flex flex-col items-center gap-2.5 ${selectedSubCategory === sub.name ? 'border-[#8B4356] bg-white shadow-[0_10px_30px_rgba(139,67,86,0.08)] scale-[1.02]' : 'border-zinc-50 bg-[#fafafa] hover:border-zinc-200'}`}>
-                                     <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 transition-transform bg-zinc-100 flex items-center justify-center ${selectedSubCategory === sub.name ? 'border-[#8B4356]' : 'border-transparent group-hover:scale-105'}`}>
-                                         {sub.image && (
-                                             <img src={sub.image} className="w-full h-full object-cover" crossOrigin="anonymous" loading="lazy" onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
-                                         )}
-                                         <div className="hidden items-center justify-center w-full h-full text-zinc-300"><ImageLucide className="w-5 h-5" /></div>
-                                     </div>
-                                     <span className={`text-[11px] font-serif uppercase tracking-widest leading-tight transition-colors ${selectedSubCategory === sub.name ? 'text-[#8B4356] font-bold' : 'text-zinc-800'}`}>{sub.name}</span>
-                                 </button>
-                             ))}
-                         </div>
+                        <h4 className="text-[9.5px] font-bold uppercase tracking-[0.5em] text-zinc-500 mb-4 flex items-center gap-3">Discovery Map <div className="h-[1px] flex-grow bg-zinc-50"></div></h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            {currentCatData?.subcategories.map(sub => (
+                                <button key={sub.name} onClick={() => setSelectedSubCategory(sub.name === selectedSubCategory ? null : sub.name)} className={`relative group p-3 rounded-2xl border transition-all text-center flex flex-col items-center gap-2.5 ${selectedSubCategory === sub.name ? 'border-[#8B4356] bg-white shadow-[0_10px_30px_rgba(139,67,86,0.08)] scale-[1.02]' : 'border-zinc-50 bg-[#fafafa] hover:border-zinc-200'}`}>
+                                    <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 transition-transform bg-zinc-100 flex items-center justify-center ${selectedSubCategory === sub.name ? 'border-[#8B4356]' : 'border-transparent group-hover:scale-105'}`}>
+                                        {sub.image && (
+                                            <img src={sub.image} className="w-full h-full object-cover" crossOrigin="anonymous" loading="lazy" onError={(e) => { e.target.style.display = 'none'; if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
+                                        )}
+                                        <div className="hidden items-center justify-center w-full h-full text-zinc-300"><ImageLucide className="w-5 h-5" /></div>
+                                    </div>
+                                    <span className={`text-[11px] font-serif uppercase tracking-widest leading-tight transition-colors ${selectedSubCategory === sub.name ? 'text-[#8B4356] font-bold' : 'text-zinc-800'}`}>{sub.name}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="space-y-8">
-                         {/* DYNAMIC MATERIAL SECTION based on Category */}
-                         {currentCatData?.materials && (
+                        {/* DYNAMIC MATERIAL SECTION based on Category */}
+                        {currentCatData?.materials && (
                             <div>
                                 <h4 className="text-[9.5px] font-bold uppercase tracking-[0.5em] text-[#8B4356] mb-4 flex items-center gap-3">
-                                    {currentCatData.materialLabel || "By Material"} 
+                                    {currentCatData.materialLabel || "By Material"}
                                     <div className="h-[1px] flex-grow bg-[#FDF5F6]"></div>
                                 </h4>
                                 <div className="grid grid-cols-2 gap-2 px-1">
@@ -178,17 +180,17 @@ const Shop = () => {
                                     ))}
                                 </div>
                             </div>
-                         )}
+                        )}
 
                         {/* PRICE SLIDER - Restored Manual Shift UI */}
                         <div>
-                             <h4 className="text-[9.5px] font-bold uppercase tracking-[0.5em] text-zinc-500 mb-6 flex items-center gap-3">Price Explorer <div className="h-[1px] flex-grow bg-zinc-50"></div></h4>
-                             <div className="px-2 space-y-4">
+                            <h4 className="text-[9.5px] font-bold uppercase tracking-[0.5em] text-zinc-500 mb-6 flex items-center gap-3">Price Explorer <div className="h-[1px] flex-grow bg-zinc-50"></div></h4>
+                            <div className="px-2 space-y-4">
                                 <div className="flex justify-between items-end mb-4">
                                     <div className="flex flex-col gap-1">
                                         <label className="text-[7px] font-black uppercase text-zinc-400">Min Budget</label>
-                                        <input 
-                                            type="number" 
+                                        <input
+                                            type="number"
                                             value={priceRange.min}
                                             onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) || 0 }))}
                                             className="w-20 bg-zinc-50 border-none text-[12px] font-bold text-[#8B4356] font-display p-1 rounded"
@@ -196,41 +198,41 @@ const Shop = () => {
                                     </div>
                                     <div className="flex flex-col gap-1 text-right">
                                         <label className="text-[7px] font-black uppercase text-zinc-400">Max Budget</label>
-                                        <input 
-                                            type="number" 
+                                        <input
+                                            type="number"
                                             value={priceRange.max}
                                             onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) || 0 }))}
                                             className="w-24 bg-zinc-50 border-none text-[12px] font-bold text-[#8B4356] font-display p-1 rounded text-right"
                                         />
                                     </div>
                                 </div>
-                                
+
                                 <div className="relative h-6 flex items-center">
-                                    <input 
-                                        type="range" 
-                                        min="0" 
-                                        max="500000" 
-                                        step="1000" 
-                                        value={priceRange.max} 
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="500000"
+                                        step="1000"
+                                        value={priceRange.max}
                                         onChange={(e) => setPriceRange(prev => ({ ...prev, max: Math.max(prev.min + 1000, parseInt(e.target.value)) }))}
                                         className="absolute w-full h-[3px] bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-[#8B4356] z-20 pointer-events-auto"
                                     />
-                                    <input 
-                                        type="range" 
-                                        min="0" 
-                                        max="500000" 
-                                        step="1000" 
-                                        value={priceRange.min} 
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="500000"
+                                        step="1000"
+                                        value={priceRange.min}
                                         onChange={(e) => setPriceRange(prev => ({ ...prev, min: Math.min(prev.max - 1000, parseInt(e.target.value)) }))}
                                         className="absolute w-full h-[3px] bg-transparent appearance-none cursor-pointer accent-[#8B4356] invisible pointer-events-none [&::-webkit-slider-thumb]:visible [&::-webkit-slider-thumb]:pointer-events-auto"
                                     />
                                 </div>
-                                
+
                                 <div className="flex justify-between mt-1">
                                     <span className="text-[9px] font-black uppercase tracking-tighter text-zinc-400">Min 0</span>
                                     <span className="text-[9px] font-black uppercase tracking-tighter text-zinc-400">Max 5 Lakh +</span>
                                 </div>
-                             </div>
+                            </div>
                         </div>
 
                         {/* GENDER FILTER - Restored */}
@@ -278,71 +280,112 @@ const Shop = () => {
     };
 
     const CategoryMegaGrid = () => {
-        const currentCatData = initialCategories.find(c => c.name === openCategory);
-        
+        const [activeGridTab, setActiveGridTab] = useState('Jewellery');
+        const departments = ['Jewellery', 'Tools', 'Machines'];
+
+        const currentDeptCats = categories.filter(c =>
+            c.department?.toLowerCase() === activeGridTab.toLowerCase() &&
+            c.status === 'Active'
+        );
+
         return (
-            <div className="hidden lg:grid grid-cols-4 gap-6 bg-white border border-zinc-100 p-6 rounded-[2rem] mb-8 shadow-[0_15px_50px_rgba(0,0,0,0.015)] relative z-40">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-[#FDF5F6]/40 rounded-full blur-[70px] -translate-y-1/2 translate-x-1/2"></div>
-                <div>
-                    <h5 className="text-[8px] font-bold uppercase tracking-[0.5em] text-[#8B4356] mb-5 flex items-center gap-3">
-                        {currentCatData?.materialLabel || "By Material"} 
-                        <div className="h-[1px] flex-grow bg-[#FDF5F6]"></div>
-                    </h5>
-                    <div className="space-y-2">
-                        {currentCatData?.materials?.map(m => (
-                            <button key={m} onClick={() => setSelectedMetal(m === selectedMetal ? 'All' : m)} className={`block w-full text-left text-[13.5px] font-serif uppercase tracking-widest transition-all hover:text-black px-4 py-2 rounded-xl border ${selectedMetal === m ? 'border-[#8B4356] bg-[#FDF5F6]/30 text-[#8B4356] font-bold' : 'border-transparent text-zinc-800 hover:bg-zinc-50'}`}>{m} Selection</button>
-                        ))}
-                    </div>
+            <div className="hidden lg:block mb-10">
+                {/* 1. Horizontal Department Tabs */}
+                <div className="flex justify-center gap-16 mb-8 border-b border-zinc-100 pb-0.5">
+                    {departments.map((dept) => (
+                        <button
+                            key={dept}
+                            onClick={() => setActiveGridTab(dept)}
+                            className={`font-serif text-[11px] tracking-[0.4em] uppercase transition-all duration-500 relative py-4 px-4 whitespace-nowrap ${activeGridTab.toLowerCase() === dept.toLowerCase() ? 'text-black font-black' : 'text-gray-300 hover:text-gray-500 font-medium'
+                                }`}
+                        >
+                            {dept}
+                            {activeGridTab.toLowerCase() === dept.toLowerCase() && (
+                                <motion.div
+                                    layoutId="gridTabLine"
+                                    className="absolute bottom-[-1px] left-0 right-0 h-[1.5px] bg-black"
+                                    initial={false}
+                                />
+                            )}
+                        </button>
+                    ))}
                 </div>
-                <div>
-                    <h5 className="text-[8px] font-bold uppercase tracking-[0.5em] text-[#8B4356] mb-5 flex items-center gap-3">Top Styles <div className="h-[1px] flex-grow bg-[#FDF5F6]"></div></h5>
-                    <div className="grid grid-cols-1 gap-y-2.5">
-                        {currentCatData?.popularTypes?.map(t => (
-                            <button key={t} onClick={() => setSelectedType(t === selectedType ? 'All' : t)} className={`text-left text-[13.5px] font-serif uppercase tracking-widest hover:text-[#8B4356] transition-all hover:translate-x-1 ${selectedType === t ? 'text-[#8B4356] translate-x-1 font-bold' : 'text-zinc-800'}`}>{t}</button>
-                        ))}
-                    </div>
-                </div>
-                <div className="border-x border-zinc-50 px-10">
-                    <h5 className="text-[8px] font-bold uppercase tracking-[0.5em] text-[#8B4356] mb-5 flex items-center gap-3">Budget Discovery <div className="h-[1px] flex-grow bg-[#FDF5F6]"></div></h5>
-                    <div className="space-y-6 pt-2">
-                        <div className="flex gap-2">
-                            <input 
-                                type="number" 
-                                value={priceRange.min}
-                                onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) || 0 }))}
-                                className="w-1/2 bg-zinc-50 border-none text-[10px] font-bold text-[#8B4356] p-1.5 rounded"
-                            />
-                            <input 
-                                type="number" 
-                                value={priceRange.max}
-                                onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) || 0 }))}
-                                className="w-1/2 bg-zinc-50 border-none text-[10px] font-bold text-[#8B4356] p-1.5 rounded text-right"
-                            />
+
+                {/* 2. Showroom Panel */}
+                <div className="bg-[#FDFBF7] rounded-[2rem] overflow-hidden border border-black/5 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.03)]">
+                    <div className="grid grid-cols-12 min-h-[400px]">
+                        {/* Left Info Column */}
+                        <div className="col-span-4 p-12 border-r border-black/5 flex flex-col justify-center bg-white/40 backdrop-blur-sm">
+                            <motion.div
+                                key={activeGridTab}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.8 }}
+                            >
+                                <span className="text-[9px] font-black uppercase tracking-[0.5em] text-zinc-300 mb-6 block">Elite Discovery</span>
+                                <h2 className="text-5xl font-display text-black mb-4 leading-[1.1] uppercase tracking-tighter">
+                                    Complete <br />
+                                    <span className="italic font-serif font-normal text-gray-400 lowercase">{activeGridTab}</span>
+                                </h2>
+                                <p className="text-[11px] font-medium text-gray-500 leading-relaxed uppercase tracking-widest mt-8 flex items-center gap-4 group cursor-pointer" onClick={() => setSelectedCategory(activeGridTab)}>
+                                    Explore our curated {activeGridTab.toLowerCase()} range, <br /> handcrafted for excellence.
+                                </p>
+
+                                <div className="mt-12 flex items-center gap-6">
+                                    <button
+                                        onClick={() => { setSelectedCategory(activeGridTab); setSelectedSubCategory(null); }}
+                                        className="text-[10px] font-black uppercase tracking-[0.4em] text-black hover:tracking-[0.5em] transition-all flex items-center gap-4 group"
+                                    >
+                                        VIEW ALL
+                                        <div className="w-12 h-[1px] bg-black/20 group-hover:bg-black transition-all"></div>
+                                    </button>
+                                </div>
+                            </motion.div>
                         </div>
-                        <input 
-                            type="range" 
-                            min="0" 
-                            max="500000" 
-                            step="5000" 
-                            value={priceRange.max} 
-                            onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) }))}
-                            className="w-full h-1 bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-[#8B4356]"
-                        />
-                        <div className="flex justify-between items-center text-[7px] font-black uppercase tracking-widest text-zinc-300">
-                            <span>Min</span>
-                            <span>5 Lakh+</span>
+
+                        {/* Right Discovery Grid */}
+                        <div className="col-span-8 p-12 flex flex-col justify-center">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={activeGridTab}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="grid grid-cols-4 gap-x-6 gap-y-10"
+                                >
+                                    {currentDeptCats.map((cat, idx) => (
+                                        <motion.div
+                                            key={cat.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.6, delay: idx * 0.05 }}
+                                            onClick={() => { setSelectedCategory(cat.name); setSelectedSubCategory(null); }}
+                                            className="flex flex-col items-center gap-4 group cursor-pointer"
+                                        >
+                                            <div className="relative w-24 h-24 rounded-full overflow-hidden border border-black/5 p-1 bg-white transition-all duration-700 group-hover:border-black/10 group-hover:scale-110 group-hover:shadow-lg">
+                                                <div className="w-full h-full rounded-full overflow-hidden">
+                                                    <img
+                                                        src={cat.image || 'https://via.placeholder.com/300'}
+                                                        className="w-full h-full object-cover transform transition-transform duration-1000 group-hover:scale-110"
+                                                        crossOrigin="anonymous"
+                                                        loading="lazy"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 text-center transition-all group-hover:text-black">
+                                                {cat.name}
+                                            </span>
+                                        </motion.div>
+                                    ))}
+                                    {currentDeptCats.length === 0 && (
+                                        <div className="col-span-full py-20 text-center text-gray-300 font-serif text-[11px] uppercase tracking-widest italic">
+                                            No segments initialized yet.
+                                        </div>
+                                    )}
+                                </motion.div>
+                            </AnimatePresence>
                         </div>
-                    </div>
-                </div>
-                <div>
-                    <h5 className="text-[8px] font-bold uppercase tracking-[0.5em] text-[#8B4356] mb-5 flex items-center gap-3">All Categories <div className="h-[1px] flex-grow bg-[#FDF5F6]"></div></h5>
-                    <div className="space-y-3.5">
-                        {initialCategories.map(m => (
-                            <div key={m.id} onClick={() => handleCategoryToggle(m.name)} className="group/item cursor-pointer flex items-center justify-between border-b border-zinc-50 pb-2.5 transition-colors hover:border-[#8B4356]/20">
-                                <p className={`text-[11.5px] font-bold uppercase tracking-widest hover:text-[#8B4356] transition-all ${openCategory === m.name ? 'text-[#8B4356] translate-x-1' : 'text-black group-hover/item:translate-x-1'}`}>{m.name}</p>
-                                <ChevronRight className={`w-3.5 h-3.5 transition-all ${openCategory === m.name ? 'text-[#8B4356] translate-x-1' : 'text-zinc-200 group-hover/item:text-black group-hover/item:translate-x-1'}`} />
-                            </div>
-                        ))}
                     </div>
                 </div>
             </div>
@@ -356,7 +399,7 @@ const Shop = () => {
                 <main className="flex-grow min-w-0 bg-[#fdf2f8]/5">
                     <div className="pt-8 pb-4 px-2 md:p-4 lg:px-16 lg:pt-0 lg:pb-6">
                         <div className="mb-0 lg:mb-1">
-                             <div className="flex items-center gap-2 text-[8px] uppercase tracking-[0.5em] font-bold text-zinc-300 mb-1 px-1">
+                            <div className="flex items-center gap-2 text-[8px] uppercase tracking-[0.5em] font-bold text-zinc-300 mb-1 px-1">
                                 <Link to="/" className="hover:text-[#8B4356] transition-colors">Home</Link>
                                 <span className="opacity-20">/</span>
                                 <span className="text-zinc-400">Categories</span>
@@ -373,7 +416,7 @@ const Shop = () => {
                                     </React.Fragment>
                                 )}
                             </div>
-                            
+
                             <div className="flex flex-col md:flex-row md:items-end justify-between items-start gap-4 border-b border-zinc-100 pb-1 relative px-1">
                                 <div className="flex items-start justify-between w-full relative">
                                     <div className="flex flex-col gap-1">
@@ -384,7 +427,7 @@ const Shop = () => {
                                         </div>
                                     </div>
                                     <div className="absolute top-0 right-0 flex items-center gap-3">
-                                        <button 
+                                        <button
                                             onClick={() => setIsFilterOpen(true)}
                                             className="lg:hidden w-11 h-11 rounded-2xl border border-zinc-100 flex items-center justify-center bg-white text-[#8B4356] shadow-sm active:scale-95 transition-all"
                                         >
@@ -410,17 +453,17 @@ const Shop = () => {
                                 </div>
                                 <h3 className="text-3xl font-serif font-bold text-black mb-5">Choice Not Found</h3>
                                 <p className="text-zinc-400 font-serif italic mb-10 max-w-sm mx-auto text-base">We couldn't match your discovery parameters.</p>
-                                <button 
-                                    onClick={() => { 
-                                        setSelectedCategory('Jewellery'); 
-                                        setSelectedSubCategory(null); 
-                                        setSelectedType('All'); 
-                                        setSelectedGender('All'); 
-                                        setSelectedMetal('All'); 
-                                        setPriceRange({ min: 0, max: 500000 }); 
-                                        setSortBy('Newest'); 
+                                <button
+                                    onClick={() => {
+                                        setSelectedCategory('Jewellery');
+                                        setSelectedSubCategory(null);
+                                        setSelectedType('All');
+                                        setSelectedGender('All');
+                                        setSelectedMetal('All');
+                                        setPriceRange({ min: 0, max: 500000 });
+                                        setSortBy('Newest');
                                         navigate('/shop');
-                                    }} 
+                                    }}
                                     className="bg-[#8B4356] text-white px-10 py-5 rounded-full font-bold uppercase tracking-[0.4em] text-[10px] shadow-2xl transition-all"
                                 >
                                     Reset All

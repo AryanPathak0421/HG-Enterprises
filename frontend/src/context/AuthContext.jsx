@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import api from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -9,67 +10,86 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem('hg_current_user'));
-        if (storedUser) setUser(storedUser);
-        setLoading(false);
-    }, []);
+        const fetchUser = async () => {
+            const token = localStorage.getItem('hg_token');
+            if (!token) {
+                setLoading(false);
+                return;
+            }
 
-    const login = (email, password) => {
-        // In a real app, verify password hash. Here we mock it by checking the users list.
-        const users = JSON.parse(localStorage.getItem('hg_users')) || [];
-        const validUser = users.find(u => u.email === email && u.password === password);
-
-        if (validUser) {
-            const { password, ...userWithoutPass } = validUser;
-            setUser(userWithoutPass);
-            localStorage.setItem('hg_current_user', JSON.stringify(userWithoutPass));
-            return { success: true };
-        }
-
-        // Admin Backdoor for testing
-        if (email === 'admin@hgenterprises.com' && password === 'admin123') {
-            const adminUser = { id: 'admin_01', name: 'Super Admin', email, role: 'admin' };
-            setUser(adminUser);
-            localStorage.setItem('hg_current_user', JSON.stringify(adminUser));
-            return { success: true };
-        }
-
-        return { success: false, message: 'Invalid credentials' };
-    };
-
-    const signup = (userData) => {
-        const users = JSON.parse(localStorage.getItem('hg_users')) || [];
-
-        if (users.find(u => u.email === userData.email)) {
-            return { success: false, message: 'User already exists' };
-        }
-
-        const newUser = {
-            id: `user_${Date.now()}`,
-            role: 'user',
-            points: 0,
-            usedCoupons: [],
-            ...userData
+            try {
+                const res = await api.get('/auth/profile');
+                setUser(res.data);
+            } catch (error) {
+                console.error("Token verification failed:", error);
+                localStorage.removeItem('hg_token');
+            } finally {
+                setLoading(false);
+            }
         };
 
-        users.push(newUser);
-        localStorage.setItem('hg_users', JSON.stringify(users));
+        fetchUser();
+    }, []);
 
-        // Auto login after signup
-        const { password, ...userWithoutPass } = newUser;
-        setUser(userWithoutPass);
-        localStorage.setItem('hg_current_user', JSON.stringify(userWithoutPass));
+    const login = async (email, password) => {
+        try {
+            const res = await api.post('/auth/login', { email, password });
+            const { token, user: userData } = res.data;
 
-        return { success: true };
+            localStorage.setItem('hg_token', token);
+            setUser(userData);
+            return { success: true };
+        } catch (error) {
+            console.error("Login Error:", error);
+            return { success: false, message: error.response?.data?.message || 'Invalid credentials' };
+        }
+    };
+
+    const signup = async (userData) => {
+        try {
+            const res = await api.post('/auth/signup', userData);
+            const { token, user: newUser } = res.data;
+
+            localStorage.setItem('hg_token', token);
+            setUser(newUser);
+            return { success: true };
+        } catch (error) {
+            console.error("Signup Error:", error);
+            return { success: false, message: error.response?.data?.message || 'Signup failed' };
+        }
     };
 
     const logout = () => {
         setUser(null);
-        localStorage.removeItem('hg_current_user');
+        localStorage.removeItem('hg_token');
+    };
+
+    const sendOTP = async (phone) => {
+        try {
+            const res = await api.post('/auth/otp/send', { phone });
+            return { success: true, exists: res.data.exists };
+        } catch (error) {
+            console.error("OTP Send Error:", error);
+            return { success: false, message: error.response?.data?.message || 'Failed to send OTP' };
+        }
+    };
+
+    const verifyOTP = async (otpData) => {
+        try {
+            const res = await api.post('/auth/otp/verify', otpData);
+            const { token, user: userData } = res.data;
+
+            localStorage.setItem('hg_token', token);
+            setUser(userData);
+            return { success: true };
+        } catch (error) {
+            console.error("OTP Verify Error:", error);
+            return { success: false, message: error.response?.data?.message || 'Invalid OTP' };
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
+        <AuthContext.Provider value={{ user, setUser, login, signup, logout, sendOTP, verifyOTP, loading }}>
             {children}
         </AuthContext.Provider>
     );

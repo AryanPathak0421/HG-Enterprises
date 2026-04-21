@@ -5,12 +5,18 @@ import { Trash2, ArrowRight, ShoppingBag, Gift, ShieldCheck, ArrowLeft, Plus, Mi
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Cart = () => {
-    const { cart, removeFromCart, updateQuantity } = useShop();
+    const { cart, removeFromCart, updateQuantity, settings, orders } = useShop();
     const navigate = useNavigate();
 
     const subtotal = cart.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
-    const shipping = subtotal > 499 ? 0 : 50;
-    const total = subtotal + shipping;
+
+    // First Order Free Logic
+    const isFirstOrder = orders && orders.length === 0;
+    const shipping = isFirstOrder ? 0 : (settings?.shippingCharge || 0);
+
+    const gstRate = (settings?.gstPercentage || 18) / 100;
+    const gstAmount = Math.round(subtotal * gstRate);
+    const total = subtotal + shipping + gstAmount;
 
     if (cart.length === 0) {
         return (
@@ -123,9 +129,9 @@ const Cart = () => {
                                         <div className="mt-auto flex items-end justify-between">
                                             <div className="flex items-center bg-gray-50 border border-gray-100 rounded-lg p-0.5 w-fit">
                                                 <button
-                                                    onClick={() => updateQuantity(item.id, -1)}
-                                                    disabled={item.quantity <= 1}
-                                                    className="w-6 h-6 md:w-9 md:h-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                                                    onClick={() => updateQuantity(item.id, (item.quantity || 1) - 1)}
+                                                    disabled={(item.quantity || 1) <= 1}
+                                                    className="w-6 h-6 md:w-9 md:h-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent active:scale-90 transition-all"
                                                 >
                                                     <Minus className="w-3 h-3" />
                                                 </button>
@@ -133,8 +139,8 @@ const Cart = () => {
                                                     {item.quantity || 1}
                                                 </span>
                                                 <button
-                                                    onClick={() => updateQuantity(item.id, 1)}
-                                                    className="w-6 h-6 md:w-9 md:h-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-gray-600 transition-all"
+                                                    onClick={() => updateQuantity(item.id, (item.quantity || 1) + 1)}
+                                                    className="w-6 h-6 md:w-9 md:h-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-gray-600 active:scale-90 transition-all"
                                                 >
                                                     <Plus className="w-3 h-3" />
                                                 </button>
@@ -175,14 +181,20 @@ const Cart = () => {
                                     <span className="text-black">₹{subtotal.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-sm md:text-base font-semibold text-gray-500">
-                                    <span className="uppercase tracking-widest text-[10px] md:text-xs">Shipping</span>
+                                    <span className="font-serif">Shipping</span>
                                     {shipping === 0 ? (
-                                        <span className="text-emerald-600 font-bold tracking-tight">FREE</span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-emerald-600 font-bold uppercase tracking-widest text-[10px] md:text-xs">Free Shipping</span>
+                                            {isFirstOrder && <span className="text-[8px] text-emerald-500 font-bold uppercase">First Order Special</span>}
+                                        </div>
                                     ) : (
                                         <span className="text-black">₹{shipping}</span>
                                     )}
                                 </div>
-
+                                <div className="flex justify-between text-sm md:text-base font-semibold text-gray-500">
+                                    <span className="uppercase tracking-widest text-[10px] md:text-xs">GST ({settings?.gstPercentage || 18}%)</span>
+                                    <span className="text-black">₹{gstAmount.toLocaleString()}</span>
+                                </div>
                             </div>
 
                             <div className="pt-8 border-t border-gray-100">
@@ -190,7 +202,7 @@ const Cart = () => {
                                     <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Grand Total</span>
                                     <span className="text-xl md:text-2xl font-bold text-black">₹{total.toLocaleString()}</span>
                                 </div>
-                                <p className="text-[10px] md:text-xs text-gray-400 font-medium italic">* Includes 3% GST and all applicable charges</p>
+                                <p className="text-[10px] md:text-xs text-gray-400 font-medium italic">* Includes {settings?.gstPercentage || 18}% GST and all applicable charges</p>
                             </div>
 
                             <div className="space-y-3 pt-2">

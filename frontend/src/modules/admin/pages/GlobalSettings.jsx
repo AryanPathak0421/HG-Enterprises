@@ -1,95 +1,101 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Save, Truck, AlertTriangle, MapPin, Phone, Mail, Globe, Check, Edit3,
     RefreshCw, Repeat, CreditCard, Shield, Bell, Plus, Trash2, Tag, Gift,
-    Star, Zap, Headset, Upload, X, ChevronDown, Facebook, Twitter, Instagram, Youtube, Layout
+    Star, Zap, Headset, Upload, X, ChevronDown, ChevronUp, Eye, EyeOff, Facebook, Twitter, Instagram, Youtube, Layout
 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
+import { useShop } from '../../../context/ShopContext';
+import api from '../../../utils/api';
+
 
 const GlobalSettings = () => {
+    const { settings: globalSettings, setSettings: setGlobalSettings } = useShop();
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Initial Mock Data
-    const [settings, setSettings] = useState(() => {
-        const saved = localStorage.getItem('siteSettings');
-        const initial = saved ? JSON.parse(saved) : {};
+    // Initial State from Context or Defaults
+    const [settings, setSettings] = useState(globalSettings || {
+        productHeader: 'ESTIMATED DELIVERY DATE',
+        returnPolicy: '2 Days Return',
 
-        return {
-            // Defaults (merged with saved)
-            productHeader: 'ESTIMATED DELIVERY DATE',
-            returnPolicy: '2 Days Return',
-            exchangePolicy: '10 Days Exchange',
-            codPolicy: 'Cash On Delivery',
-            warrantyText: 'Lifetime Warranty',
-            safetyText: 'Skin Safe Jewellery',
-            platingText: '18k Gold Tone Plated',
-            announcementItems: [
-                { id: 1, icon: 'Truck', text: 'Free Shipping' },
-                { id: 2, icon: 'Shield', text: 'Secure Payments' },
-                { id: 3, icon: 'RefreshCw', text: 'Easy Returns & Refunds' },
-                { id: 4, icon: 'Headset', text: 'Dedicated Support Team' }
-            ],
-            fraudWarning: 'BEWARE OF FRAUD: HG Enterprises never asks for confidential banking details over phone or email.',
-            address: '45/2, Golden Plaza, Business District, Jaipur',
-            phone: '+91 91234 56789',
-            email: 'admin@hgenterprises.com',
-            website: 'www.hgenterprises.com',
+        exchangePolicy: '10 Days Exchange',
+        codPolicy: 'Cash On Delivery',
+        warrantyText: 'Lifetime Warranty',
+        safetyText: 'Skin Safe Jewellery',
+        platingText: '18k Gold Tone Plated',
+        announcementItems: [
+            { id: 1, icon: 'Truck', text: 'Free Shipping' },
+            { id: 2, icon: 'Shield', text: 'Secure Payments' },
+            { id: 3, icon: 'RefreshCw', text: 'Easy Returns & Refunds' },
+            { id: 4, icon: 'Headset', text: 'Dedicated Support Team' }
+        ],
+        fraudWarning: 'BEWARE OF FRAUD: HG Enterprises never asks for confidential banking details over phone or email.',
+        address: '45/2, Golden Plaza, Business District, Jaipur',
+        phone: '+91 91234 56789',
+        email: 'admin@hgenterprises.com',
+        website: 'www.hgenterprises.com',
 
-            // Footer Settings
-            footerTagline: 'Exquisite Artistry,',
-            footerSubTagline: 'Individually Crafted for You.',
-            footerDescription: 'Every piece at HG Enterprises tells a story of modern luxury and timeless craftsmanship. Join us in celebrating life\'s most precious moments.',
+        // Footer Settings
+        footerTagline: 'Exquisite Artistry,',
+        footerSubTagline: 'Individually Crafted for You.',
+        footerDescription: 'Every piece at HG Enterprises tells a story of modern luxury and timeless craftsmanship. Join us in celebrating life\'s most precious moments.',
 
-            footerColumn1Title: 'Experience',
-            footerColumn2Title: 'Policies',
-            footerColumn3Title: 'Our World',
+        footerColumn1Title: 'Experience',
+        footerColumn2Title: 'Policies',
+        footerColumn3Title: 'Our World',
 
-            // ... (rest should be fine as path based)
-            footerExperienceLinks: [
-                { id: 1, name: "Easy Returns", path: "/returns" },
-                { id: 2, name: "Contact Us", path: "/contact" },
-                { id: 3, name: "FAQs", path: "/help" },
-                { id: 4, name: "Blogs", path: "/blogs" },
-            ],
-            footerPoliciesLinks: [
-                { id: 1, name: "Shipping Policy", path: "/shipping-policy" },
-                { id: 2, name: "Privacy Policy", path: "/privacy" },
-                { id: 3, name: "Cancellation Policy", path: "/cancellation-policy" },
-                { id: 4, name: "Terms & Conditions", path: "/terms" },
-            ],
-            footerWorldLinks: [
-                { id: 1, name: "About Us", path: "/about" },
-                { id: 2, name: "Jewellery Care Guide", path: "/care-guide" },
-                { id: 3, name: "Store Locator", path: "/stores" },
-                { id: 4, name: "Our Craft", path: "/craft" },
-            ],
+        // ... (rest should be fine as path based)
+        footerExperienceLinks: [
+            { id: 1, name: "Easy Returns", path: "/returns" },
+            { id: 2, name: "Contact Us", path: "/contact" },
+            { id: 3, name: "FAQs", path: "/help" },
+            { id: 4, name: "Blogs", path: "/blogs" },
+        ],
+        footerPoliciesLinks: [
+            { id: 1, name: "Shipping Policy", path: "/shipping-policy" },
+            { id: 2, name: "Privacy Policy", path: "/privacy" },
+            { id: 3, name: "Cancellation Policy", path: "/cancellation-policy" },
+            { id: 4, name: "Terms & Conditions", path: "/terms" },
+        ],
+        footerWorldLinks: [
+            { id: 1, name: "About Us", path: "/about" },
+            { id: 2, name: "Jewellery Care Guide", path: "/care-guide" },
+            { id: 3, name: "Store Locator", path: "/stores" },
+            { id: 4, name: "Our Craft", path: "/craft" },
+        ],
 
-            socialLinks: {
-                facebook: '#',
-                twitter: '#',
-                instagram: '#',
-                youtube: '#'
-            },
+        socialLinks: {
+            facebook: '#',
+            twitter: '#',
+            instagram: '#',
+            youtube: '#'
+        },
 
-            footerDeliveryText: 'Safe & Insured Express Worldwide Delivery',
-            footerCopyrightText: 'HG Enterprises Pvt Ltd. All Rights Reserved.',
-
-            ...initial
-        };
+        footerDeliveryText: 'Safe & Insured Express Worldwide Delivery',
+        footerCopyrightText: 'HG Enterprises Pvt Ltd. All Rights Reserved.'
     });
 
-    const handleSave = () => {
+
+    useEffect(() => {
+        if (globalSettings) {
+            setSettings(globalSettings);
+        }
+    }, [globalSettings]);
+
+    const handleSave = async () => {
         setIsSaving(true);
-        // Simulate API Call & Local Storage
-        setTimeout(() => {
-            localStorage.setItem('siteSettings', JSON.stringify(settings));
-            // Dispatch event for immediate update in other components if they listen
-            window.dispatchEvent(new Event('storage'));
+        try {
+            const res = await api.post('/settings', settings);
+            setGlobalSettings(res.data);
             setIsSaving(false);
             setIsEditing(false);
-        }, 800);
+        } catch (error) {
+            console.error('Error updating settings:', error);
+            setIsSaving(false);
+        }
     };
+
 
     const handleChange = (field, value) => {
         setSettings(prev => ({ ...prev, [field]: value }));
@@ -152,6 +158,30 @@ const GlobalSettings = () => {
         setSettings(prev => ({
             ...prev,
             [listName]: prev[listName].filter(item => item.id !== id)
+        }));
+    };
+
+    // Dashboard Layout Handlers
+    const moveSection = (index, direction) => {
+        if (!settings.dashboardLayout) return;
+        const newLayout = [...settings.dashboardLayout];
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= newLayout.length) return;
+
+        [newLayout[index], newLayout[newIndex]] = [newLayout[newIndex], newLayout[index]];
+
+        // Update orders
+        const finalLayout = newLayout.map((s, i) => ({ ...s, order: i + 1 }));
+        setSettings(prev => ({ ...prev, dashboardLayout: finalLayout }));
+    };
+
+    const toggleSection = (id) => {
+        if (!settings.dashboardLayout) return;
+        setSettings(prev => ({
+            ...prev,
+            dashboardLayout: prev.dashboardLayout.map(s =>
+                s.id === id ? { ...s, enabled: !s.enabled } : s
+            )
         }));
     };
 
@@ -587,6 +617,66 @@ const GlobalSettings = () => {
                                     />
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Dashboard Layout Management */}
+                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                        <h4 className="flex items-center gap-2 font-bold text-[#3E2723]"><Layout className="w-4 h-4" /> Admin Dashboard Layout</h4>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Enable/Disable and Reorder Dashboard Modules</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {(settings.dashboardLayout || [
+                                { id: 'header', name: 'Editorial Header', enabled: true, order: 1 },
+                                { id: 'sectors', name: 'Sector Specifics', enabled: true, order: 2 },
+                                { id: 'stats', name: 'Metrics Grid', enabled: true, order: 2 },
+                                { id: 'analytics', name: 'Analytics & Alerts', enabled: true, order: 4 },
+                                { id: 'quickActions', name: 'Global Control Grid', enabled: true, order: 5 },
+                                { id: 'recentOrders', name: 'Fulfillment Section', enabled: true, order: 6 }
+                            ]).sort((a, b) => a.order - b.order).map((section, index) => (
+                                <div key={section.id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl group hover:border-[#3E2723]/30 transition-all">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col gap-1">
+                                            {isEditing && (
+                                                <>
+                                                    <button
+                                                        onClick={() => moveSection(index, 'up')}
+                                                        disabled={index === 0}
+                                                        className="p-1 hover:bg-white rounded text-gray-400 disabled:opacity-0"
+                                                    >
+                                                        <ChevronUp className="w-3 h-3" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => moveSection(index, 'down')}
+                                                        disabled={index === (settings.dashboardLayout?.length || 6) - 1}
+                                                        className="p-1 hover:bg-white rounded text-gray-400 disabled:opacity-0"
+                                                    >
+                                                        <ChevronDown className="w-3 h-3" />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-[#3E2723] uppercase">{section.name}</p>
+                                            <p className="text-[8px] font-bold text-gray-400">Order: {section.order}</p>
+                                        </div>
+                                    </div>
+
+                                    {isEditing && (
+                                        <button
+                                            onClick={() => toggleSection(section.id)}
+                                            className={`p-2 rounded-lg transition-all ${section.enabled ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}
+                                        >
+                                            {section.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                        </button>
+                                    )}
+                                    {!isEditing && (
+                                        <div className={`px-2 py-1 rounded text-[8px] font-bold uppercase transition-all ${section.enabled ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                            {section.enabled ? 'Visible' : 'Hidden'}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
                     </div>
 

@@ -1,24 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Save, Info, Image as ImageIcon,
     Plus, Trash2, Edit3, Check
 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 
+import { useShop } from '../../../context/ShopContext';
+import api from '../../../utils/api';
+import toast from 'react-hot-toast';
+
 const ContentManagement = () => {
+    const { settings, setSettings } = useShop();
     const [isSaving, setIsSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
 
-    // Initial Mock Content - About Us
     const [aboutContent, setAboutContent] = useState({
         heroTitle: 'About Us',
-        heroSubtitle: 'Welcome to Sands Ornaments, where elegance meets timeless tradition. We are more than just a jewellery brand.',
+        heroSubtitle: 'Welcome to Sands Ornaments, where elegance meets timeless tradition.',
         mainStory: 'Our journey began with a passion for bringing handcrafted 925 Sterling Silver pieces to the modern woman.',
         missionStatement: 'At Sands Ornaments, we are committed to sustainability and ethical sourcing.',
         images: [
-            { id: 1, url: 'https://images.unsplash.com/photo-1543294001-f7cd5d7fb516?auto=format&fit=crop&q=80&w=600', label: 'Landscape' },
-            { id: 2, url: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&q=80&w=600', label: 'Bracelet' },
-            { id: 3, url: 'https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?auto=format&fit=crop&q=80&w=600', label: 'Necklace Wear' }
+            { id: 1, url: 'https://images.unsplash.com/photo-1543294001-f7cd5d7fb516', label: 'Landscape' },
+            { id: 2, url: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a', label: 'Bracelet' },
+            { id: 3, url: 'https://images.unsplash.com/photo-1601121141461-9d6647bca1ed', label: 'Necklace Wear' }
         ],
         features: [
             { id: 1, title: 'Free Shipping', description: 'Enjoy free and fast delivery on all orders above ₹2000.' },
@@ -26,19 +30,35 @@ const ContentManagement = () => {
             { id: 3, title: 'Secure Checkout', description: 'Shop with confidence using our encrypted payment gateways.' }
         ],
         instagramImages: [
-            { id: 1, url: 'https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=400' },
-            { id: 2, url: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&q=80&w=400' },
-            { id: 3, url: 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?auto=format&fit=crop&q=80&w=400' },
-            { id: 4, url: 'https://images.unsplash.com/photo-1615655114865-4cc1bda5901e?auto=format&fit=crop&q=80&w=400' }
+            { id: 1, url: 'https://images.unsplash.com/photo-1600607686527-6fb886090705' },
+            { id: 2, url: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a' },
+            { id: 3, url: 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584' },
+            { id: 4, url: 'https://images.unsplash.com/photo-1615655114865-4cc1bda5901e' }
         ]
     });
 
-    const handleSave = () => {
+    useEffect(() => {
+        if (settings?.aboutContent) {
+            setAboutContent(settings.aboutContent);
+        }
+    }, [settings]);
+
+    const handleSave = async () => {
         setIsSaving(true);
-        setTimeout(() => {
-            setIsSaving(false);
+        try {
+            const res = await api.post('/settings', {
+                ...settings,
+                aboutContent
+            });
+            setSettings(res.data);
+            toast.success("Content saved successfully!");
             setIsEditing(false);
-        }, 1200);
+        } catch (error) {
+            console.error("Error saving content:", error);
+            toast.error("Failed to save content.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleFeatureChange = (id, field, value) => {
@@ -153,7 +173,7 @@ const ContentManagement = () => {
                                             <button onClick={() => {
                                                 const nu = prompt("URL:", img.url);
                                                 if (nu) handleImageChange('images', img.id, nu);
-                                            }} className="p-1.5 bg-white text-black hover:bg-gold"><Edit3 size={12}/></button>
+                                            }} className="p-1.5 bg-white text-black hover:bg-gold"><Edit3 size={12} /></button>
                                         </div>
                                     )}
                                     <div className="absolute bottom-1 left-1 px-1 py-0.5 bg-black/80 text-white text-[6px] font-black uppercase tracking-widest">{img.label}</div>
@@ -178,8 +198,8 @@ const ContentManagement = () => {
                                             <button onClick={() => {
                                                 const nu = prompt("URL:", img.url);
                                                 if (nu) handleImageChange('instagramImages', img.id, nu);
-                                            }} className="p-1 bg-white text-black hover:bg-gold"><Edit3 size={10}/></button>
-                                            <button onClick={() => removeInstagramImage(img.id)} className="p-1 bg-red-500 text-white hover:bg-red-600"><Trash2 size={10}/></button>
+                                            }} className="p-1 bg-white text-black hover:bg-gold"><Edit3 size={10} /></button>
+                                            <button onClick={() => removeInstagramImage(img.id)} className="p-1 bg-red-500 text-white hover:bg-red-600"><Trash2 size={10} /></button>
                                         </div>
                                     )}
                                 </div>

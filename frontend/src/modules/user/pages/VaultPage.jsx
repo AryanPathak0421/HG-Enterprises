@@ -6,7 +6,6 @@ import { useShop } from '../../../context/ShopContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Bookmark, ShoppingCart, Trash2, ArrowRight, ShoppingBag, ArrowLeft } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import { PACKS } from '../../../mockData/data';
 
 const VaultPage = () => {
     const { user } = useAuth();

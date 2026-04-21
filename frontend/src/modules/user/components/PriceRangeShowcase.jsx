@@ -49,13 +49,13 @@ const PriceRangeShowcase = () => {
 
             <div className="relative group w-full">
                 {/* Navigation Arrows */}
-                <button 
+                <button
                     onClick={() => scroll('left')}
                     className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-30 p-2 md:p-3 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white rounded-full transition-all opacity-0 group-hover:opacity-100 hidden md:block"
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </button>
-                <button 
+                <button
                     onClick={() => scroll('right')}
                     className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-30 p-2 md:p-3 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white rounded-full transition-all opacity-0 group-hover:opacity-100 hidden md:block"
                 >
@@ -63,55 +63,55 @@ const PriceRangeShowcase = () => {
                 </button>
 
                 {/* Horizontal Scrollable Container - Edge to Edge */}
-                <div 
+                <div
                     ref={scrollRef}
                     className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                        {displayItems.map((item, index) => {
-                            const itemLabel = item.name || item.label;
+                    {displayItems.map((item, index) => {
+                        const itemLabel = item.name || item.label;
 
-                            return (
-                                <motion.div
-                                    key={item.id}
-                                    className="min-w-full snap-center"
-                                    initial={{ opacity: 0 }}
-                                    whileInView={{ opacity: 1 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.8 }}
+                        return (
+                            <motion.div
+                                key={item.id}
+                                className="min-w-full snap-center"
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.8 }}
+                            >
+                                <Link
+                                    to={item.path}
+                                    className="group relative block w-full aspect-[16/10] md:aspect-[3/1] rounded-none overflow-hidden shadow-lg transition-all duration-700"
                                 >
-                                    <Link
-                                        to={item.path}
-                                        className="group relative block w-full aspect-[16/10] md:aspect-[3/1] rounded-none overflow-hidden shadow-lg transition-all duration-700"
-                                    >
-                                        <img
-                                            src={item.image}
-                                            alt={itemLabel}
-                                            className="w-full h-full object-cover transform transition-transform duration-[2000ms] group-hover:scale-110"
-                                        />
+                                    <img
+                                        src={item.image}
+                                        alt={itemLabel}
+                                        className="w-full h-full object-cover transform transition-transform duration-[2000ms] group-hover:scale-110"
+                                    />
 
-                                        {/* Luxury Gradient Overlay */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/30 to-transparent" />
+                                    {/* Luxury Gradient Overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/30 to-transparent" />
 
-                                        <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-14 z-20">
-                                            <div className="space-y-2 md:space-y-4">
-                                                <span className="text-[10px] md:text-sm font-serif font-normal text-gold uppercase tracking-[0.4em] opacity-90 block">
-                                                    Exclusive Range
-                                                </span>
-                                                <h3 className="text-2xl md:text-5xl font-serif font-normal text-white leading-tight drop-shadow-2xl">
-                                                    {(itemLabel || '').split(' ')[0]} <br />
-                                                    <span className="italic text-xl md:text-4xl text-white/90 font-light">{(itemLabel || '').split(' ').slice(1).join(' ')}</span>
-                                                </h3>
-                                                <div className="pt-3 md:pt-6 flex items-center gap-4">
-                                                    <div className="h-[1px] w-10 md:w-20 bg-white/50"></div>
-                                                    <span className="text-white text-[9px] md:text-xs font-serif uppercase tracking-widest group-hover:text-gold transition-colors duration-300">Shop Collection</span>
-                                                </div>
+                                    <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-14 z-20">
+                                        <div className="space-y-2 md:space-y-4">
+                                            <span className="text-[10px] md:text-sm font-serif font-normal text-gold uppercase tracking-[0.4em] opacity-90 block">
+                                                Exclusive Range
+                                            </span>
+                                            <h3 className="text-2xl md:text-5xl font-serif font-normal text-white leading-tight drop-shadow-2xl">
+                                                {(itemLabel || '').split(' ')[0]} <br />
+                                                <span className="italic text-xl md:text-4xl text-white/90 font-light">{(itemLabel || '').split(' ').slice(1).join(' ')}</span>
+                                            </h3>
+                                            <div className="pt-3 md:pt-6 flex items-center gap-4">
+                                                <div className="h-[1px] w-10 md:w-20 bg-white/50"></div>
+                                                <span className="text-white text-[9px] md:text-xs font-serif uppercase tracking-widest group-hover:text-gold transition-colors duration-300">Shop Collection</span>
                                             </div>
                                         </div>
-                                    </Link>
-                                </motion.div>
-                            )
-                        })}
+                                    </div>
+                                </Link>
+                            </motion.div>
+                        )
+                    })}
                 </div>
             </div>
         </section>

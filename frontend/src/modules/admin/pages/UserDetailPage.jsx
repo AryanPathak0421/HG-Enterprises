@@ -21,30 +21,22 @@ import { useShop } from '../../../context/ShopContext';
 const UserDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { orders, wishlist, getProductById, getPackById } = useShop();
-
-    // Get all users for updating purposes
-    const [storedUsers, setStoredUsers] = React.useState(() => {
-        return JSON.parse(localStorage.getItem('farmlyf_users')) || [];
-    });
+    const { orders, wishlist, users, toggleUserStatus } = useShop();
 
     // Get specific user data
     const user = useMemo(() => {
-        return storedUsers.find(u => u.id === id);
-    }, [storedUsers, id]);
+        return users.find(u => (u._id === id || u.id === id));
+    }, [users, id]);
 
     // Handle blocking/unblocking
     const handleToggleBlock = () => {
-        const updatedUsers = storedUsers.map(u =>
-            u.id === id ? { ...u, isBlocked: !u.isBlocked } : u
-        );
-        localStorage.setItem('farmlyf_users', JSON.stringify(updatedUsers));
-        setStoredUsers(updatedUsers);
+        toggleUserStatus(id);
     };
 
     // Get user orders
     const userOrders = useMemo(() => {
-        return Object.values(orders).flat().filter(o => o.userId === id);
+        const userId = id;
+        return Array.isArray(orders) ? orders.filter(o => o.userId === userId || o.userId?._id === userId) : [];
     }, [orders, id]);
 
     if (!user) {

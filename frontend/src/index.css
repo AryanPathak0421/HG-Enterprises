@@ -7,11 +7,16 @@
     --font-body: 'Inter', sans-serif;
 
     --color-pure-white: #FFFFFF;
-    --color-primary: #3E2723; /* Logo Dark Brown */
-    --color-secondary: #8D6E63; /* Muted Gold/Taupe */
-    --color-gold: #C5A059; /* Bright Gold */
-    --color-gold-light: #FDFBF7; /* Cream Background */
-    --color-gold-dark: #2D1B1E; /* Deeper Brown */
+    --color-primary: #3E2723;
+    /* Logo Dark Brown */
+    --color-secondary: #8D6E63;
+    /* Muted Gold/Taupe */
+    --color-gold: #C5A059;
+    /* Bright Gold */
+    --color-gold-light: #FDFBF7;
+    /* Cream Background */
+    --color-gold-dark: #2D1B1E;
+    /* Deeper Brown */
     --color-dark: #1A1A1A;
     --color-muted: #A1A1AA;
     --color-bg-light: #FDF5F6;

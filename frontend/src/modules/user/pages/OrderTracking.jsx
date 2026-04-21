@@ -1,35 +1,56 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../../../context/ShopContext';
-import { 
-    ChevronRight, 
-    Package, 
-    ArrowLeft, 
-    RefreshCw, 
-    Check, 
-    CheckCircle, 
-    Clock, 
-    MapPin, 
-    Truck, 
-    Calendar, 
+import {
+    ChevronRight,
+    Package,
+    ArrowLeft,
+    RefreshCw,
+    Check,
+    CheckCircle,
+    Clock,
+    MapPin,
+    Truck,
+    Calendar,
     HelpCircle,
     ShoppingBag,
-    Phone
+    Phone,
+    Image as ImageIcon,
+    XCircle
 } from 'lucide-react';
+import api from '../../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const OrderTracking = () => {
     const { orderId, view } = useParams();
     const { orders } = useShop();
     const navigate = useNavigate();
+    const [returnRequest, setReturnRequest] = React.useState(null);
+    const [loadingReturn, setLoadingReturn] = React.useState(view === 'return');
+
+    React.useEffect(() => {
+        if (view === 'return') {
+            fetchReturnStatus();
+        }
+    }, [view, orderId]);
+
+    const fetchReturnStatus = async () => {
+        try {
+            // Find the return for this order
+            const res = await api.get('/returns/my');
+            const found = res.data.find(r => r.orderId === orderId || r.orderId === `ORD-${orderId}`);
+            setReturnRequest(found);
+        } catch (error) {
+            console.error('[FETCH RETURN STATUS ERROR]', error);
+        } finally {
+            setLoadingReturn(false);
+        }
+    };
 
     // Normalize IDs for comparison
-    const order = orders.find(o => o.id === orderId || o.id === `ORD-${orderId}` || o.id.replace('ORD-', '') === orderId);
-
-    // --- MOCK STATES ---
-    const [currentStepIndex, setCurrentStepIndex] = React.useState(() => {
-        const savedStep = localStorage.getItem(`tracking_step_${orderId}`);
-        return savedStep ? parseInt(savedStep, 10) : 2; // Default to 'Dispatched' for demo
+    const order = orders.find(o => {
+        const oid = o.orderId || o._id || o.id || '';
+        return oid === orderId || oid === `ORD-${orderId}` || (typeof oid === 'string' && oid.replace('ORD-', '') === orderId);
     });
 
     if (!order) {
@@ -49,12 +70,27 @@ const OrderTracking = () => {
         );
     }
 
+    const getStepIndex = (status) => {
+        switch (status) {
+            case 'Pending': return 0;
+            case 'Processing': return 1;
+            case 'Shipped': return 2;
+            case 'In Transit': return 3;
+            case 'Delivered': return 4;
+            case 'Cancelled': return -1;
+            default: return 0;
+        }
+    };
+
+    const currentStepIndex = getStepIndex(order.status);
+
     const formatDateTime = (dateTimestamp) => {
-        return new Date(dateTimestamp).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        const d = new Date(dateTimestamp);
+        return isNaN(d.getTime()) ? 'Pending' : d.toLocaleString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     };
 
     // --- DELIVERY TIMELINE ---
-    const deliveryBaseDate = new Date(order.date).getTime();
+    const deliveryBaseDate = new Date(order.date || order.createdAt || new Date()).getTime();
     const deliverySteps = [
         { status: 'Order Placed', date: formatDateTime(deliveryBaseDate), icon: <ShoppingBag className="w-5 h-5" /> },
         { status: 'Confirmed', date: formatDateTime(deliveryBaseDate + 3600000), icon: <CheckCircle className="w-5 h-5" /> },
@@ -63,8 +99,138 @@ const OrderTracking = () => {
         { status: 'Delivered', date: formatDateTime(deliveryBaseDate + 266400000), icon: <Check className="w-5 h-5" />, isLast: true }
     ];
 
-    const currentStatus = deliverySteps[currentStepIndex];
+    const isCancelled = order.status === 'Cancelled';
+    const currentStatus = isCancelled
+        ? { status: 'Cancelled', icon: <XCircle className="w-5 h-5 text-red-500" />, date: order.updatedAt ? formatDateTime(order.updatedAt) : 'N/A' }
+        : deliverySteps[currentStepIndex] || deliverySteps[0];
 
+    const orderAddress = order.address || order.shippingAddress || {};
+
+    if (view === 'return') {
+        if (loadingReturn) return <div className="p-20 text-center text-xs font-black uppercase tracking-widest animate-pulse">Accessing Consignment Reversal Protocols...</div>;
+        if (!returnRequest) return (
+            <div className="min-h-screen pt-32 pb-20 px-4 flex items-center justify-center bg-gray-50">
+                <div className="text-center max-w-sm">
+                    <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-6" />
+                    <h2 className="text-2xl font-serif text-black mb-4">No Protocol Found</h2>
+                    <p className="text-gray-400 text-xs font-serif italic mb-8 text-black">We couldn't find an active return or exchange protocol for this consignment.</p>
+                    <button onClick={() => navigate('/profile/orders')} className="w-full bg-black text-white py-4 rounded-full font-bold uppercase tracking-widest text-[10px]">Return to Manifesto</button>
+                </div>
+            </div>
+        );
+
+        return (
+            <div className="min-h-screen bg-white pb-16">
+                <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-black/5 px-4 py-8">
+                    <div className="max-w-7xl mx-auto flex items-center justify-between">
+                        <button onClick={() => navigate('/profile/orders')} className="flex items-center gap-2 text-gray-400 hover:text-black transition-all group font-black uppercase tracking-[0.3em] text-[9px]">
+                            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                            <span>Return</span>
+                        </button>
+                        <h1 className="text-lg font-serif text-black tracking-widest uppercase italic">Reversal Protocol {returnRequest.type}</h1>
+                        <div className="w-10"></div>
+                    </div>
+                </div>
+
+                <div className="max-w-5xl mx-auto px-4 pt-12 space-y-12">
+                    {/* Status Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-[#FDF5F6]/50 p-8 rounded-none border border-black/5 text-center relative overflow-hidden"
+                    >
+                        <div className="relative z-10">
+                            <div className={`w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center border-2 border-dashed ${returnRequest.status === 'Approved' ? 'border-emerald-200 bg-emerald-50 text-emerald-500' : 'border-amber-200 bg-amber-50 text-amber-500'}`}>
+                                <RefreshCw className={`w-8 h-8 ${returnRequest.status === 'Pending' ? 'animate-spin-slow' : ''}`} />
+                            </div>
+                            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.5em] mb-2">Protocol Current State</h2>
+                            <p className="text-4xl font-serif italic text-black capitalize tabular-nums tracking-tight">{returnRequest.status}</p>
+                            <div className="mt-6 flex justify-center gap-4">
+                                <div className="text-xs font-serif italic text-gray-500">
+                                    Initiated on {new Date(returnRequest.createdAt).toLocaleDateString()}
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Return Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div className="space-y-8">
+                            <div>
+                                <h3 className="text-[10px] font-black text-black uppercase tracking-widest mb-6 border-b border-black/5 pb-2">Admin Logistics Update</h3>
+                                <div className="bg-black text-white p-6 rounded-none relative">
+                                    <Clock className="w-4 h-4 text-gold mb-4" />
+                                    <p className="text-[11px] font-serif italic text-gray-300 leading-relaxed capitalize">
+                                        {returnRequest.adminComment || "Our quality assurance team is currently inspecting your request. High-tier status update pending."}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-[10px] font-black text-black uppercase tracking-widest mb-6 border-b border-black/5 pb-2">User Manifest Submission</h3>
+                                <div className="bg-gray-50 p-6 space-y-4">
+                                    <div>
+                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 font-black">Reason Protocol</p>
+                                        <p className="text-sm font-serif italic text-black">{returnRequest.reason}</p>
+                                    </div>
+                                    {returnRequest.comment && (
+                                        <div>
+                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 font-black">Patron Observations</p>
+                                            <p className="text-xs font-serif italic text-gray-600">"{returnRequest.comment}"</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="text-[10px] font-black text-black uppercase tracking-widest mb-6 border-b border-black/5 pb-2">Visual Inspection Registry</h3>
+                            {returnRequest.evidence?.images?.length > 0 ? (
+                                <div className="grid grid-cols-2 gap-4">
+                                    {returnRequest.evidence.images.map((img, i) => (
+                                        <div key={i} className="aspect-square bg-gray-50 border border-black/5 p-1">
+                                            <img src={img} alt="Evidence" className="w-full h-full object-cover" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-12 border border-dashed border-gray-100 flex flex-col items-center justify-center text-gray-300">
+                                    <ImageIcon strokeWidth={1} size={48} />
+                                    <p className="text-[8px] font-black uppercase tracking-widest mt-4 italic text-black">No Visual Registry Provided</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    if (isCancelled) {
+        return (
+            <div className="min-h-screen bg-zinc-50 pb-16 relative overflow-hidden">
+                <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-100 px-4 py-4">
+                    <div className="max-w-7xl mx-auto flex items-center justify-between">
+                        <button onClick={() => navigate('/profile/orders')} className="flex items-center gap-2 text-zinc-400 hover:text-black transition-all group font-bold uppercase tracking-[0.3em] text-[9px]">
+                            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                            <span className="hidden sm:inline">Return</span>
+                        </button>
+                        <h1 className="text-sm md:text-lg font-serif text-black tracking-widest uppercase italic">Order Status</h1>
+                        <div className="w-10"></div>
+                    </div>
+                </div>
+                <div className="max-w-3xl mx-auto px-4 pt-20 text-center">
+                    <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-8 animate-in zoom-in duration-500">
+                        <XCircle className="w-12 h-12 text-red-500" />
+                    </div>
+                    <h2 className="text-4xl font-serif text-black mb-4">Order Cancelled</h2>
+                    <p className="text-gray-500 font-serif italic mb-10 max-w-sm mx-auto">This order has been cancelled and is no longer being processed. If this was a mistake, please contact our support.</p>
+                    <Link to="/shop" className="bg-black text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-gold hover:text-black transition-all shadow-xl">
+                        Continue Shopping
+                    </Link>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="min-h-screen bg-zinc-50 pb-16 selection:bg-[#3E2723] selection:text-white relative overflow-hidden">
             {/* Background Aesthetics */}
@@ -76,7 +242,7 @@ const OrderTracking = () => {
             {/* Sticky Header */}
             <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-100 px-4 py-3 md:py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <button 
+                    <button
                         onClick={() => navigate('/profile/orders')}
                         className="flex items-center gap-2 text-zinc-400 hover:text-black transition-all group font-bold uppercase tracking-[0.3em] text-[9px]"
                     >
@@ -92,14 +258,14 @@ const OrderTracking = () => {
 
             <div className="max-w-3xl mx-auto px-4 pt-6 md:pt-10 relative z-10">
                 {/* 1. Main Status Card */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm p-6 md:p-10 mb-8 overflow-hidden relative"
                 >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
                         <div>
-                            <span className="text-zinc-300 text-[8px] md:text-[10px] font-bold uppercase tracking-[0.4em] mb-2 block">Leger ID #{order.id.replace('ORD-', '')}</span>
+                            <span className="text-zinc-300 text-[8px] md:text-[10px] font-bold uppercase tracking-[0.4em] mb-2 block">Leger ID #{(order.orderId || order._id || '').replace('ORD-', '')}</span>
                             <h2 className="text-2xl md:text-4xl font-serif text-black tracking-tight mb-1 italic">
                                 {currentStatus.status}
                             </h2>
@@ -116,7 +282,7 @@ const OrderTracking = () => {
                     {/* Progress Bar */}
                     <div className="mt-8 md:mt-12 relative px-2">
                         <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 h-0.5 md:h-1 bg-zinc-50 rounded-full overflow-hidden">
-                            <motion.div 
+                            <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${(currentStepIndex / (deliverySteps.length - 1)) * 100}%` }}
                                 transition={{ duration: 1.5, ease: "easeOut" }}
@@ -168,7 +334,7 @@ const OrderTracking = () => {
                         <div className="bg-white rounded-[2rem] border border-zinc-100 p-6 md:p-8 shadow-sm">
                             <h3 className="text-lg md:text-xl font-serif text-black mb-6 md:mb-8 tracking-tight italic">Order <span className="text-zinc-400 not-italic">Manifest</span></h3>
                             <div className="space-y-4">
-                                {order.items.map((item, idx) => (
+                                {order.items?.map((item, idx) => (
                                     <div key={idx} className="flex items-center gap-4 group">
                                         <div className="w-16 h-16 bg-zinc-50 rounded-xl overflow-hidden border border-zinc-100 p-1 flex-shrink-0">
                                             <img src={item.image} className="w-full h-full object-cover rounded-lg" alt={item.name} />
@@ -176,14 +342,14 @@ const OrderTracking = () => {
                                         <div className="flex-grow">
                                             <h4 className="text-sm font-serif text-black italic line-clamp-1">{item.name}</h4>
                                             <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Qty: {item.quantity || 1}</p>
-                                            <p className="text-xs font-bold text-black mt-1">₹{item.price.toLocaleString()}</p>
+                                            <p className="text-xs font-bold text-black mt-1">₹{(item.price || 0).toLocaleString()}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                             <div className="mt-6 pt-5 border-t border-zinc-50 flex justify-between items-center">
                                 <span className="font-serif italic text-zinc-400 text-sm">Consignment Total</span>
-                                <span className="text-xl font-serif text-black">₹{order.total.toLocaleString()}</span>
+                                <span className="text-xl font-serif text-black">₹{(order.total || 0).toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
@@ -196,9 +362,9 @@ const OrderTracking = () => {
                                 <MapPin className="w-6 h-6 text-zinc-500 mb-4" />
                                 <h4 className="text-[9px] font-bold uppercase tracking-[0.4em] mb-3 text-zinc-500">Destination Point</h4>
                                 <p className="text-xs md:text-sm font-serif italic text-zinc-300 leading-relaxed">
-                                    {order.shippingAddress.flatNo}, {order.shippingAddress.area}<br />
-                                    {order.shippingAddress.city}, {order.shippingAddress.state}<br />
-                                    {order.shippingAddress.pincode}
+                                    {orderAddress.flatNo}, {orderAddress.area}<br />
+                                    {orderAddress.city}, {orderAddress.state}<br />
+                                    {orderAddress.pincode}
                                 </p>
                             </div>
                         </div>

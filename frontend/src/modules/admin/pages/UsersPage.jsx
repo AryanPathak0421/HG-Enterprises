@@ -16,22 +16,19 @@ import Pagination from '../components/Pagination';
 
 const UsersPage = () => {
     const navigate = useNavigate();
-    const { orders } = useShop();
+    const { orders, users, toggleUserStatus } = useShop();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
-
-    // Get users from localStorage
-    const [users, setUsers] = useState(() => {
-        return JSON.parse(localStorage.getItem('farmlyf_users')) || [];
-    });
 
     // Calculate user metrics
     const usersWithStats = useMemo(() => {
         return users.map(user => {
-            const userOrders = Object.values(orders).flat().filter(o => o.userId === user.id);
-            const totalSpend = userOrders.reduce((acc, o) => acc + (o.amount || 0), 0);
+            const userId = user._id || user.id;
+            const userOrders = Array.isArray(orders) ? orders.filter(o => o.userId === userId || o.userId?._id === userId) : [];
+            const totalSpend = userOrders.reduce((acc, o) => acc + (o.total || o.amount || 0), 0);
             return {
                 ...user,
+                id: userId,
                 totalOrders: userOrders.length,
                 totalSpend
             };
@@ -67,16 +64,7 @@ const UsersPage = () => {
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
     const handleToggleBlock = (userId) => {
-        const updatedUsers = users.map(u => {
-            if (u.id === userId) {
-                return { ...u, isBlocked: !u.isBlocked };
-            }
-            return u;
-        });
-        setUsers(updatedUsers);
-        localStorage.setItem('farmlyf_users', JSON.stringify(updatedUsers));
-        // Force refresh in other tabs if needed (standard event)
-        window.dispatchEvent(new Event('storage'));
+        toggleUserStatus(userId);
     };
 
     const stats = [

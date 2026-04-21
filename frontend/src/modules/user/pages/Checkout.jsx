@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useShop } from '../../../context/ShopContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Truck, CreditCard, Banknote, ShieldCheck, Lock, Plus, Check, MapPin, ChevronRight, LayoutDashboard, Gift, ArrowRight, X, Tag } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import api from '../../../utils/api';
 
 const Checkout = () => {
-    const { cart, placeOrder, user, login, addresses, addAddress, defaultAddressId, coupons } = useShop();
+    const {
+        cart,
+        placeOrder,
+        user,
+        addresses,
+        addAddress,
+        defaultAddressId,
+        coupons,
+        sendOTP,
+        verifyOTP,
+        showNotification,
+        settings,
+        orders
+    } = useShop();
+
     const navigate = useNavigate();
     const location = useLocation();
     const isDirectBuy = location.state?.directBuy;
@@ -17,20 +31,21 @@ const Checkout = () => {
 
     // Checkout Form State
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        flatNo: '',
+        name: user?.name || '',
+        phone: user?.phone || '',
+        email: user?.email || '',
+        houseNo: '',
         area: '',
+        landmark: '',
         city: '',
-        district: '',
         state: '',
         pincode: '',
     });
+
     const [paymentMethod, setPaymentMethod] = useState('online');
     const [loading, setLoading] = useState(false);
-    const [addressSelection, setAddressSelection] = useState(addresses.length > 0 ? 'saved' : 'new');
+    const [addressSelection, setAddressSelection] = useState('new');
+    const [selectedId, setSelectedId] = useState(null);
     const [saveNewAddress, setSaveNewAddress] = useState(false);
 
     const [showCouponModal, setShowCouponModal] = useState(false);
@@ -38,20 +53,33 @@ const Checkout = () => {
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [discount, setDiscount] = useState(0);
 
+    // Checkout Items
+    const checkoutItems = isDirectBuy && location.state?.buyNowProduct
+        ? [{ ...location.state.buyNowProduct, quantity: 1 }]
+        : cart;
+
     // Calculate totals
-    const subtotal = cart.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
-    const shipping = subtotal > 499 ? 0 : 50;
-    const total = subtotal + shipping - discount;
+    const subtotal = checkoutItems.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
+
+    // First Order Free Logic
+    const isFirstOrder = !location.state?.directBuy && (cart.length > 0 && (!orders || orders.length === 0));
+    // Fallback: If user is logged in, use orders array length
+    const finalIsFirstOrder = user ? (orders && orders.length === 0) : true;
+    const shipping = finalIsFirstOrder ? 0 : (settings?.shippingCharge || 0);
+
+    const gstRate = (settings?.gstPercentage || 18) / 100;
+    const gstAmount = Math.round(subtotal * gstRate);
+    const total = subtotal + shipping + gstAmount - discount;
 
     // Get active coupons from context
     const availableCoupons = coupons ? coupons.filter(c => c.active) : [];
 
     const handleApplyCoupon = (coupon) => {
-        const minVal = coupon.minOrderValue || coupon.minOrder || 0;
-        const discountVal = coupon.value || coupon.amount || 0;
+        const minVal = coupon.minOrderValue || 0;
+        const discountVal = (coupon.type === 'percent') ? (subtotal * coupon.value) / 100 : (coupon.value || 0);
 
         if (subtotal < minVal) {
-            alert(`Minimum order value of ₹${minVal} required`);
+            showNotification(`Min order value of ₹${minVal} required`);
             return;
         }
         setAppliedCoupon(coupon);
@@ -71,25 +99,33 @@ const Checkout = () => {
     };
 
     // --- Login Handlers ---
-    const handleSendOtp = (e) => {
+    const handleSendOtp = async (e) => {
         e.preventDefault();
         if (phoneNumber.length === 10) {
-            setLoginStep(2);
+            setLoading(true);
+            const res = await sendOTP(phoneNumber);
+            setLoading(false);
+            if (res.success) {
+                setLoginStep(2);
+                showNotification("OTP Sent!");
+            }
         } else {
-            alert("Please enter a valid 10-digit phone number");
+            showNotification("Full phone number required");
         }
     };
 
-    const handleVerifyOtp = (e) => {
+    const handleVerifyOtp = async (e) => {
         e.preventDefault();
         const enteredOtp = otp.join('');
         if (enteredOtp.length === 6) {
-            // Mock Login Success
-            login({ names: 'Guest User', phone: phoneNumber });
-            // Pre-fill phone in checkout form
-            setFormData(prev => ({ ...prev, phone: phoneNumber }));
+            setLoading(true);
+            const res = await verifyOTP({ phone: phoneNumber, otp: enteredOtp });
+            setLoading(false);
+            if (res.success) {
+                showNotification("Logged in!");
+            }
         } else {
-            alert("Please enter the 6-digit OTP");
+            showNotification("6-digit OTP required");
         }
     };
 
@@ -113,65 +149,124 @@ const Checkout = () => {
         navigate('/checkout', { state: { directBuy: true, buyNowProduct: product } });
     };
 
-    const handleSubmit = (e) => {
+    const loadRazorpay = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
-        // If new address and "Save Address" is checked
-        if ((addressSelection === 'new' || addresses.length === 0) && saveNewAddress) {
-            addAddress({
-                name: `${formData.firstName} ${formData.lastName}`,
-                phone: formData.phone,
-                flatNo: formData.flatNo,
-                area: formData.area,
-                city: formData.city,
-                district: formData.district,
-                state: formData.state,
-                pincode: formData.pincode,
-                type: 'Home'
-            });
-        }
+        const orderData = {
+            items: checkoutItems,
+            shippingAddress: formData,
+            paymentMethod: paymentMethod === 'online' ? 'razorpay' : 'cod',
+            amount: total,
+            discount: discount,
+            couponCode: appliedCoupon?.code
+        };
 
-        // Simulate API call
+        // Handle Online Payment
         if (paymentMethod === 'online') {
-            setTimeout(() => {
+            const isLoaded = await loadRazorpay();
+            if (!isLoaded) {
+                showNotification("Razorpay SDK failed to load. Check your connection.");
                 setLoading(false);
-                placeOrder({ shippingAddress: formData, paymentMethod: 'razorpay', amount: total });
-                navigate('/order-success');
-            }, 3000);
+                return;
+            }
+
+            try {
+                // 1. Create Razorpay Order on Backend
+                const response = await api.post('/payments/razorpay/create', { amount: total });
+                const order = response.data;
+
+                const options = {
+                    key: 'rzp_test_8sYbzHWidwe5Zw',
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: "HG Enterprises",
+                    description: "Premium Jewellery Purchase",
+                    order_id: order.id,
+                    handler: async (response) => {
+                        try {
+                            // 2. Verify Payment on Backend
+                            const verifyRes = await api.post('/payments/razorpay/verify', response);
+                            if (verifyRes.data.success) {
+                                // 3. Place actual order
+                                const orderId = await placeOrder({ ...orderData, razorpay_payment_id: response.razorpay_payment_id });
+                                if (orderId) navigate('/order-success');
+                            }
+                        } catch (err) {
+                            showNotification("Payment verification failed");
+                        }
+                    },
+                    prefill: {
+                        name: formData.name,
+                        email: formData.email,
+                        contact: formData.phone,
+                    },
+                    theme: { color: "#D39A9F" },
+                };
+
+                const paymentObject = new window.Razorpay(options);
+                paymentObject.open();
+
+                paymentObject.on('payment.failed', function (response) {
+                    showNotification("Payment Failed: " + response.error.description);
+                });
+
+            } catch (error) {
+                console.error("Order creation failed", error);
+                showNotification("Could not initiate payment");
+            } finally {
+                setLoading(false);
+            }
             return;
         }
 
-        setTimeout(() => {
-            setLoading(false);
-            placeOrder({ shippingAddress: formData, paymentMethod: 'cod', amount: total });
+        // Handle COD Flow
+        if (addressSelection === 'new' && saveNewAddress) {
+            await addAddress(formData);
+        }
+
+        const orderId = await placeOrder(orderData);
+        setLoading(false);
+        if (orderId) {
             navigate('/order-success');
-        }, 2000);
+        }
     };
 
-    // Pre-fill default address if it exists
-    React.useEffect(() => {
-        if (user && addresses.length > 0 && defaultAddressId) {
-            const defaultAddr = addresses.find(a => a.id === defaultAddressId);
-            if (defaultAddr) {
+    // Pre-fill default address or existing selection
+    useEffect(() => {
+        if (user && addresses.length > 0) {
+            const target = addresses.find(a => a._id === selectedId || a.id === selectedId) ||
+                addresses.find(a => a.isDefault) ||
+                addresses[0];
+
+            if (target) {
                 setFormData({
-                    firstName: defaultAddr.name.split(' ')[0] || '',
-                    lastName: defaultAddr.name.split(' ').slice(1).join(' ') || '',
+                    name: target.name || user.name,
+                    phone: target.phone || user.phone,
                     email: user.email || '',
-                    phone: defaultAddr.phone,
-                    flatNo: defaultAddr.flatNo || '',
-                    area: defaultAddr.area || '',
-                    city: defaultAddr.city,
-                    district: defaultAddr.district || '',
-                    state: defaultAddr.state || '',
-                    pincode: defaultAddr.pincode
+                    houseNo: target.houseNo || target.flatNo || '',
+                    area: target.area || '',
+                    city: target.city || '',
+                    state: target.state || '',
+                    pincode: target.pincode || ''
                 });
                 setAddressSelection('saved');
+                setSelectedId(target._id || target.id);
             }
         }
-    }, [user, addresses, defaultAddressId]);
+    }, [user, addresses]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         // Only redirect to cart if the cart is genuinely empty AND we aren't in a direct-buy flow
         if (cart.length === 0 && !isDirectBuy) {
             navigate('/cart');
@@ -287,53 +382,51 @@ const Checkout = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {addresses.map((addr) => (
                                         <div
-                                            key={addr.id}
+                                            key={addr._id || addr.id}
                                             onClick={() => {
                                                 setFormData({
-                                                    firstName: addr.name.split(' ')[0] || '',
-                                                    lastName: addr.name.split(' ').slice(1).join(' ') || '',
+                                                    name: addr.name,
                                                     email: user.email || '',
                                                     phone: addr.phone,
-                                                    flatNo: addr.flatNo || '',
-                                                    area: addr.area || '',
+                                                    houseNo: addr.houseNo || addr.flatNo || '',
+                                                    area: addr.area,
                                                     city: addr.city,
-                                                    district: addr.district || '',
-                                                    state: addr.state || '',
+                                                    state: addr.state,
                                                     pincode: addr.pincode
                                                 });
                                                 setAddressSelection('saved');
+                                                setSelectedId(addr._id || addr.id);
                                             }}
-                                            className={`p-5 rounded-xl border-2 cursor-pointer transition-all relative ${formData.flatNo === addr.flatNo && formData.area === addr.area ? 'border-black bg-gray-50' : 'border-gray-100 hover:border-black/30'}`}
+                                            className={`p-5 rounded-xl border-2 cursor-pointer transition-all relative ${selectedId === (addr._id || addr.id) ? 'border-black bg-gray-50' : 'border-gray-100 hover:border-black/30'}`}
                                         >
                                             <div className="flex justify-between mb-3">
                                                 <div className="flex gap-2">
                                                     <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-gray-200 text-black rounded-sm">{addr.type}</span>
-                                                    {defaultAddressId === addr.id && (
+                                                    {addr.isDefault && (
                                                         <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-[#D39A9F] text-white rounded-sm">Default</span>
                                                     )}
                                                 </div>
-                                                {(formData.flatNo === addr.flatNo && formData.area === addr.area) && <div className="bg-black text-white rounded-full p-0.5"><Check className="w-3 h-3" /></div>}
+                                                {selectedId === (addr._id || addr.id) && <div className="bg-black text-white rounded-full p-0.5"><Check className="w-3 h-3" /></div>}
                                             </div>
                                             <p className="font-bold text-black text-sm mb-1">{addr.name}</p>
-                                            <p className="text-xs text-gray-500 leading-relaxed font-serif">{addr.flatNo}, {addr.area}, {addr.city}</p>
+                                            <p className="text-xs text-gray-500 leading-relaxed font-serif">{addr.houseNo || addr.flatNo}, {addr.area}, {addr.city}</p>
                                             <p className="text-xs text-gray-500 font-serif">{addr.pincode}</p>
                                         </div>
                                     ))}
                                     <div
                                         onClick={() => {
                                             setFormData({
-                                                firstName: '',
-                                                lastName: '',
+                                                name: '',
                                                 email: user.email || '',
                                                 phone: '',
-                                                flatNo: '',
+                                                houseNo: '',
                                                 area: '',
                                                 city: '',
-                                                district: '',
                                                 state: '',
                                                 pincode: ''
                                             });
                                             setAddressSelection('new');
+                                            setSelectedId(null);
                                         }}
                                         className={`p-5 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-gray-50 min-h-[140px] ${addressSelection === 'new' ? 'border-black bg-gray-50' : 'border-gray-200 text-gray-400'}`}
                                     >
@@ -350,24 +443,13 @@ const Checkout = () => {
                                     {addressSelection === 'new' || addresses.length === 0 ? 'Delivery Address' : 'Selected Address Details'}
                                 </p>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">First Name</label>
+                            <div className="md:col-span-2 space-y-1">
+                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Full Name</label>
                                 <input
                                     required
                                     type="text"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Last Name</label>
-                                <input
-                                    required
-                                    type="text"
-                                    name="lastName"
-                                    value={formData.lastName}
+                                    name="name"
+                                    value={formData.name}
                                     onChange={handleInputChange}
                                     className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white"
                                 />
@@ -401,10 +483,10 @@ const Checkout = () => {
                                 <input
                                     required
                                     type="text"
-                                    name="flatNo"
-                                    value={formData.flatNo}
+                                    name="houseNo"
+                                    value={formData.houseNo}
                                     onChange={handleInputChange}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white"
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white font-serif italic"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -415,7 +497,17 @@ const Checkout = () => {
                                     name="area"
                                     value={formData.area}
                                     onChange={handleInputChange}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white"
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white font-serif italic"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Landmark (Optional)</label>
+                                <input
+                                    type="text"
+                                    name="landmark"
+                                    value={formData.landmark}
+                                    onChange={handleInputChange}
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white font-serif italic"
                                 />
                             </div>
 
@@ -427,18 +519,7 @@ const Checkout = () => {
                                     name="city"
                                     value={formData.city}
                                     onChange={handleInputChange}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">District</label>
-                                <input
-                                    required
-                                    type="text"
-                                    name="district"
-                                    value={formData.district}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white"
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white font-serif italic"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -449,10 +530,10 @@ const Checkout = () => {
                                     name="state"
                                     value={formData.state}
                                     onChange={handleInputChange}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white"
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white font-serif italic"
                                 />
                             </div>
-                            <div className="space-y-1">
+                            <div className="md:col-span-2 space-y-1">
                                 <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Pincode</label>
                                 <input
                                     required
@@ -460,7 +541,7 @@ const Checkout = () => {
                                     name="pincode"
                                     value={formData.pincode}
                                     onChange={handleInputChange}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white"
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm bg-white font-serif italic"
                                 />
                             </div>
                             {(addressSelection === 'new' || addresses.length === 0) && (
@@ -603,7 +684,18 @@ const Checkout = () => {
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="font-serif">Shipping</span>
-                                <span className="font-sans font-bold">{shipping === 0 ? <span className="text-emerald-600">Free</span> : `₹${shipping}`}</span>
+                                <span className="font-sans font-bold">
+                                    {shipping === 0 ? (
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-emerald-600">Free</span>
+                                            {finalIsFirstOrder && <span className="text-[8px] text-emerald-500 uppercase">First Order Special</span>}
+                                        </div>
+                                    ) : `₹${shipping}`}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center text-gray-400">
+                                <span className="font-serif">GST ({settings?.gstPercentage || 18}%)</span>
+                                <span className="font-sans font-bold">₹{gstAmount.toLocaleString()}</span>
                             </div>
                             {appliedCoupon && (
                                 <div className="flex justify-between items-center text-[#D39A9F]">
@@ -662,13 +754,15 @@ const Checkout = () => {
                             <div className="flex gap-2">
                                 <input
                                     type="text"
-                                    placeholder="Enter Coupon Code"
+                                    placeholder={appliedCoupon ? "Coupon already applied" : "Enter Coupon Code"}
                                     value={couponCode}
+                                    disabled={!!appliedCoupon}
                                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                    className="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-xs outline-none focus:border-black font-bold uppercase placeholder:normal-case h-10"
+                                    className={`flex-1 border rounded-xl px-4 py-2 text-xs outline-none font-bold uppercase placeholder:normal-case h-10 ${appliedCoupon ? 'bg-gray-50 border-gray-100 text-gray-400' : 'border-gray-200 focus:border-black'}`}
                                 />
                                 <button
                                     onClick={() => {
+                                        if (appliedCoupon) return;
                                         const found = availableCoupons.find(c => c.code === couponCode);
                                         if (found) {
                                             handleApplyCoupon(found);
@@ -676,7 +770,8 @@ const Checkout = () => {
                                             alert("Invalid coupon code");
                                         }
                                     }}
-                                    className="bg-black text-white px-5 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#D39A9F] transition-all h-10"
+                                    disabled={!!appliedCoupon}
+                                    className={`px-5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all h-10 ${appliedCoupon ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-black text-white hover:bg-[#D39A9F]'}`}
                                 >
                                     Apply
                                 </button>
@@ -686,28 +781,44 @@ const Checkout = () => {
                             <div className="space-y-3">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Personalized Offers</p>
                                 <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
-                                    {availableCoupons.length > 0 ? availableCoupons.map((coupon, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="border border-gray-100 rounded-2xl p-4 bg-gray-50/30 hover:bg-white hover:shadow-lg hover:border-[#D39A9F]/30 transition-all group flex flex-col gap-2"
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <div className="bg-[#f0dae4] px-3 py-1 rounded-lg text-[#8b4356] font-bold text-[10px] tracking-widest border border-[#f0dae4]">
-                                                    {coupon.code}
+                                    {availableCoupons.length > 0 ? availableCoupons.map((coupon, idx) => {
+                                        const isApplied = appliedCoupon?.code === coupon.code;
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`border rounded-2xl p-4 transition-all group flex flex-col gap-2 ${isApplied ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-100 bg-gray-50/30 hover:bg-white hover:shadow-lg hover:border-[#D39A9F]/30'}`}
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <div className={`px-3 py-1 rounded-lg font-bold text-[10px] tracking-widest border ${isApplied ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-[#f0dae4] text-[#8b4356] border-[#f0dae4]'}`}>
+                                                        {coupon.code}
+                                                    </div>
+                                                    {isApplied ? (
+                                                        <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
+                                                            <Check className="w-3.5 h-3.5" />
+                                                            Applied
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleApplyCoupon(coupon)}
+                                                            disabled={!!appliedCoupon}
+                                                            className={`font-bold text-[10px] uppercase tracking-widest transition-all ${appliedCoupon ? 'text-gray-300 cursor-not-allowed' : 'text-[#8b4356] hover:scale-105'}`}
+                                                        >
+                                                            {appliedCoupon ? 'Coupon Applied' : 'Tap to Apply'}
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                <button
-                                                    onClick={() => handleApplyCoupon(coupon)}
-                                                    className="text-[#8b4356] font-bold text-[10px] uppercase tracking-widest hover:scale-105 transition-transform"
-                                                >
-                                                    Tap to Apply
-                                                </button>
+                                                <div>
+                                                    <p className="text-xs font-bold text-black mb-1">
+                                                        {coupon.type === 'percent'
+                                                            ? `${coupon.value}% OFF`
+                                                            : `Save ₹${(coupon.value || 0).toLocaleString()}`
+                                                        }
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-500 font-serif italic leading-relaxed">{coupon.description || coupon.desc}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-black mb-1">Save ₹{(coupon.value || coupon.amount || 0).toLocaleString()}</p>
-                                                <p className="text-[10px] text-gray-500 font-serif italic leading-relaxed">{coupon.description || coupon.desc}</p>
-                                            </div>
-                                        </div>
-                                    )) : (
+                                        );
+                                    }) : (
                                         <p className="text-center py-6 text-xs text-gray-400 font-serif italic">No coupons available at the moment.</p>
                                     )}
                                 </div>

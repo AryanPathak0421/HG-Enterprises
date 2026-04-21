@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Play, ShoppingBag, ChevronDown, MoveRight, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
-import { banners, categories, products } from '../data/data';
+import { useShop } from '../../../context/ShopContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import CategoryShowcase from '../components/CategoryShowcase';
@@ -11,8 +11,6 @@ import NewLaunchSection from '../components/NewLaunchSection';
 import LatestDrop from '../components/LatestDrop';
 import MostGifted from '../components/MostGifted';
 import EditorialSection from '../components/EditorialSection';
-
-
 import StyleItYourWay from '../components/StyleItYourWay';
 import AllProducts from '../components/AllProducts';
 import BrandPromises from '../components/BrandPromises';
@@ -25,14 +23,8 @@ import spotlightHover from '../assets/spotlight_silver_hover.png';
 import trendingHeritage from '../assets/trending_heritage.png';
 import trendingModern from '../assets/trending_modern.png';
 
-// Product Images
-import prodEarringsMain from '../assets/prod_earrings_main.png';
-import prodEarringsHover from '../assets/prod_earrings_hover.png';
-import prodRingMain from '../assets/prod_ring_main.png';
-import prodRingHover from '../assets/cat_rings.png';
-import prodChainMain from '../assets/cat_pendant.png'; // Reusing as it fits
-
 const Home = () => {
+    const { products, banners, loading } = useShop();
     const featuredProducts = products.slice(0, 3);
     const [hoveredCategory, setHoveredCategory] = useState(null);
     const [activeFaq, setActiveFaq] = useState(null);
@@ -58,26 +50,17 @@ const Home = () => {
         }
     ];
 
-    const heroSlides = [
-        {
-            video: "/videos/pinterest-banner.mp4",
-            badge: "Harshad Gauri",
-            title: "HARSHAD GAURI",
-            titleItalic: "enterprises",
-            description: "Luxury Crafted with Precision.",
-            btnText: "Explore Selection",
-            link: "/shop"
-        },
-        {
-            video: "/videos/jewelry-video-2.mp4",
-            badge: "New Collection",
-            title: "DREAM",
-            titleItalic: "rings",
-            description: "Elegant and timeless pieces for every occasion.",
-            btnText: "Explore Now",
-            link: "/shop"
-        }
-    ];
+    // Dynamic Hero Slides from Database
+    const heroSlides = banners.map(b => ({
+        id: b._id,
+        image: b.image,
+        video: b.video, // Use dynamic video field from database
+        title: b.title,
+        titleItalic: b.badge || 'collection',
+        description: b.description || 'Luxury Crafted with Precision.',
+        btnText: b.btnText || "Explore Selection",
+        link: b.link || '/shop'
+    }));
 
     // Slide timer
     useEffect(() => {
@@ -100,95 +83,101 @@ const Home = () => {
             {/* Hero Section - Video Banners like Bluestone */}
             <section className="relative overflow-hidden bg-white">
                 <div className="relative h-[300px] md:h-[calc(100vh-130px)] overflow-hidden">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={currentSlide}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 1, ease: "easeInOut" }}
-                            className="absolute inset-0"
-                        >
-                            {/* Video Background - key forces re-mount on slide change */}
-                            {heroSlides[currentSlide].video ? (
-                                <video
-                                    key={`video-${currentSlide}`}
-                                    autoPlay
-                                    loop
-                                    muted
-                                    playsInline
-                                    className="absolute inset-0 w-full h-full object-cover"
-                                >
-                                    <source src={heroSlides[currentSlide].video} type="video/mp4" />
-                                </video>
-                            ) : (
-                                <img
-                                    src={heroSlides[currentSlide].image}
-                                    alt={heroSlides[currentSlide].title}
-                                    className="absolute inset-0 w-full h-full object-cover transform scale-100 animate-slow-zoom"
-                                />
-                            )}
-                            {/* Overlay */}
-                            <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-                                <div className="container mx-auto px-4">
-                                    <div className="flex flex-col items-center justify-center text-white text-center">
-                                        
-                                        {/* Premium Compact Typography */}
-                                        <AnimatePresence mode="wait">
-                                            <motion.div 
-                                                key={currentSlide}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -20 }}
-                                                transition={{ duration: 0.8 }}
-                                                className="relative flex flex-col items-center"
-                                            >
-                                                {/* Removed redundant brand badge */}
-                                                <h1 className="font-serif uppercase leading-none mb-2 px-4">
-                                                    {/* Mobile Split Title */}
-                                                    <span className="md:hidden block">
-                                                        <span className="block text-2xl font-light tracking-[0.45em] mb-2">HARSHAD</span>
-                                                        <span className="block text-2xl font-light tracking-[0.45em] mb-3">GAURI</span>
-                                                    </span>
-                                                    {/* Desktop Single Line Title */}
-                                                    <span className="hidden md:block text-5xl font-light drop-shadow-2xl text-white tracking-[0.55em]">
-                                                        {heroSlides[currentSlide].title}
-                                                    </span>
-                                                    
-                                                    {/* Enlarged Italic Subtitle for Mobile */}
-                                                    <span className="block font-serif italic lowercase font-light text-2xl md:text-3xl text-gold-light mt-1 tracking-normal">
-                                                        {heroSlides[currentSlide].titleItalic}
-                                                    </span>
-                                                </h1>
-                                                
-                                                {/* Minimalist Centered Divider - Extra Thin */}
+                    {heroSlides.length > 0 ? (
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={currentSlide}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 1, ease: "easeInOut" }}
+                                className="absolute inset-0"
+                            >
+                                {/* Video Background - key forces re-mount on slide change */}
+                                {heroSlides[currentSlide]?.video ? (
+                                    <video
+                                        key={`video-${currentSlide}`}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                    >
+                                        <source src={heroSlides[currentSlide].video} type="video/mp4" />
+                                    </video>
+                                ) : (
+                                    <img
+                                        src={heroSlides[currentSlide]?.image}
+                                        alt={heroSlides[currentSlide]?.title}
+                                        className="absolute inset-0 w-full h-full object-cover transform scale-100 animate-slow-zoom"
+                                    />
+                                )}
+                                {/* Overlay */}
+                                <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                                    <div className="container mx-auto px-4">
+                                        <div className="flex flex-col items-center justify-center text-white text-center">
+
+                                            {/* Premium Compact Typography */}
+                                            <AnimatePresence mode="wait">
                                                 <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: '60px' }}
-                                                    transition={{ duration: 1, delay: 0.5 }}
-                                                    className="h-[1px] bg-secondary/50 mt-4 mb-4"
-                                                />
+                                                    key={currentSlide}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -20 }}
+                                                    transition={{ duration: 0.8 }}
+                                                    className="relative flex flex-col items-center"
+                                                >
+                                                    {/* Removed redundant brand badge */}
+                                                    <h1 className="font-serif uppercase leading-none mb-2 px-4">
+                                                        {/* Mobile Split Title */}
+                                                        <span className="md:hidden block">
+                                                            <span className="block text-2xl font-light tracking-[0.45em] mb-2">HARSHAD</span>
+                                                            <span className="block text-2xl font-light tracking-[0.45em] mb-3">GAURI</span>
+                                                        </span>
+                                                        {/* Desktop Single Line Title */}
+                                                        <span className="hidden md:block text-5xl font-light drop-shadow-2xl text-white tracking-[0.55em]">
+                                                            {heroSlides[currentSlide].title}
+                                                        </span>
+
+                                                        {/* Enlarged Italic Subtitle for Mobile */}
+                                                        <span className="block font-serif italic lowercase font-light text-2xl md:text-3xl text-gold-light mt-1 tracking-normal">
+                                                            {heroSlides[currentSlide].titleItalic}
+                                                        </span>
+                                                    </h1>
+
+                                                    {/* Minimalist Centered Divider - Extra Thin */}
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: '60px' }}
+                                                        transition={{ duration: 1, delay: 0.5 }}
+                                                        className="h-[1px] bg-secondary/50 mt-4 mb-4"
+                                                    />
 
 
-                                            {/* Elegant CTA - Close to main text */}
-                                            <motion.div
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                transition={{ duration: 0.8, delay: 0.8 }}
-                                            >
-                                                <Link to={heroSlides[currentSlide].link} className="group flex flex-col items-center">
-                                                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-white/70 group-hover:text-white transition-all">
-                                                        Explore Selection
-                                                    </span>
-                                                </Link>
-                                            </motion.div>
-                                        </motion.div>
-                                    </AnimatePresence>
+                                                    {/* Elegant CTA - Close to main text */}
+                                                    <motion.div
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        transition={{ duration: 0.8, delay: 0.8 }}
+                                                    >
+                                                        <Link to={heroSlides[currentSlide].link} className="group flex flex-col items-center">
+                                                            <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-white/70 group-hover:text-white transition-all">
+                                                                Explore Selection
+                                                            </span>
+                                                        </Link>
+                                                    </motion.div>
+                                                </motion.div>
+                                            </AnimatePresence>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </motion.div>
+                        </AnimatePresence>
+                    ) : (
+                        <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+                            <span className="text-gray-400 font-serif italic uppercase tracking-widest text-[10px]">HG Enterprises Loading Cinematic...</span>
                         </div>
-                        </motion.div>
-                    </AnimatePresence>
+                    )}
 
 
                     {/* Pagination Dots - Larger on mobile for better visibility */}

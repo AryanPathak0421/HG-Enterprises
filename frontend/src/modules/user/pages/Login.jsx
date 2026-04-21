@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import loginHero from '../assets/login_hero_silver.png';
-import { useShop } from '../../../context/ShopContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Crown, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
 import logo from '../assets/logo_final.jpg';
+import toast from 'react-hot-toast';
+
 
 const Login = () => {
-    const { login } = useShop();
+    const { login, sendOTP, verifyOTP } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -32,33 +33,48 @@ const Login = () => {
         setEmail('');
     }, [isSignup]);
 
-    const handleSendOtp = (e) => {
+    const handleSendOtp = async (e) => {
         e.preventDefault();
         if (phoneNumber.length === 10) {
-            setLoginStep(2);
+            const res = await sendOTP(phoneNumber);
+            if (res.success) {
+                if (!isSignup && !res.exists) {
+                    toast.error("Account not found. Please register first.");
+                    return;
+                }
+                setLoginStep(2);
+                toast.success("OTP Sent Successfully");
+            } else {
+                toast.error(res.message);
+            }
         } else {
-            alert("Please enter a valid 10-digit phone number");
+            toast.error("Please enter a valid 10-digit phone number");
         }
     };
 
-    const handleVerifyOtp = (e) => {
+    const handleVerifyOtp = async (e) => {
         e.preventDefault();
         const enteredOtp = otp.join('');
         if (enteredOtp.length === 6) {
-            // Mock Login/Signup
-            const userData = {
-                name: isSignup ? fullName : 'Guest User',
+            const res = await verifyOTP({
                 phone: phoneNumber,
-                email: isSignup ? email : 'guest@example.com'
-            };
+                otp: enteredOtp,
+                name: isSignup ? fullName : undefined,
+                email: isSignup ? email : undefined
+            });
 
-            login(userData);
-            // Redirect to Profile page after successful login/signup as requested
-            navigate('/profile');
+            if (res.success) {
+                toast.success("Login Successful");
+                navigate('/profile');
+            } else {
+                toast.error(res.message);
+                setOtp(['', '', '', '', '', '']); // Clear OTP on failure
+            }
         } else {
-            alert("Please enter the 6-digit OTP");
+            toast.error("Please enter the 6-digit OTP");
         }
     };
+
 
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return;
@@ -109,7 +125,7 @@ const Login = () => {
                         </h2>
                         <p className="text-gray-400 text-[9px] font-serif italic mt-0.5">
                             {loginStep === 1
-                                 ? (isSignup ? 'Enter details below.' : 'Login to continue.')
+                                ? (isSignup ? 'Enter details below.' : 'Login to continue.')
                                 : `Code for +91 ${phoneNumber}`
                             }
                         </p>

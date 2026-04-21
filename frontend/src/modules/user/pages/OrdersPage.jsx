@@ -3,8 +3,12 @@ import React from 'react';
 import { useShop } from '../../../context/ShopContext';
 import { useAuth } from '../../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, ChevronRight, Clock, MapPin, ArrowLeft } from 'lucide-react';
+import { Package, ChevronRight, Clock, MapPin, ArrowLeft, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { generateInvoice } from '../../../utils/invoiceGenerator';
+import hgLogoPremium from '../assets/logo_final.jpg';
 
 const OrdersPage = () => {
     const navigate = useNavigate();
@@ -12,6 +16,25 @@ const OrdersPage = () => {
     const { getOrders } = useShop();
 
     const orders = user ? getOrders(user.id) : [];
+
+    const handleDownloadInvoice = (order) => {
+        const img = new Image();
+        img.src = hgLogoPremium;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            const doc = generateInvoice(order, dataUrl);
+            doc.save(`Invoice_HG_${order.id}.pdf`);
+        };
+        img.onerror = () => {
+            const doc = generateInvoice(order);
+            doc.save(`Invoice_HG_${order.id}.pdf`);
+        };
+    };
 
     if (orders.length === 0) {
         return (
@@ -67,15 +90,22 @@ const OrdersPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Bottom Row: View Details Button */}
-                                    <div className="pt-1">
+                                    {/* Bottom Row: Actions */}
+                                    <div className="pt-1 flex flex-col sm:flex-row gap-2">
                                         <Link
                                             to={`/order/${order.id}`}
-                                            className="w-full md:w-fit md:ml-auto md:px-10 bg-slate-50 border border-slate-100 text-footerBg py-2.5 md:py-3 rounded-xl text-[9px] md:text-xs font-black uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-footerBg hover:text-white"
+                                            className="flex-1 bg-slate-50 border border-slate-100 text-footerBg py-2.5 md:py-3 rounded-xl text-[9px] md:text-xs font-black uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-slate-100"
                                         >
                                             View Details
                                             <ChevronRight size={12} />
                                         </Link>
+                                        <button
+                                            onClick={() => handleDownloadInvoice(order)}
+                                            className="flex-1 bg-white border border-[#8B4356]/20 text-[#8B4356] py-2.5 md:py-3 rounded-xl text-[9px] md:text-xs font-black uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#8B4356] hover:text-white"
+                                        >
+                                            <Download size={12} />
+                                            Download Invoice
+                                        </button>
                                     </div>
                                 </div>
                             </div>

@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Search, Heart, ShoppingBag, User, Store, Menu, X, Bell, ChevronDown, ChevronRight, Home } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 import hgLogo from '../assets/hg_logo_gold.png';
 import hgLogoPremium from '../assets/logo_final.jpg';
 import { motion, AnimatePresence } from 'framer-motion';
-import { categories } from '../data/data';
 
 const Navbar = () => {
-    const { cart, wishlist, user, userNotifications, isMenuOpen, toggleMenu, isSearchOpen, toggleSearch } = useShop();
+    const { cart, wishlist, user, userNotifications, isMenuOpen, toggleMenu, isSearchOpen, toggleSearch, categories } = useShop();
     const location = useLocation();
     const isHome = location.pathname === '/';
 
@@ -31,6 +30,13 @@ const Navbar = () => {
 
     const [openSection, setOpenSection] = useState('mainCategories');
     const [activeMegaCategory, setActiveMegaCategory] = useState(categories[0]);
+
+    // Sync activeMegaCategory when categories load from the API
+    useEffect(() => {
+        if (categories.length > 0 && !activeMegaCategory) {
+            setActiveMegaCategory(categories[0]);
+        }
+    }, [categories]);
 
     const toggleSection = (section) => {
         setOpenSection(openSection === section ? null : section);
@@ -69,11 +75,11 @@ const Navbar = () => {
                 {/* 2. Main Navigation Bar - Balanced Compactness */}
                 <nav className="w-full bg-black border-b border-white/10 shadow-sm sticky top-0 md:relative z-50">
                     <div className="w-full flex items-center justify-between h-14 md:h-18 px-4 md:px-10">
-                        
+
                         {/* Logo & Brand Heading - Refined Placement */}
                         <Link to="/" className="flex items-center group flex-shrink-0 gap-2 md:gap-4">
                             <motion.div
-                                animate={{ 
+                                animate={{
                                     y: [0, -2, 0],
                                 }}
                                 transition={{
@@ -83,13 +89,13 @@ const Navbar = () => {
                                 }}
                                 className="relative bg-black"
                             >
-                                <img 
-                                    src={hgLogoPremium} 
-                                    alt="HG" 
-                                    className="h-[40px] md:h-[60px] w-auto object-contain" 
+                                <img
+                                    src={hgLogoPremium}
+                                    alt="HG"
+                                    className="h-[40px] md:h-[60px] w-auto object-contain"
                                 />
                             </motion.div>
-                            
+
                             <div className="flex flex-col">
                                 <span className="text-white font-serif text-[15px] md:text-xl font-light tracking-wider leading-none group-hover:text-[#EBCDD0] transition-colors">
                                     Harshad Gauri
@@ -115,9 +121,9 @@ const Navbar = () => {
                         {/* Icons */}
                         <div className="flex items-center gap-1.5 md:gap-5">
                             {/* Mobile/Tablet Search Toggle */}
-                            <button 
+                            <button
                                 onClick={() => toggleSearch(!isSearchOpen)}
-                                aria-label="Toggle search" 
+                                aria-label="Toggle search"
                                 className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 group transition-colors"
                             >
                                 <Search className={`w-5 h-5 transition-colors ${isSearchOpen ? 'text-white' : 'text-white/90 group-hover:text-primary'}`} />
@@ -136,7 +142,7 @@ const Navbar = () => {
                                     </span>
                                 )}
                             </Link>
-                            
+
                             <Link to="/cart" aria-label="View shopping bag" className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center hover:bg-white/10 rounded-full group transition-colors relative">
                                 <ShoppingBag className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
                                 {cart?.length > 0 && (
@@ -199,20 +205,23 @@ const Navbar = () => {
                                     Categories
                                     <ChevronDown className="w-3.5 h-3.5 transition-transform group-hover/mega:rotate-180" />
                                 </button>
-                                
+
                                 <div className="fixed left-0 w-screen top-[110px] md:top-[128px] opacity-0 invisible group-hover/mega:opacity-100 group-hover/mega:visible transition-all duration-500 z-[100] bg-white border-b border-gray-100 shadow-2xl">
                                     <div className="flex flex-col min-h-[380px] w-full">
-                                        
-                                        {/* Step 1: Main Category Selection Bar */}
+
+                                        {/* Step 1: Main Category Selection Bar - Grouped by Department */}
                                         <div className="bg-gray-50/80 border-b border-gray-100 px-10 py-4 flex justify-center gap-16">
-                                            {categories.map((cat, idx) => (
-                                                <button 
-                                                    key={idx}
-                                                    onMouseEnter={() => setActiveMegaCategory(cat)}
-                                                    aria-label={`View ${cat.name} category`}
-                                                    className={`text-[12px] font-serif font-bold tracking-[0.25em] uppercase transition-all pb-1.5 border-b-2 ${activeMegaCategory?.id === cat.id ? 'text-primary border-primary' : 'text-gray-400 border-transparent hover:text-black'}`}
+                                            {['Jewellery', 'Tools', 'Machines'].map((dept) => (
+                                                <button
+                                                    key={dept}
+                                                    onMouseEnter={() => {
+                                                        const firstInDept = categories.find(c => (c.department || 'Jewellery').toLowerCase() === dept.toLowerCase());
+                                                        if (firstInDept) setActiveMegaCategory(firstInDept);
+                                                    }}
+                                                    aria-label={`View ${dept} department`}
+                                                    className={`text-[12px] font-serif font-bold tracking-[0.25em] uppercase transition-all pb-1.5 border-b-2 ${(activeMegaCategory?.department || 'Jewellery').toLowerCase() === dept.toLowerCase() ? 'text-primary border-primary' : 'text-gray-400 border-transparent hover:text-black'}`}
                                                 >
-                                                    {cat.name}
+                                                    {dept}
                                                 </button>
                                             ))}
                                         </div>
@@ -228,22 +237,22 @@ const Navbar = () => {
                                                     className="flex h-full min-h-[420px]"
                                                 >
                                                     {/* Step 2: Content Area - Floating from Left */}
-                                                    <motion.div 
+                                                    <motion.div
                                                         initial={{ x: -100, opacity: 0 }}
                                                         animate={{ x: 0, opacity: 1 }}
                                                         transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
                                                         className="w-[30%] p-12 border-r border-gray-100 flex flex-col items-center text-center justify-center"
                                                     >
                                                         <h2 className="text-4xl font-serif text-black uppercase tracking-tighter leading-[0.85] mb-6">
-                                                            Complete <br /> 
+                                                            Complete <br />
                                                             <span className="text-primary italic text-3xl">Collection</span>
                                                         </h2>
                                                         <p className="text-[11px] text-gray-500 font-serif leading-relaxed mb-8 max-w-[240px]">
                                                             Explore our curated {activeMegaCategory?.name?.toLowerCase() || 'Jewellery'} range, handcrafted for excellence.
                                                         </p>
-                                                        
-                                                        <Link 
-                                                            to={`/category/${activeMegaCategory?.id}`} 
+
+                                                        <Link
+                                                            to={`/category/${activeMegaCategory?.id}`}
                                                             aria-label={`View all ${activeMegaCategory?.name} products`}
                                                             className="text-[10px] font-serif font-bold text-black group flex items-center gap-3 tracking-[0.3em] uppercase hover:text-primary transition-colors"
                                                         >
@@ -253,34 +262,36 @@ const Navbar = () => {
                                                     </motion.div>
 
                                                     {/* Step 3: Circular Sub-Category Grid - Floating from Right */}
-                                                    <motion.div 
+                                                    <motion.div
                                                         initial={{ x: 100, opacity: 0 }}
                                                         animate={{ x: 0, opacity: 1 }}
                                                         transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
                                                         className="flex-1 p-12 flex items-start justify-center pt-8"
                                                     >
                                                         <div className="grid grid-cols-4 lg:grid-cols-5 gap-x-8 gap-y-12">
-                                                            {(activeMegaCategory?.subcategories || []).map((sub, idx) => (
-                                                                <Link 
-                                                                    key={idx} 
-                                                                    to={`/category/${activeMegaCategory?.id}/${sub.path}`}
-                                                                    aria-label={`Show ${sub.name}`}
-                                                                    className="flex flex-col items-center gap-4 group/sub"
-                                                                >
-                                                                    <div className="relative w-24 h-24 rounded-full border border-gray-100 p-0.5 transition-all duration-700 group-hover/sub:border-primary/40 group-hover/sub:shadow-lg bg-white overflow-hidden">
-                                                                        <div className="w-full h-full rounded-full overflow-hidden">
-                                                                            <img 
-                                                                                src={sub.image} 
-                                                                                alt={sub.name} 
-                                                                                className="w-full h-full object-cover transform transition-transform duration-1000 group-hover/sub:scale-110" 
-                                                                            />
+                                                            {categories
+                                                                .filter(c => (c.department || 'Jewellery').toLowerCase() === (activeMegaCategory?.department || 'Jewellery').toLowerCase())
+                                                                .map((cat, idx) => (
+                                                                    <Link
+                                                                        key={idx}
+                                                                        to={`/shop?category=${cat.name.toLowerCase()}`}
+                                                                        aria-label={`Show ${cat.name}`}
+                                                                        className="flex flex-col items-center gap-4 group/sub"
+                                                                    >
+                                                                        <div className="relative w-24 h-24 rounded-full border border-gray-100 p-0.5 transition-all duration-700 group-hover/sub:border-primary/40 group-hover/sub:shadow-lg bg-white overflow-hidden">
+                                                                            <div className="w-full h-full rounded-full overflow-hidden">
+                                                                                <img
+                                                                                    src={cat.image || 'https://via.placeholder.com/300'}
+                                                                                    alt={cat.name}
+                                                                                    className="w-full h-full object-cover transform transition-transform duration-1000 group-hover/sub:scale-110"
+                                                                                />
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                    <span className="text-[10px] font-serif font-bold text-black/80 tracking-[0.2em] uppercase transition-all duration-300 border-b border-transparent group-hover/sub:border-black/30 pb-0.5 text-center">
-                                                                        {sub.name}
-                                                                    </span>
-                                                                </Link>
-                                                            ))}
+                                                                        <span className="text-[10px] font-serif font-bold text-black/80 tracking-[0.2em] uppercase transition-all duration-300 border-b border-transparent group-hover/sub:border-black/30 pb-0.5 text-center">
+                                                                            {cat.name}
+                                                                        </span>
+                                                                    </Link>
+                                                                ))}
                                                         </div>
                                                     </motion.div>
                                                 </motion.div>
@@ -298,9 +309,9 @@ const Navbar = () => {
                                 { name: "CONTACT US", path: "/help" },
                                 { name: "TRACK ORDER", path: "/profile/orders" }
                             ].map((nav, idx) => (
-                                <Link 
-                                    key={idx} 
-                                    to={nav.path} 
+                                <Link
+                                    key={idx}
+                                    to={nav.path}
                                     aria-label={`Go to ${nav.name}`}
                                     className="text-[11px] font-serif font-bold text-black hover:text-primary transition-all tracking-[0.3em] uppercase border-b-2 border-transparent hover:border-primary pb-0.5"
                                 >
@@ -340,9 +351,9 @@ const Navbar = () => {
                             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                                 <div className="space-y-1">
                                     {sidebarMenu.mainCategories.map((item, idx) => (
-                                        <Link 
+                                        <Link
                                             key={idx}
-                                            to={item.path} 
+                                            to={item.path}
                                             aria-label={`Go to ${item.name}`}
                                             onClick={() => toggleMenu(false)}
                                             className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 group transition-all"
@@ -357,9 +368,9 @@ const Navbar = () => {
 
                                 <div className="mt-8 pt-8 border-t border-gray-100 space-y-2 px-4">
                                     {sidebarMenu.support.map((item, idx) => (
-                                        <Link 
+                                        <Link
                                             key={idx}
-                                            to={item.path} 
+                                            to={item.path}
                                             aria-label={`Go to ${item.name}`}
                                             onClick={() => toggleMenu(false)}
                                             className="block text-[10px] font-serif uppercase tracking-widest text-gray-400 hover:text-primary transition-colors py-2"
@@ -371,8 +382,8 @@ const Navbar = () => {
                             </div>
 
                             <div className="p-6 bg-gray-50 border-t border-gray-100">
-                                <Link 
-                                    to="/login" 
+                                <Link
+                                    to="/login"
                                     aria-label="Proceed to login"
                                     onClick={() => toggleMenu(false)}
                                     className="w-full bg-black text-white py-4 rounded-xl font-display font-black text-[10px] uppercase tracking-[0.3em] text-center block hover:bg-primary transition-all shadow-lg"

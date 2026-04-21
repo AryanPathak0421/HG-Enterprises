@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useShop } from '../../../context/ShopContext';
-import { PACKS } from '../../../mockData/data';
 import {
     Star,
     ArrowLeft,

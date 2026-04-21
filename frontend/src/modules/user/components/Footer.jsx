@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Facebook, Twitter, Instagram, Youtube, Truck, Mail, Phone, MapPin, Heart, ShieldCheck, Star } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import hgLogoPremium from '../assets/logo_final.jpg';
+import { useShop } from '../../../context/ShopContext';
+
 
 const Footer = () => {
+    const { settings: globalSettings } = useShop();
     const location = useLocation();
     const isOrderSuccess = location.pathname === '/order-success';
+
 
     const [settings, setSettings] = useState({
         footerTagline: 'Timeless Elegance,',
@@ -48,17 +52,11 @@ const Footer = () => {
     });
 
     useEffect(() => {
-        const loadSettings = () => {
-            const saved = localStorage.getItem('siteSettings');
-            if (saved) {
-                setSettings(prev => ({ ...prev, ...JSON.parse(saved) }));
-            }
-        };
-        loadSettings();
+        if (globalSettings) {
+            setSettings(prev => ({ ...prev, ...globalSettings }));
+        }
+    }, [globalSettings]);
 
-        window.addEventListener('storage', loadSettings);
-        return () => window.removeEventListener('storage', loadSettings);
-    }, []);
 
     if (isOrderSuccess) return null;
 

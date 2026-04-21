@@ -27,6 +27,8 @@ import BlogsPage from './modules/user/pages/BlogsPage';
 import OffersPage from './modules/user/pages/OffersPage';
 import SmoothScroll from './components/SmoothScroll';
 import { useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
+
 
 // Admin Imports
 import AdminLogin from './modules/admin/pages/Login';
@@ -67,6 +69,7 @@ import GlobalSettings from './modules/admin/pages/GlobalSettings';
 import SectionManagement from './modules/admin/pages/SectionManagement';
 import SectionEditor from './modules/admin/pages/SectionEditor';
 import DynamicPageEditor from './modules/admin/pages/DynamicPageEditor';
+import PlatformSettingsPage from './modules/admin/pages/PlatformSettingsPage';
 import CancellationPolicy from './modules/user/pages/CancellationPolicy';
 import ShippingPolicy from './modules/user/pages/ShippingPolicy';
 import ContactPage from './modules/user/pages/ContactPage';
@@ -74,6 +77,8 @@ import CareGuidePage from './modules/user/pages/CareGuidePage';
 import CraftsmanshipPage from './modules/user/pages/CraftsmanshipPage';
 import StoreLocator from './modules/user/pages/StoreLocator';
 import ReturnsPolicy from './modules/user/pages/ReturnsPolicy';
+import WarrantyInfo from './modules/user/pages/WarrantyInfo';
+import CustomizationPage from './modules/user/pages/CustomizationPage';
 
 const ScrollToTop = () => {
   const { pathname, key } = useLocation();
@@ -125,6 +130,8 @@ const AppContent = () => {
             <Route path="/shipping-policy" element={<ShippingPolicy />} />
             <Route path="/cancellation-policy" element={<CancellationPolicy />} />
             <Route path="/care-guide" element={<CareGuidePage />} />
+            <Route path="/warranty-info" element={<WarrantyInfo />} />
+            <Route path="/customization" element={<CustomizationPage />} />
             <Route path="/stores" element={<StoreLocator />} />
             <Route path="/craft" element={<CraftsmanshipPage />} />
             <Route path="/terms" element={<TermsAndConditions />} />
@@ -183,6 +190,7 @@ const AppContent = () => {
                     <Route path="/sections/:id" element={<SectionEditor />} />
                     <Route path="/pages/:pageId" element={<DynamicPageEditor />} />
                     <Route path="/settings" element={<GlobalSettings />} />
+                    <Route path="/platform-settings" element={<PlatformSettingsPage />} />
                   </Routes>
                 </AdminLayout>
               </AdminProtectedRoute>

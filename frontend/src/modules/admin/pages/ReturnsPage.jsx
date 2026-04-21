@@ -1,30 +1,72 @@
-import React, { useState } from 'react';
-import { Eye, RotateCcw, Clock, CheckCircle2, Search, Filter, IndianRupee } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AdminStatsCard from '../components/AdminStatsCard';
+import api from '../../../utils/api';
+import { useShop } from '../../../context/ShopContext';
+import {
+    Search,
+    Filter,
+    ArrowUpRight,
+    MoreVertical,
+    Clock,
+    CheckCircle2,
+    XCircle,
+    Truck,
+    Package,
+    Shield,
+    Database,
+    Cpu,
+    AlertCircle,
+    RotateCcw,
+    IndianRupee,
+    Eye
+} from 'lucide-react';
+
 
 const ReturnsPage = () => {
     const navigate = useNavigate();
+    const { showNotification } = useShop();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
+    const [returns, setReturns] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Categorization logic for display
-    const mockReturns = [
-        { id: 'RTN-105', orderId: 'ORD-5005', customer: 'Vikram Das', reason: 'Changed Mind', date: '05/02/2025', amount: 1200, status: 'COMPLETED' },
-        { id: 'RTN-104', orderId: 'ORD-5004', customer: 'Neha Gupta', reason: 'Defective', date: '04/02/2025', amount: 750, status: 'REJECTED' },
-        { id: 'RTN-103', orderId: 'ORD-5003', customer: 'Amit Singh', reason: 'Size Issue', date: '03/02/2025', amount: 2100, status: 'REFUNDED' },
-        { id: 'RTN-102', orderId: 'ORD-5002', customer: 'Priya Verma', reason: 'Wrong Color', date: '02/02/2025', amount: 899, status: 'APPROVED' },
-    ];
+    useEffect(() => {
+        fetchReturns();
+    }, []);
+
+    const fetchReturns = async () => {
+        try {
+            const res = await api.get('/returns?type=return');
+            setReturns(res.data);
+        } catch (error) {
+            console.error('[FETCH RETURNS ERROR]', error);
+            showNotification("Failed to fetch return protocols.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getStatusStyle = (status) => {
-        switch (status) {
-            case 'COMPLETED': return 'text-emerald-600 border-emerald-200 bg-emerald-50';
-            case 'REFUNDED': return 'text-teal-600 border-teal-200 bg-teal-50';
+        switch (status?.toUpperCase()) {
+            case 'COMPLETED':
+            case 'REFUNDED': return 'text-emerald-600 border-emerald-200 bg-emerald-50';
             case 'APPROVED': return 'text-blue-600 border-blue-200 bg-blue-50';
             case 'REJECTED': return 'text-red-500 border-red-200 bg-red-50';
+            case 'PENDING': return 'text-amber-600 border-amber-200 bg-amber-50';
             default: return 'text-gray-400 border-gray-100 bg-gray-50';
         }
     };
+
+    const filteredReturns = returns.filter(item => {
+        const matchesSearch =
+            item.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item._id?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesStatus = statusFilter === 'ALL' || item.status?.toUpperCase() === statusFilter;
+
+        return matchesSearch && matchesStatus;
+    });
 
     return (
         <div className="space-y-4 font-outfit animate-in fade-in duration-500 text-left pb-10">
@@ -47,17 +89,17 @@ const ReturnsPage = () => {
             {/* Metrics Row - Geometric */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 {[
-                    { label: 'Active Requests', value: '05', icon: RotateCcw, trend: '+2' },
-                    { label: 'Pending Action', value: '01', icon: Clock, trend: 'Critical' },
-                    { label: 'Reversal Volume', value: '₹4,949', icon: IndianRupee, trend: 'Monthly' },
+                    { label: 'Active Requests', value: returns.length, icon: RotateCcw, trend: 'Global' },
+                    { label: 'Pending Action', value: returns.filter(r => r.status === 'Pending').length, icon: Clock, trend: 'Critical' },
+                    { label: 'Reversal Volume', value: `₹${returns.reduce((acc, r) => acc + (r.refundAmount || 0), 0)}`, icon: IndianRupee, trend: 'Monthly' },
                     { label: 'System Health', value: '98%', icon: CheckCircle2, trend: 'Optimal' },
                 ].map((stat, i) => (
                     <div key={i} className="bg-white p-3 border border-black/5 rounded-none shadow-sm relative overflow-hidden group hover:border-gold/30 transition-all">
                         <div className="flex justify-between items-start mb-2">
-                             <div className="p-1.5 bg-[#FDF5F6] text-gold border border-black/5">
-                                 <stat.icon size={13} />
-                             </div>
-                             <span className="text-[7px] font-black text-gold uppercase tracking-tighter bg-gold/5 px-1.5 py-0.5">{stat.trend}</span>
+                            <div className="p-1.5 bg-[#FDF5F6] text-gold border border-black/5">
+                                <stat.icon size={13} />
+                            </div>
+                            <span className="text-[7px] font-black text-gold uppercase tracking-tighter bg-gold/5 px-1.5 py-0.5">{stat.trend}</span>
                         </div>
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{stat.label}</p>
                         <h3 className="text-xl font-serif font-black text-black tabular-nums tracking-tighter">{stat.value}</h3>
@@ -110,16 +152,24 @@ const ReturnsPage = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/5 text-[10px] text-black">
-                            {mockReturns.map((item, idx) => (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="7" className="px-6 py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest italic animate-pulse">Synchronizing Protocol Matrix...</td>
+                                </tr>
+                            ) : filteredReturns.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="px-6 py-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest italic">No matching protocols identified.</td>
+                                </tr>
+                            ) : filteredReturns.map((item, idx) => (
                                 <tr key={idx} className="hover:bg-[#FDF5F6]/30 transition-colors group">
                                     <td className="px-6 py-3">
-                                         <span className="font-serif font-black tracking-tight text-sm">#{item.id.split('-')[1]}</span>
-                                         <p className="text-[6px] font-black text-gray-400 mt-0.5 tracking-widest uppercase">{item.date}</p>
+                                        <span className="font-serif font-black tracking-tight text-sm">#{item._id.slice(-5)}</span>
+                                        <p className="text-[6px] font-black text-gray-400 mt-0.5 tracking-widest uppercase">{new Date(item.createdAt).toLocaleDateString()}</p>
                                     </td>
-                                    <td className="px-6 py-3 font-black text-gray-500 tracking-widest">{item.orderId}</td>
-                                    <td className="px-6 py-3 font-black uppercase truncate max-w-[120px]">{item.customer}</td>
+                                    <td className="px-6 py-3 font-black text-gray-500 tracking-widest">#{item.orderId?.replace('ORD-', '')}</td>
+                                    <td className="px-6 py-3 font-black uppercase truncate max-w-[120px]">{item.userId?.name || 'Patron Unknown'}</td>
                                     <td className="px-6 py-3 italic font-serif text-gray-500">{item.reason}</td>
-                                    <td className="px-6 py-3 text-center font-serif font-black text-[#AD8E4F]">₹{item.amount.toLocaleString()}</td>
+                                    <td className="px-6 py-3 text-center font-serif font-black text-[#AD8E4F]">₹{(item.items?.reduce((acc, i) => acc + i.price, 0) || 0).toLocaleString()}</td>
                                     <td className="px-6 py-3 text-center">
                                         <span className={`px-2 py-0.5 rounded-none text-[7px] font-black uppercase tracking-[0.2em] border ${getStatusStyle(item.status)}`}>
                                             {item.status}
@@ -127,7 +177,7 @@ const ReturnsPage = () => {
                                     </td>
                                     <td className="px-6 py-3 text-right">
                                         <button
-                                            onClick={() => navigate(`/admin/returns/${item.id}`)}
+                                            onClick={() => navigate(`/admin/returns/${item._id}`)}
                                             className="px-4 py-1.5 border border-black/5 bg-white text-black hover:bg-gold hover:text-black transition-all font-black text-[9px] uppercase tracking-widest rounded-none shadow-sm active:scale-95 flex items-center gap-2 ml-auto"
                                         >
                                             <Eye size={12} className="text-gold" /> Protocol Details

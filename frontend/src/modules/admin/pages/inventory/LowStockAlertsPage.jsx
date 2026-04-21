@@ -2,24 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Zap, Package, XCircle, ArrowRight, Clock, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminStatsCard from '../../components/AdminStatsCard';
+import api from '../../../../utils/api';
+import toast from 'react-hot-toast';
 
 const LowStockAlertsPage = () => {
     const navigate = useNavigate();
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
+    const fetchAlerts = async () => {
         setLoading(true);
-        // Mock API call
-        setTimeout(() => {
-            setAlerts([
-                { id: 1, name: 'GOLD PLATED NECKLACE', category: 'Necklace', stock: 0, threshold: 15, image: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=100&h=100&fit=crop' },
-                { id: 2, name: 'DIAMOND STUD EARRINGS', category: 'Earrings', stock: 2, threshold: 5, image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100&h=100&fit=crop' },
-                { id: 3, name: 'SILVER ANKLET', category: 'Anklet', stock: 15, threshold: 20, image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1520e?w=100&h=100&fit=crop' },
-                { id: 4, name: 'ROSE GOLD BRACELET', category: 'Bracelet', stock: 8, threshold: 10, image: 'https://images.unsplash.com/photo-1530124560676-4ce5784914f6?w=100&h=100&fit=crop' },
-            ]);
+        try {
+            const res = await api.get('/products?adminView=true');
+            const lowStockItems = res.data
+                .map(p => ({
+                    id: p._id,
+                    name: p.name,
+                    category: p.category,
+                    stock: p.variants?.[0]?.stock || 0,
+                    threshold: 10,
+                    image: p.image || 'https://via.placeholder.com/100',
+                    unit: p.unit || 'pcs'
+                }))
+                .filter(item => item.stock < 10);
+
+            setAlerts(lowStockItems);
+        } catch (error) {
+            console.error("Error fetching alerts:", error);
+            toast.error("Failed to sync inventory alerts");
+        } finally {
             setLoading(false);
-        }, 500);
+        }
+    };
+
+    useEffect(() => {
+        fetchAlerts();
     }, []);
 
     const outOfStockCount = alerts.filter(a => a.stock === 0).length;
@@ -41,7 +58,7 @@ const LowStockAlertsPage = () => {
                     onClick={() => navigate('/admin/inventory/adjust')}
                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-none text-[9px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 transition-all flex items-center gap-2 group"
                 >
-                    <Zap size={12} fill="currentColor" strokeWidth={3} className="group-hover:scale-110 transition-transform" /> 
+                    <Zap size={12} fill="currentColor" strokeWidth={3} className="group-hover:scale-110 transition-transform" />
                     <span>Quick Restock Protocol</span>
                 </button>
             </div>

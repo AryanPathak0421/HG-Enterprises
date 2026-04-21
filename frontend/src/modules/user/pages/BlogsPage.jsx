@@ -9,18 +9,20 @@ import item4 from '../../../assets/editorial/item4.png';
 import item5 from '../../../assets/editorial/item5.png';
 import item6 from '../../../assets/editorial/item6.png';
 
+import api from '../../../utils/api';
+
 const BlogModal = ({ blog, onClose }) => {
     if (!blog) return null;
 
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10 bg-black/80 backdrop-blur-md"
             onClick={onClose}
         >
-            <motion.div 
+            <motion.div
                 initial={{ y: 50, scale: 0.95, opacity: 0 }}
                 animate={{ y: 0, scale: 1, opacity: 1 }}
                 exit={{ y: 50, scale: 0.95, opacity: 0 }}
@@ -29,7 +31,7 @@ const BlogModal = ({ blog, onClose }) => {
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Close Button */}
-                <button 
+                <button
                     onClick={onClose}
                     className="absolute top-6 right-6 z-30 w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-black shadow-lg hover:bg-[#8B4356] hover:text-white transition-all group"
                 >
@@ -39,9 +41,9 @@ const BlogModal = ({ blog, onClose }) => {
                 <div className="overflow-y-auto scrollbar-hide">
                     {/* Hero Image inside Modal */}
                     <div className="w-full aspect-[16/10] md:aspect-[21/9] relative bg-gray-100">
-                        <img 
-                            src={blog.image} 
-                            alt={blog.title} 
+                        <img
+                            src={blog.image}
+                            alt={blog.title}
                             className="w-full h-full object-cover"
                             onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1626784215021-2e39ccf971cd?auto=format&fit=crop&q=80&w=1200'}
                         />
@@ -60,23 +62,16 @@ const BlogModal = ({ blog, onClose }) => {
                                 {blog.title}
                             </h2>
 
-                            <div className="relative mb-12 py-6 border-y border-black/5">
-                                <p className="text-lg md:text-2xl font-serif italic text-[#8B4356] leading-relaxed text-center">
-                                    "{blog.quote || 'Crafting memories, one masterpiece at a time.'}"
-                                </p>
-                            </div>
-
-                            <div className="space-y-6 text-sm md:text-lg text-gray-700 font-serif leading-relaxed">
-                                <p>{blog.description}</p>
-                                <p>In the world of fine jewellery, the detail is everything. Every curve, every facet, and every placement of a gemstone is a testament to the artisan's dedication to perfection. At Harshad Gauri, we believe that jewellery is not just an accessory, but a legacy item that carries stories across generations.</p>
-                                <p>Choosing the right piece requires more than just an eye for beauty; it requires an understanding of how light interacts with silver and gold, and how a design can complement the wearer's unique personality. Our latest collection explores these intersections, bringing you pieces that are both timeless and contemporary.</p>
+                            {/* Dynamic Content from Editor */}
+                            <div className="prose prose-pink max-w-none prose-p:font-serif prose-p:text-gray-700 prose-p:leading-relaxed blog-content-view">
+                                <div dangerouslySetInnerHTML={{ __html: blog.content || blog.description }} />
                             </div>
 
                             <div className="mt-16 pt-8 border-t border-black/5 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-display font-bold text-[#8B4356]">HG</div>
                                     <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-black">Editorial Team</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-black">{blog.author || 'Editorial Team'}</p>
                                         <p className="text-xs text-gray-400 font-serif">Harshad Gauri Collective</p>
                                     </div>
                                 </div>
@@ -93,6 +88,23 @@ const BlogsPage = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBlog, setSelectedBlog] = useState(null);
+    const [blogs, setBlogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchBlogs = async () => {
+        try {
+            const { data } = await api.get('/blogs');
+            setBlogs(data);
+        } catch (error) {
+            console.error('Failed to load journals', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchBlogs();
+    }, []);
 
     useEffect(() => {
         if (selectedBlog) {
@@ -111,47 +123,27 @@ const BlogsPage = () => {
         { src: item6, top: '60%', right: '8%', rotate: '6deg' }
     ];
 
-    const blogs = [
-        {
-            id: 1,
-            category: 'CRAFTSMANSHIP',
-            title: 'The Art of Layering Silver Necklaces',
-            image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=1200',
-            description: 'Discover how to create the perfect layered look with our guide to mixing and matching silver chains and pendants.',
-            quote: 'Jewellery is the most transformative thing you can wear.',
-            date: 'OCT 12',
-            readTime: '5 MIN'
-        },
-        {
-            id: 2,
-            category: 'CARE GUIDE',
-            title: 'Caring for Your Sterling Silver',
-            image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&q=80&w=1200',
-            description: 'Learn the essential tips and tricks to keep your 925 Sterling Silver jewellery shining bright for years to come.',
-            quote: 'A piece of jewellery is often a piece of art. But it only becomes valuable when it is worn and loved.',
-            date: 'NOV 23',
-            readTime: '4 MIN'
-        },
-        {
-            id: 3,
-            category: 'AUTHENTICITY',
-            title: 'Understanding Hallmarks: What is 925?',
-            image: 'https://images.unsplash.com/photo-1626784215021-2e39ccf971cd?auto=format&fit=crop&q=80&w=1200',
-            description: 'Dive deep into the world of silver purity. We explain what the 925 hallmark means, why it matters, and how to verify authenticity.',
-            quote: 'Luxury is in each detail.',
-            date: 'JAN 05',
-            readTime: '6 MIN'
-        }
-    ];
-
     const filteredBlogs = blogs.filter(blog =>
         blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.description.toLowerCase().includes(searchTerm.toLowerCase())
+        blog.excerpt?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#fdf2f8] via-[#eecad5] to-[#fdf2f8] font-body pb-20 selection:bg-[#8B4356] selection:text-white relative overflow-hidden">
-            
+            <style>{`
+                .blog-content-view p {
+                    margin-bottom: 1.5rem;
+                }
+                .blog-content-view h1, .blog-content-view h2, .blog-content-view h3 {
+                    font-family: inherit;
+                    color: black;
+                    text-transform: uppercase;
+                    margin-top: 2rem;
+                    margin-bottom: 1rem;
+                    font-weight: 800;
+                }
+            `}</style>
+
             <AnimatePresence>
                 {selectedBlog && (
                     <BlogModal blog={selectedBlog} onClose={() => setSelectedBlog(null)} />
@@ -194,62 +186,68 @@ const BlogsPage = () => {
 
             {/* Articles List */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-y-20 md:gap-x-12">
-                    {filteredBlogs.length > 0 ? (
-                        filteredBlogs.map((blog, idx) => (
-                            <motion.article
-                                key={blog.id}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "-100px" }}
-                                transition={{ duration: 0.8 }}
-                                className="group flex flex-col items-center text-center w-full"
-                            >
-                                <div className="w-full relative mb-4 md:mb-6 overflow-hidden rounded-[2rem] md:rounded-[2.5rem] shadow-xl border border-white/40 group bg-white/50 backdrop-blur-sm transition-all duration-500 hover:shadow-2xl">
-                                    <div className="aspect-[1.1] md:aspect-[1.4/1] overflow-hidden relative">
-                                        <img 
-                                            src={blog.image} 
-                                            alt={blog.title} 
-                                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                                            onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1616150638538-ffb0679a3fc4?auto=format&fit=crop&q=80&w=1200'}
-                                        />
-                                        <div className="absolute top-4 left-4 md:top-6 md:left-6 bg-[#8B4356]/90 backdrop-blur-md text-white px-4 py-1.5 rounded-md text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
-                                            {blog.category}
+                {loading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="w-8 h-8 border-2 border-[#8B4356] border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-y-20 md:gap-x-12">
+                        {filteredBlogs.length > 0 ? (
+                            filteredBlogs.map((blog, idx) => (
+                                <motion.article
+                                    key={blog._id}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.8 }}
+                                    className="group flex flex-col items-center text-center w-full"
+                                >
+                                    <div className="w-full relative mb-4 md:mb-6 overflow-hidden rounded-[2rem] md:rounded-[2.5rem] shadow-xl border border-white/40 group bg-white/50 backdrop-blur-sm transition-all duration-500 hover:shadow-2xl">
+                                        <div className="aspect-[1.1] md:aspect-[1.4/1] overflow-hidden relative">
+                                            <img
+                                                src={blog.image}
+                                                alt={blog.title}
+                                                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                                                onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1616150638538-ffb0679a3fc4?auto=format&fit=crop&q=80&w=1200'}
+                                            />
+                                            <div className="absolute top-4 left-4 md:top-6 md:left-6 bg-[#8B4356]/90 backdrop-blur-md text-white px-4 py-1.5 rounded-md text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
+                                                {blog.category}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="w-full px-4">
-                                    <div className="flex items-center justify-center gap-3 text-[9px] font-bold text-[#8B4356] uppercase tracking-[0.3em] mb-2 opacity-70">
-                                        <span>{blog.date}</span>
-                                        <span className="opacity-30">|</span>
-                                        <span>{blog.readTime}</span>
+                                    <div className="w-full px-4">
+                                        <div className="flex items-center justify-center gap-3 text-[9px] font-bold text-[#8B4356] uppercase tracking-[0.3em] mb-2 opacity-70">
+                                            <span>{blog.date}</span>
+                                            <span className="opacity-30">|</span>
+                                            <span>5 MIN</span>
+                                        </div>
+                                        <h2 className="text-xl md:text-xl font-serif font-normal text-black mb-3 tracking-tight leading-[1.2] group-hover:text-[#8B4356] transition-colors duration-500 uppercase">
+                                            {blog.title}
+                                        </h2>
+                                        <p className="text-xs md:text-xs text-gray-500 font-serif italic mb-6 leading-relaxed max-w-sm mx-auto line-clamp-2">
+                                            {blog.excerpt}
+                                        </p>
+                                        <div className="flex justify-center">
+                                            <button
+                                                onClick={() => setSelectedBlog(blog)}
+                                                className="text-black font-bold uppercase tracking-[0.4em] text-[10px] md:text-xs border-b border-black/10 pb-1 hover:border-[#8B4356] hover:text-[#8B4356] transition-all duration-300"
+                                            >
+                                                Read Story
+                                            </button>
+                                        </div>
                                     </div>
-                                    <h2 className="text-xl md:text-xl font-serif font-normal text-black mb-3 tracking-tight leading-[1.2] group-hover:text-[#8B4356] transition-colors duration-500 uppercase">
-                                        {blog.title}
-                                    </h2>
-                                    <p className="text-xs md:text-xs text-gray-500 font-serif italic mb-6 leading-relaxed max-w-sm mx-auto">
-                                        {blog.description}
-                                    </p>
-                                    <div className="flex justify-center">
-                                        <button 
-                                            onClick={() => setSelectedBlog(blog)}
-                                            className="text-black font-bold uppercase tracking-[0.4em] text-[10px] md:text-xs border-b border-black/10 pb-1 hover:border-[#8B4356] hover:text-[#8B4356] transition-all duration-300"
-                                        >
-                                            Read Story
-                                        </button>
-                                    </div>
-                                </div>
-                            </motion.article>
-                        ))
-                    ) : (
-                        <div className="text-center py-20 bg-white/40 backdrop-blur-md rounded-[3rem] border border-dashed border-black/10">
-                            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                            <h3 className="text-lg font-bold text-black/40">Archive Empty</h3>
-                            <p className="text-gray-500 font-serif italic">Try searching for another masterpiece.</p>
-                        </div>
-                    )}
-                </div>
+                                </motion.article>
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-20 bg-white/40 backdrop-blur-md rounded-[3rem] border border-dashed border-black/10">
+                                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                <h3 className="text-lg font-bold text-black/40 uppercase tracking-widest">Journal Archive Empty</h3>
+                                <p className="text-gray-500 font-serif italic">Try searching for another masterpiece.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Newsletter Anchor */}
@@ -276,3 +274,5 @@ const BlogsPage = () => {
 };
 
 export default BlogsPage;
+
+

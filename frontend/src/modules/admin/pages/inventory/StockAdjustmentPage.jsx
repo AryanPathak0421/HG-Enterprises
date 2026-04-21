@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Save, RotateCcw, Plus, Minus, AlertCircle, CheckCircle2, Package } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
+import api from '../../../../utils/api';
+import toast from 'react-hot-toast';
 
 const StockAdjustmentPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -8,21 +10,32 @@ const StockAdjustmentPage = () => {
     const [adjustments, setAdjustments] = useState({}); // { productId: adjustmentAmount }
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [selectedDept, setSelectedDept] = useState('all');
 
-    // Mock Data Load
-    useEffect(() => {
+    const fetchProducts = async () => {
         setLoading(true);
-        // Simulating API fetch
-        setTimeout(() => {
-            setProducts([
-                { id: 1, name: 'GOLD PLATED NECKLACE', category: 'Necklace', stock: 120, image: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=100&h=100&fit=crop' },
-                { id: 2, name: 'DIAMOND STUD EARRINGS', category: 'Earrings', stock: 45, image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100&h=100&fit=crop' },
-                { id: 3, name: 'SILVER ANKLET', category: 'Anklet', stock: 0, image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1520e?w=100&h=100&fit=crop' },
-                { id: 4, name: 'ROSE GOLD BRACELET', category: 'Bracelet', stock: 85, image: 'https://images.unsplash.com/photo-1530124560676-4ce5784914f6?w=100&h=100&fit=crop' },
-                { id: 5, name: 'PEARL CHOKER', category: 'Necklace', stock: 15, image: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=100&h=100&fit=crop' },
-            ]);
+        try {
+            const res = await api.get('/products?adminView=true');
+            const normalized = res.data.map(p => ({
+                id: p._id || p.id,
+                name: p.name,
+                category: p.category,
+                department: p.department || 'jewellery',
+                stock: p.stock ?? (p.variants?.[0]?.stock) ?? 0,
+                unit: p.unit || 'pcs',
+                image: p.image || (p.images?.[0]) || 'https://via.placeholder.com/100'
+            }));
+            setProducts(normalized);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+            toast.error("Failed to load inventory registry");
+        } finally {
             setLoading(false);
-        }, 500);
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
     }, []);
 
     const handleAdjustmentChange = (id, value) => {
@@ -36,28 +49,32 @@ const StockAdjustmentPage = () => {
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        if (Object.keys(adjustments).length === 0) return;
+
         setSaving(true);
-        // Simulate API save
-        setTimeout(() => {
-            const newProducts = products.map(p => ({
-                ...p,
-                stock: p.stock + (adjustments[p.id] || 0)
-            }));
-            setProducts(newProducts);
+        try {
+            await api.patch('/products/admin/inventory/bulk-adjust', { adjustments });
+            toast.success("Inventory reconciliation complete");
+            await fetchProducts();
             setAdjustments({});
+        } catch (error) {
+            toast.error("Reconciliation failed");
+        } finally {
             setSaving(false);
-        }, 1000);
+        }
     };
 
     const resetAdjustments = () => {
         setAdjustments({});
     };
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProducts = products.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.category.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesDept = selectedDept === 'all' || p.department?.toLowerCase() === selectedDept.toLowerCase();
+        return matchesSearch && matchesDept;
+    });
 
     const pendingCount = Object.keys(adjustments).length;
 
@@ -93,12 +110,26 @@ const StockAdjustmentPage = () => {
             </div>
 
             {/* Search Consol - High Density */}
-            <div className="bg-white p-3 rounded-none border border-black/5 shadow-sm mb-6 flex items-center gap-4 sticky top-4 z-20">
-                <div className="relative flex-1">
+            <div className="bg-white p-3 rounded-none border border-black/5 shadow-sm mb-6 flex flex-col md:flex-row items-center gap-4 sticky top-4 z-20">
+                <div className="flex bg-gray-50 p-0.5 rounded-none w-full md:w-auto border border-black/5">
+                    {['all', 'jewellery', 'tools', 'machines'].map((dept) => (
+                        <button
+                            key={dept}
+                            onClick={() => setSelectedDept(dept)}
+                            className={`px-4 py-1.5 rounded-none text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all flex-1 md:flex-none ${selectedDept === dept
+                                ? 'bg-white text-footerBg shadow-sm border border-black/5'
+                                : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                        >
+                            {dept}
+                        </button>
+                    ))}
+                </div>
+                <div className="relative flex-1 w-full">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                     <input
                         type="text"
-                        placeholder="SEARCH PRODUCT REGISTRY..."
+                        placeholder="SEARCH PRODUCT REGISTRY (NAME OR CATEGORY)..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 bg-gray-50 rounded-none border border-transparent text-[9px] font-black uppercase tracking-widest text-footerBg outline-none focus:bg-white focus:border-black/10 transition-all placeholder:text-gray-400"
@@ -119,9 +150,9 @@ const StockAdjustmentPage = () => {
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-black/5">
                                 <th className="px-6 py-5 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px] w-[50%]">Inventory Asset</th>
-                                <th className="px-6 py-5 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px] text-center">Current Base</th>
-                                <th className="px-6 py-5 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px] text-center">Deviation</th>
-                                <th className="px-6 py-5 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px] text-right">Projected Level</th>
+                                <th className="px-6 py-5 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px] text-center">Available Stock</th>
+                                <th className="px-6 py-5 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px] text-center">Adjustment (+/-)</th>
+                                <th className="px-6 py-5 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px] text-right">Final Stock</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/5">
@@ -153,9 +184,12 @@ const StockAdjustmentPage = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className={`text-2xl font-serif font-black ${product.stock === 0 ? 'text-red-500' : 'text-footerBg'}`}>
-                                                    {product.stock.toString().padStart(2, '0')}
-                                                </span>
+                                                <div className="flex flex-col items-center">
+                                                    <span className={`text-2xl font-serif font-black ${product.stock === 0 ? 'text-red-500' : 'text-footerBg'}`}>
+                                                        {product.stock.toString().padStart(2, '0')}
+                                                    </span>
+                                                    <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{product.unit}</span>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <div className="inline-flex items-center justify-center relative group-adjustment">
@@ -180,6 +214,7 @@ const StockAdjustmentPage = () => {
                                                         finalStock !== product.stock ? 'text-primary' : 'text-footerBg'
                                                         }`}>
                                                         {finalStock.toString().padStart(2, '0')}
+                                                        <span className="text-[8px] ml-1 opacity-50">{product.unit}</span>
                                                     </span>
                                                     {isModified && (
                                                         <span className="text-[9px] font-black text-white bg-primary px-1.5 py-0.5 rounded-none uppercase tracking-tighter">FINAL</span>
@@ -219,7 +254,7 @@ const StockAdjustmentPage = () => {
                             disabled={saving}
                             className="px-6 py-2 bg-black text-white rounded-none text-[10px] font-black uppercase tracking-widest shadow-xl shadow-black/20 hover:bg-primary transition-all flex items-center gap-3 group"
                         >
-                            <span>{saving ? 'RECOGNIZING...' : 'COMMIT RECONCILIATION'}</span> 
+                            <span>{saving ? 'RECOGNIZING...' : 'COMMIT RECONCILIATION'}</span>
                             <CheckCircle2 size={16} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
                         </button>
                     </div>

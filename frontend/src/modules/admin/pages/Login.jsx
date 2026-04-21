@@ -4,31 +4,31 @@ import { Mail, Lock, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import loginBg from '../assets/admin-login-bg.png';
 import logoName from '../../user/assets/logo_final.jpg';
+import { useAuth } from '../../../context/AuthContext';
 
 const AdminLogin = () => {
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        setTimeout(() => {
-            if (email === 'admin@hgenterprises.com' && password === 'admin123') {
-                const adminUser = { id: 'admin_hg', name: 'HG Admin', email, role: 'admin' };
-                localStorage.setItem('adminAuth', 'true');
-                localStorage.setItem('hg_current_user', JSON.stringify(adminUser));
-                navigate('/admin');
-            } else {
-                setError('Invalid credentials');
-                setLoading(false);
-            }
-        }, 1200);
+        const result = await login(email, password);
+        if (result.success) {
+            localStorage.setItem('adminAuth', 'true'); // Keep this for the current fake AdminProtectedRoute
+            navigate('/admin');
+        } else {
+            setError(result.message || 'Invalid credentials');
+            setLoading(false);
+        }
     };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center p-6 font-sans relative overflow-hidden bg-black">
@@ -45,12 +45,12 @@ const AdminLogin = () => {
                     filter: 'grayscale(10%) brightness(50%)'
                 }}
             />
-            
+
             {/* Design Gradients */}
             <div className="absolute inset-0 z-10 bg-gradient-to-tr from-black via-black/40 to-transparent" />
             <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
 
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -78,10 +78,10 @@ const AdminLogin = () => {
                     {/* Progress Bar for Loading */}
                     <AnimatePresence>
                         {loading && (
-                            <motion.div 
-                                initial={{ width: 0 }} 
-                                animate={{ width: '100%' }} 
-                                className="absolute top-0 left-0 h-1 bg-primary/40 z-30" 
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: '100%' }}
+                                className="absolute top-0 left-0 h-1 bg-primary/40 z-30"
                             />
                         )}
                     </AnimatePresence>
@@ -96,7 +96,7 @@ const AdminLogin = () => {
                     <form onSubmit={handleLogin} className="space-y-4">
                         <AnimatePresence mode="wait">
                             {error && (
-                                <motion.div 
+                                <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
@@ -146,7 +146,7 @@ const AdminLogin = () => {
                             <span className="relative z-10">{loading ? 'Verifying...' : 'Access Portal'}</span>
                             {!loading && <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform relative z-10" />}
                         </button>
-                        
+
                         <div className="pt-2 text-center">
                             <div className="bg-[#FCFAF8] p-3 rounded-2xl border border-[#EEE6DE] inline-block w-full">
                                 <p className="text-[8px] text-gray-400 uppercase tracking-widest mb-1 font-bold">Encrypted Credentials</p>
@@ -159,7 +159,7 @@ const AdminLogin = () => {
                 </div>
 
                 {/* Footer Credits */}
-                <motion.p 
+                <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1 }}

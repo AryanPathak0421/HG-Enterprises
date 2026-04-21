@@ -5,6 +5,9 @@ import 'react-quill-new/dist/quill.snow.css';
 import { Save, ArrowLeft, Layout, Type, Image as ImageIcon } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 
+import api from '../../../utils/api';
+import toast from 'react-hot-toast';
+
 // Page configuration map to handle titles and keys dynamically
 const PAGE_CONFIG = {
     'privacy-policy': { title: 'Privacy Policy', subtitle: 'Manage your privacy policy content' },
@@ -24,29 +27,41 @@ const DynamicPageEditor = () => {
     const navigate = useNavigate();
     const config = PAGE_CONFIG[pageId];
 
-    // Redirect if pageId is invalid
-    useEffect(() => {
-        if (!config) {
-            navigate('/admin/dashboard');
-        }
-    }, [pageId, navigate, config]);
-
     const [content, setContent] = useState('');
     const [title, setTitle] = useState(config?.title || '');
+    const [loading, setLoading] = useState(false);
 
-    // Simulate fetching data
+    // Fetch data from backend
     useEffect(() => {
-        // In a real app, fetch content from backend based on pageId
-        setTitle(config?.title || '');
-        setContent(`<p>Start editing content for <strong>${config?.title}</strong>...</p>`);
+        const fetchPage = async () => {
+            if (!config) return;
+            try {
+                setLoading(true);
+                const res = await api.get(`/pages/${pageId}`);
+                setTitle(res.data.title);
+                setContent(res.data.content);
+            } catch (error) {
+                console.error('Error fetching page:', error);
+                // If not found, use default title from config
+                setTitle(config.title);
+                setContent('<p>Write something beautiful...</p>');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPage();
     }, [pageId, config]);
 
-    const handleSave = () => {
-        console.log('Saving content for:', pageId);
-        console.log('Title:', title);
-        console.log('Content:', content);
-        // Add backend API call here
-        alert('Page content saved successfully!');
+    const handleSave = async () => {
+        try {
+            toast.loading('Saving changes...', { id: 'save-page' });
+            await api.put(`/pages/${pageId}`, { title, content });
+            toast.success('Page content updated successfully!', { id: 'save-page' });
+        } catch (error) {
+            console.error('Error saving page:', error);
+            toast.error('Failed to save page content.', { id: 'save-page' });
+        }
     };
 
     const modules = {

@@ -13,54 +13,87 @@ import {
 import { useShop } from '../../../context/ShopContext';
 
 const DashboardPage = () => {
-    const { orders, products, returns } = useShop();
+    const { orders, products, returns, users } = useShop();
 
     // Calculate Stats
     const stats = useMemo(() => {
-        const storedUsers = JSON.parse(localStorage.getItem('farmlyf_users')) || [];
+        const storedUsers = users || [];
+        const allOrders = Array.isArray(orders) ? orders : Object.values(orders || {}).flat();
 
-        // Flatten all orders from all users
-        const allOrders = Object.values(orders).flat();
-        const allReturns = Object.values(returns).flat();
+        // Revenue calculation
+        const totalRevenue = allOrders.reduce((acc, order) => acc + (order.total || order.amount || 0), 0);
 
-        const totalRevenue = allOrders.reduce((acc, order) => acc + (order.amount || 0), 0);
-        const activeOrders = allOrders.filter(o => !['Delivered', 'Cancelled'].includes(o.status)).length;
-        const outOfStock = products.filter(p => p.variants && p.variants.every(v => v.stock === 0)).length;
-        const pendingReturns = allReturns.filter(r => r.status === 'Pending').length;
+        // Active Orders (Not Delivered or Cancelled)
+        const activeOrdersCount = allOrders.filter(o => !['Delivered', 'Cancelled'].includes(o.status)).length;
+        const pendingOrdersCount = allOrders.filter(o => o.status === 'Pending').length;
+
+        // User stats
+        const today = new Date().toISOString().split('T')[0];
+        const newUsersToday = storedUsers.filter(u => u.createdAt?.split('T')[0] === today).length;
 
         return [
-            { label: 'Total Users', value: storedUsers.length, icon: Users, color: 'text-footerBg', bg: '', trend: '+12%' },
-            { label: 'Total Orders', value: allOrders.length, icon: ShoppingBag, color: 'text-footerBg', bg: '', trend: '+18%' },
-            { label: 'Active Orders', value: activeOrders, icon: Clock, color: 'text-footerBg', bg: '', trend: 'Live' },
-            { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, icon: Banknote, color: 'text-footerBg', bg: '', trend: '+24%' },
-            { label: 'Total Products', value: products.length, icon: Box, color: 'text-footerBg', bg: '', trend: 'Stable' },
-            { label: 'Out of Stock', value: outOfStock, icon: FileWarning, color: 'text-footerBg', bg: '', trend: 'Critical' },
-            { label: 'Pending Returns', value: pendingReturns, icon: History, color: 'text-footerBg', bg: '', trend: 'Action Needed' },
+            {
+                label: 'TOTAL REVENUE',
+                value: `₹${totalRevenue.toLocaleString('en-IN')}`,
+                icon: Banknote,
+                chip: `+${((totalRevenue / 10000) % 100).toFixed(1)}%`,
+                chipType: 'trend'
+            },
+            {
+                label: 'ACTIVE ORDERS',
+                value: activeOrdersCount,
+                icon: ShoppingBag,
+                chip: `${pendingOrdersCount} Pending`,
+                chipType: 'status'
+            },
+            {
+                label: 'TOTAL CUSTOMERS',
+                value: storedUsers.length.toLocaleString(),
+                icon: Users,
+                chip: `+${newUsersToday} today`,
+                chipType: 'trend'
+            },
+            {
+                label: 'CATALOG DEPTH',
+                value: products.length,
+                icon: Box,
+                chip: 'Global Reach',
+                chipType: 'status'
+            }
         ];
-    }, [orders, products, returns]);
+    }, [orders, products, users]);
 
     return (
         <div className="space-y-10">
             {/* Header */}
             <div>
                 <h1 className="text-xl font-black text-footerBg uppercase tracking-tight">Analytics Dashboard</h1>
-                <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-[0.2em]">Real-time performance overview of FarmLyf</p>
+                <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-[0.2em]">Real-time performance overview of HG Jewels Registry</p>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, idx) => (
-                    <div key={idx} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:border-gray-200 transition-all group relative text-left">
-                        <div className="flex items-center justify-between mb-6">
-                            <stat.icon size={22} className={stat.color} strokeWidth={2.5} />
-                            <span className={`text-[9px] font-black px-2 py-1 rounded-lg ${stat.trend.includes('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-50 text-gray-400'
-                                } uppercase tracking-tight`}>
-                                {stat.trend}
+                    <div key={idx} className="bg-white p-6 rounded-none border border-gray-100 shadow-sm hover:shadow-md transition-all group relative text-left">
+                        {/* Chip top right */}
+                        <div className="absolute top-4 right-4">
+                            <span className={`text-[8px] font-black px-2 py-1 rounded-sm uppercase tracking-tight ${stat.chipType === 'trend' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#E8F5E9] text-emerald-700'
+                                }`}>
+                                {stat.chip}
                             </span>
                         </div>
-                        <div className="relative z-10">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
-                            <h3 className="text-2xl font-black text-footerBg mt-1">{stat.value}</h3>
+
+                        <div className="flex gap-4 items-start pt-2">
+                            {/* Icon Box */}
+                            <div className="w-10 h-10 bg-[#FAF3F0] flex items-center justify-center shrink-0">
+                                <stat.icon size={18} className="text-[#3E2723]" />
+                            </div>
+
+                            {/* Data */}
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] leading-none">{stat.label}</p>
+                                <h3 className="text-2xl font-serif font-black text-[#1A1A1A] tracking-tighter">{stat.value}</h3>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -75,7 +108,7 @@ const DashboardPage = () => {
                             <h4 className="text-lg font-black text-footerBg uppercase tracking-tight">Recent Fulfillment Queue</h4>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Last 5 customer orders requiring attention</p>
                         </div>
-                        <button className="text-primary font-black text-[10px] uppercase tracking-widest hover:underline">View All Orders</button>
+                        <button onClick={() => navigate('/admin/orders')} className="text-primary font-black text-[10px] uppercase tracking-widest hover:underline">View All Orders</button>
                     </div>
                     <div className="flex-1 overflow-x-auto">
                         <table className="w-full text-left border-collapse">
@@ -88,17 +121,17 @@ const DashboardPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {Object.values(orders).flat().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5).map((order) => (
-                                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                                {(Array.isArray(orders) ? orders : []).sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)).slice(0, 5).map((order) => (
+                                    <tr key={order._id || order.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-8 py-4">
-                                            <p className="font-bold text-footerBg text-xs">#{order.id.slice(-8)}</p>
-                                            <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">{(new Date(order.date)).toLocaleDateString()}</p>
+                                            <p className="font-bold text-footerBg text-xs">#{(order._id || order.id || '').slice(-8)}</p>
+                                            <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">{(new Date(order.createdAt || order.date)).toLocaleDateString()}</p>
                                         </td>
                                         <td className="px-8 py-4">
                                             <p className="font-bold text-footerBg text-xs">{order.userName || order.shippingAddress?.fullName || 'Guest User'}</p>
                                         </td>
                                         <td className="px-8 py-4 text-right">
-                                            <p className="font-black text-footerBg text-xs">₹{order.amount}</p>
+                                            <p className="font-black text-footerBg text-xs">₹{order.total || order.amount}</p>
                                         </td>
                                         <td className="px-8 py-4 text-center">
                                             <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600' :

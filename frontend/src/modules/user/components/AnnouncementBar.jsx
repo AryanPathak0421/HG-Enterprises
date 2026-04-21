@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Truck, ShieldCheck, RefreshCw, Headset, Tag, Gift, Star, Bell, Zap, Shield } from 'lucide-react';
+import { useShop } from '../../../context/ShopContext';
+
+
 
 const iconMap = {
     'Truck': Truck,
@@ -15,6 +18,7 @@ const iconMap = {
 };
 
 const AnnouncementBar = () => {
+    const { settings } = useShop();
     const [announcements, setAnnouncements] = useState([
         { icon: 'Truck', text: "Free Shipping" },
         { icon: 'Shield', text: "Secure Payments" },
@@ -22,25 +26,13 @@ const AnnouncementBar = () => {
         { icon: 'Headset', text: "Dedicated Support Team" }
     ]);
 
-    useEffect(() => {
-        const loadSettings = () => {
-            try {
-                const saved = localStorage.getItem('siteSettings');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.announcementItems && parsed.announcementItems.length > 0) {
-                        setAnnouncements(parsed.announcementItems);
-                    }
-                }
-            } catch (error) {
-                console.error("Error parsing siteSettings from localStorage:", error);
-            }
-        };
 
-        loadSettings();
-        window.addEventListener('storage', loadSettings);
-        return () => window.removeEventListener('storage', loadSettings);
-    }, []);
+    useEffect(() => {
+        if (settings?.announcementItems && settings.announcementItems.length > 0) {
+            setAnnouncements(settings.announcementItems);
+        }
+    }, [settings]);
+
 
     return (
         <div className="bg-[#1F1F1F] text-[#F7F2EF] overflow-hidden py-2 relative z-[60]">
@@ -51,12 +43,12 @@ const AnnouncementBar = () => {
                             return (
                                 <div key={idx} className="flex items-center gap-2">
                                     {item.type === 'image' && item.image ? (
-                                        <img 
-                                            src={item.image} 
-                                            alt={item.text || "Announcement icon"} 
-                                            width={20} 
-                                            height={20} 
-                                            className="w-5 h-5 object-contain" 
+                                        <img
+                                            src={item.image}
+                                            alt={item.text || "Announcement icon"}
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5 object-contain"
                                         />
                                     ) : (
                                         (() => {

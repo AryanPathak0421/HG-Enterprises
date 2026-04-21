@@ -7,39 +7,12 @@ import {
 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import AdminStatsCard from '../components/AdminStatsCard';
+import api from '../../../utils/api';
+import toast from 'react-hot-toast';
 
 const FAQManagement = () => {
-    const [faqs, setFaqs] = useState([
-        {
-            id: 1,
-            category: 'Orders',
-            question: 'How can I track my order?',
-            answer: 'You can track your order by visiting the "My Orders" section in your profile or by using the tracking link sent to your email.',
-            status: 'Active'
-        },
-        {
-            id: 2,
-            category: 'Returns',
-            question: 'What is your return policy?',
-            answer: 'We offer a 7-day easy return policy for most items. The product must be unused and in its original packaging.',
-            status: 'Active'
-        },
-        {
-            id: 3,
-            category: 'Payments',
-            question: 'What payment methods do you accept?',
-            answer: 'We accept all major credit/debit cards, UPI, Wallets, and Net Banking. Cash on Delivery is also available for selected locations.',
-            status: 'Active'
-        },
-        {
-            id: 4,
-            category: 'Shopping',
-            question: 'Are your silver ornaments hallmarked?',
-            answer: 'Yes, all our 925 Silver ornaments are hallmarked and come with an authenticity certificate.',
-            status: 'Active'
-        }
-    ]);
-
+    const [faqs, setFaqs] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingFaq, setEditingFaq] = useState(null);
     const [formData, setFormData] = useState({
@@ -54,10 +27,32 @@ const FAQManagement = () => {
 
     const categories = ['Orders', 'Returns', 'Payments', 'Shopping', 'General'];
 
+    const fetchFaqs = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/faqs');
+            setFaqs(res.data);
+        } catch (error) {
+            console.error('Failed to fetch FAQs:', error);
+            toast.error('Failed to load help center registry');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchFaqs();
+    }, []);
+
     const handleOpenModal = (faq = null) => {
         if (faq) {
             setEditingFaq(faq);
-            setFormData(faq);
+            setFormData({
+                category: faq.category,
+                question: faq.question,
+                answer: faq.answer,
+                status: faq.status
+            });
         } else {
             setEditingFaq(null);
             setFormData({
@@ -70,19 +65,34 @@ const FAQManagement = () => {
         setIsModalOpen(true);
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        if (editingFaq) {
-            setFaqs(faqs.map(f => f.id === editingFaq.id ? { ...formData, id: f.id } : f));
-        } else {
-            setFaqs([...faqs, { ...formData, id: Date.now() }]);
+        try {
+            if (editingFaq) {
+                await api.put(`/faqs/${editingFaq._id || editingFaq.id}`, formData);
+                toast.success('Protocol updated successfully');
+            } else {
+                await api.post('/faqs', formData);
+                toast.success('New registry committed');
+            }
+            fetchFaqs();
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error('Failed to save FAQ:', error);
+            toast.error('Failed to commit protocol');
         }
-        setIsModalOpen(false);
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this FAQ?')) {
-            setFaqs(faqs.filter(f => f.id !== id));
+            try {
+                await api.delete(`/faqs/${id}`);
+                toast.success('Registry deleted');
+                fetchFaqs();
+            } catch (error) {
+                console.error('Failed to delete FAQ:', error);
+                toast.error('Deletion protocol failed');
+            }
         }
     };
 

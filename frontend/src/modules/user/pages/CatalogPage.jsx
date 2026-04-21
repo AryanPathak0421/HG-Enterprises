@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
@@ -13,7 +12,6 @@ import {
     ChevronDown,
     Sparkles
 } from 'lucide-react';
-import { PRODUCTS as productsData, PACKS as packsData } from '../../../mockData/data'; // Import grouped products with variants
 import ProductCard from '../components/ProductCard';
 
 const categoriesData = [
@@ -43,6 +41,7 @@ const CatalogPage = () => {
     const navigate = useNavigate();
     const { category } = useParams();
     const { user } = useAuth();
+    const { products } = useShop();
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedSubcategory, setSelectedSubcategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -75,7 +74,7 @@ const CatalogPage = () => {
     }, [category]);
 
     const filteredProducts = useMemo(() => {
-        const allItems = [...productsData, ...packsData];
+        const allItems = [...products];
         return allItems.filter(product => {
             const catIdMap = {
                 'Nuts': 'nuts',

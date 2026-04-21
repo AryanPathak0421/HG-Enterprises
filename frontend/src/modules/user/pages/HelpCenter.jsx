@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, HelpCircle, ShoppingBag, Truck, CreditCard, RefreshCw, MessageCircle, ChevronRight, Phone, Mail, Clock, Send, Ticket, ArrowLeft, MapPin } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
+import { useAuth } from '../../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../../../utils/api';
 
 const SupportForm = ({ onCancel, initialOrder = '' }) => {
-    const { createTicket, user } = useShop();
+    const { createTicket } = useShop();
+    const { user } = useAuth();
     const [formData, setFormData] = useState({
         subject: '',
         orderId: initialOrder,
@@ -50,7 +53,7 @@ const SupportForm = ({ onCancel, initialOrder = '' }) => {
                     </div>
                 </div>
                 <div>
-                        <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-2">Category</label>
+                    <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-2">Category</label>
                     <select
                         value={formData.category}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -64,7 +67,7 @@ const SupportForm = ({ onCancel, initialOrder = '' }) => {
                     </select>
                 </div>
                 <div>
-                        <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-2">Detailed Message</label>
+                    <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-2">Detailed Message</label>
                     <textarea
                         required
                         rows="4"
@@ -96,23 +99,45 @@ const SupportForm = ({ onCancel, initialOrder = '' }) => {
 };
 
 const HelpCenter = () => {
-    const { user, orders, showNotification } = useShop();
+    const [faqs, setFaqs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
+    const { orders, showNotification } = useShop();
     const navigate = useNavigate();
+
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
-    const [view, setView] = useState('home'); 
+    const [view, setView] = useState('home');
     const [prefilledOrder, setPrefilledOrder] = useState('');
+
+    const fetchFaqs = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/faqs');
+            // Support only active FAQs for users
+            setFaqs(res.data.filter(f => f.status === 'Active'));
+        } catch (error) {
+            console.error('Failed to fetch FAQs:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Smooth scroll to top when view changes (FAQ vs Support Form)
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [view]);
 
+    useEffect(() => {
+        fetchFaqs();
+    }, []);
+
     // Handle incoming navigation with order context (from Order Details page)
     useEffect(() => {
         const stateData = window.history.state?.usr;
         if (stateData?.orderId) {
-            setPrefilledOrder(stateData.orderId.split('-')[1] || stateData.orderId);
+            const oid = stateData.orderId;
+            setPrefilledOrder(oid.includes('-') ? oid.split('-')[1] : oid);
             setView('contact');
         }
     }, []);
@@ -124,41 +149,18 @@ const HelpCenter = () => {
         { id: 'shopping', icon: <Truck className="w-6 h-6" />, title: 'Shopping', description: 'Product info, stock, and sizing' },
     ];
 
-    const faqs = [
-        {
-            category: 'orders',
-            question: 'How can I track my order?',
-            answer: 'You can track your order by visiting the "My Orders" section in your profile or by using the tracking link sent to your email.'
-        },
-        {
-            category: 'returns',
-            question: 'What is your return policy?',
-            answer: 'We offer a 7-day easy return policy for most items. The product must be unused and in its original packaging.'
-        },
-        {
-            category: 'payments',
-            question: 'What payment methods do you accept?',
-            answer: 'We accept all major credit/debit cards, UPI, Wallets, and Net Banking. Cash on Delivery is also available for selected locations.'
-        },
-        {
-            category: 'shopping',
-            question: 'Are your silver ornaments hallmarked?',
-            answer: 'Yes, all our 925 Silver ornaments are hallmarked and come with an authenticity certificate.'
-        }
-    ];
-
     const filteredFaqs = searchQuery
         ? faqs.filter(f => f.question.toLowerCase().includes(searchQuery.toLowerCase()))
         : activeCategory === 'all'
             ? faqs
-            : faqs.filter(f => f.category === activeCategory);
+            : faqs.filter(f => f.category.toLowerCase() === activeCategory.toLowerCase());
 
     const handleNeedHelpWithOrder = (orderId) => {
         if (!user) {
             showNotification("Please login to create a support ticket.");
             return;
         }
-        setPrefilledOrder(orderId.split('-')[1]);
+        setPrefilledOrder(orderId.includes('-') ? orderId.split('-')[1] : orderId);
         setView('contact');
     };
 
@@ -217,7 +219,7 @@ const HelpCenter = () => {
                             </div>
                             <h3 className="text-base md:text-lg font-normal font-serif tracking-tight mb-2 group-hover:text-[#8B4356] transition-colors">{cat.title}</h3>
                             <p className={`text-[11px] md:text-xs leading-relaxed hidden md:block font-serif ${activeCategory === cat.id && view === 'home' ? 'text-gray-300' : 'text-gray-500'}`}>{cat.description}</p>
-                            
+
                             {/* Status Accent */}
                             {activeCategory === cat.id && view === 'home' && (
                                 <div className="absolute top-6 right-6 w-2 h-2 bg-[#8B4356] rounded-full animate-pulse"></div>
@@ -240,7 +242,7 @@ const HelpCenter = () => {
                                         <button onClick={() => setActiveCategory('all')} className="text-[#8B4356] text-[10px] font-bold uppercase tracking-widest hover:text-black transition-colors underline pb-1">Reset</button>
                                     )}
                                 </div>
-                                
+
                                 <div className="space-y-4 md:space-y-5">
                                     {filteredFaqs.length > 0 ? (
                                         filteredFaqs.map((faq, idx) => (
@@ -289,7 +291,7 @@ const HelpCenter = () => {
                                     <span className="italic text-[#8B4356]">assistance?</span>
                                 </h3>
                                 <p className="text-zinc-400 mb-10 text-xs md:text-sm leading-relaxed font-serif">Our concierge is available daily to ensure your Harshad Gauri experience is essentially flawless.</p>
-                                
+
                                 <div className="space-y-8">
                                     <button
                                         onClick={() => {
@@ -301,7 +303,7 @@ const HelpCenter = () => {
                                         <MessageCircle className="w-5 h-5" />
                                         Contact Support
                                     </button>
-                                    
+
                                     <div className="pt-2 space-y-6">
                                         <div className="flex items-center gap-4 group/item">
                                             <div className="w-11 h-11 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover/item:border-[#8B4356]/40 group-hover/item:bg-[#8B4356]/10 transition-all duration-500">
@@ -324,7 +326,7 @@ const HelpCenter = () => {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {/* Decorative Shard */}
                             <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-[#8B4356]/5 rounded-full blur-[70px] pointer-events-none"></div>
                         </div>
@@ -337,23 +339,27 @@ const HelpCenter = () => {
                                     Recent Orders
                                 </h3>
                                 <div className="space-y-5 relative z-10">
-                                    {orders.slice(0, 2).map((order) => (
-                                        <div
-                                            key={order.id}
-                                            onClick={() => handleNeedHelpWithOrder(order.id)}
-                                            className="p-4 rounded-2xl bg-white border border-gray-100 group/order cursor-pointer hover:border-[#8B4356] hover:shadow-lg transition-all"
-                                        >
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">#{order.id.split('-')[1]}</span>
-                                                <span className="text-[10px] font-bold text-[#8B4356] opacity-60 italic">{new Date(order.date).toLocaleDateString()}</span>
+                                    {orders.slice(0, 2).map((order) => {
+                                        const oid = order.orderId || order._id || order.id || '';
+                                        const displayId = oid.includes('-') ? oid.split('-')[1] : oid.slice(-8);
+                                        return (
+                                            <div
+                                                key={oid}
+                                                onClick={() => handleNeedHelpWithOrder(oid)}
+                                                className="p-4 rounded-2xl bg-white border border-gray-100 group/order cursor-pointer hover:border-[#8B4356] hover:shadow-lg transition-all"
+                                            >
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">#{displayId}</span>
+                                                    <span className="text-[10px] font-bold text-[#8B4356] opacity-60 italic">{new Date(order.date || order.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <p className="text-xs text-gray-800 font-medium line-clamp-1 mb-3">{order.items[0]?.name || 'Unknown Product'}</p>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#8B4356] flex items-center gap-2 group-hover/order:translate-x-1 transition-transform">
+                                                    Raise Ticket
+                                                    <ChevronRight className="w-3 h-3" />
+                                                </span>
                                             </div>
-                                            <p className="text-xs text-gray-800 font-medium line-clamp-1 mb-3">{order.items[0].name}</p>
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#8B4356] flex items-center gap-2 group-hover/order:translate-x-1 transition-transform">
-                                                Raise Ticket
-                                                <ChevronRight className="w-3 h-3" />
-                                            </span>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                                 <Link to="/profile/orders" className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-8 block text-center hover:text-black hover:tracking-[0.3em] transition-all">Archive Insight</Link>
                             </div>

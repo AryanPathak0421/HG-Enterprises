@@ -1,47 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Image as ImageIcon, Plus, Trash2, Eye, EyeOff,
     Calendar, Link as LinkIcon, Edit3,
     Bell, Send, Layout, Move, ChevronRight, X, ExternalLink,
-    MousePointer2, Sparkles, Monitor, ArrowRight
+    MousePointer2, Sparkles, Monitor, ArrowRight, Upload, Loader2
 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../../../utils/api';
+import { useShop } from '../../../context/ShopContext';
+
 
 const BannerManagement = () => {
-    // Mock Banners Data matching the Home.jsx heroSlides structure
-    const [banners, setBanners] = useState([
-        {
-            id: 'BN-001',
-            badge: 'Daily Essentials',
-            title: 'Minimalist Grace Every Day',
-            description: 'Statement pieces designed for your everyday lifestyle.',
-            btnText: 'Explore Now',
-            link: '/shop',
-            image: 'https://images.unsplash.com/photo-1626784215021-2e39ccf971cd?auto=format&fit=crop&w=1600&q=80',
-            cardImage: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=200',
-            status: 'Active',
-            startDate: 'Dec 01, 2024',
-            endDate: 'Jan 31, 2025',
-            secondaryTitle: 'Exquisite Details',
-            secondaryLink: '/collections/minimalist'
-        },
-        {
-            id: 'BN-002',
-            badge: 'Wedding Specials',
-            title: 'Bridal Elegance Redefined',
-            description: 'Timeless silver pieces for your most special moments.',
-            btnText: 'Shop Bridal',
-            link: '/category/rings',
-            image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=1600&q=80',
-            cardImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=200',
-            status: 'Active',
-            startDate: 'Dec 20, 2024',
-            endDate: 'Feb 28, 2025',
-            secondaryTitle: 'Bridal Sets',
-            secondaryLink: '/collections/bridal'
+    const { showNotification } = useShop();
+    const [banners, setBanners] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState({ image: false, cardImage: false });
+
+    useEffect(() => {
+        fetchBanners();
+    }, []);
+
+    const fetchBanners = async () => {
+        try {
+            const res = await api.get('/banners/all');
+            setBanners(res.data);
+        } catch (error) {
+            console.error("Error fetching banners:", error);
+            showNotification("Failed to load banners.");
+        } finally {
+            setLoading(false);
         }
-    ]);
+    };
+
 
     const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
     const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
@@ -88,36 +79,76 @@ const BannerManagement = () => {
     };
 
     const openEditModal = (banner) => {
-        setEditingBanner(banner.id);
+        setEditingBanner(banner._id);
         setFormData(banner);
         setIsBannerModalOpen(true);
     };
 
-    const handleSaveBanner = (e) => {
+    const handleFileUpload = async (e, type) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(prev => ({ ...prev, [type]: true }));
+        const formDataUpload = new FormData();
+        formDataUpload.append('image', file);
+
+        try {
+            const res = await api.post('/banners/upload', formDataUpload, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setFormData(prev => ({ ...prev, [type]: res.data.imageUrl }));
+            showNotification(`${type === 'image' ? 'Background' : 'Spotlight'} image uploaded!`);
+        } catch (error) {
+            console.error("Upload error:", error);
+            showNotification("Upload failed.");
+        } finally {
+            setUploading(prev => ({ ...prev, [type]: false }));
+        }
+    };
+
+    const handleSaveBanner = async (e) => {
         e.preventDefault();
-        if (editingBanner) {
-            setBanners(banners.map(b => b.id === editingBanner ? { ...formData, id: b.id } : b));
-        } else {
-            const newBanner = {
-                ...formData,
-                id: `BN-${Math.floor(100 + Math.random() * 900)}`
-            };
-            setBanners([newBanner, ...banners]);
+        try {
+            if (editingBanner) {
+                const res = await api.put(`/banners/${editingBanner}`, formData);
+                setBanners(banners.map(b => b._id === editingBanner ? res.data : b));
+                showNotification("Banner updated successfully!");
+            } else {
+                const res = await api.post('/banners', formData);
+                setBanners([res.data, ...banners]);
+                showNotification("Banner created successfully!");
+            }
+            setIsBannerModalOpen(false);
+        } catch (error) {
+            console.error("Error saving banner:", error);
+            showNotification("Failed to save banner.");
         }
-        setIsBannerModalOpen(false);
     };
 
-    const toggleBannerStatus = (id) => {
-        setBanners(banners.map(b =>
-            b.id === id ? { ...b, status: b.status === 'Active' ? 'Inactive' : 'Active' } : b
-        ));
+
+    const toggleBannerStatus = async (id, currentStatus) => {
+        try {
+            const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+            const res = await api.put(`/banners/${id}`, { status: newStatus });
+            setBanners(banners.map(b => b._id === id ? res.data : b));
+            showNotification(`Banner ${newStatus}`);
+        } catch (error) {
+            showNotification("Failed to update status.");
+        }
     };
 
-    const deleteBanner = (id) => {
+    const handleDeleteBanner = async (id) => {
         if (window.confirm('Delete this banner from the homepage rotation?')) {
-            setBanners(banners.filter(b => b.id !== id));
+            try {
+                await api.delete(`/banners/${id}`);
+                setBanners(banners.filter(b => b._id !== id));
+                showNotification("Banner deleted.");
+            } catch (error) {
+                showNotification("Failed to delete banner.");
+            }
         }
     };
+
 
     const handleSendNotification = (e) => {
         e.preventDefault();
@@ -164,7 +195,7 @@ const BannerManagement = () => {
                                 alt={banner.title}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                            
+
                             {/* Visual Badge */}
                             <div className="absolute top-2 left-2 flex gap-1 items-center">
                                 <span className={`px-2 py-0.5 rounded-none text-[7px] font-black uppercase tracking-[0.2em] border shadow-lg ${banner.status === 'Active'
@@ -183,7 +214,7 @@ const BannerManagement = () => {
                             {/* Actions Protocol Overlay */}
                             <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                                 <button
-                                    onClick={() => toggleBannerStatus(banner.id)}
+                                    onClick={() => toggleBannerStatus(banner._id, banner.status)}
                                     className="p-1 px-2 border border-white/20 bg-black/80 backdrop-blur-md text-white hover:bg-gold hover:text-black transition-all shadow-sm active:scale-95"
                                     title={banner.status === 'Active' ? 'Deactivate' : 'Activate'}
                                 >
@@ -196,12 +227,13 @@ const BannerManagement = () => {
                                     <Edit3 size={12} />
                                 </button>
                                 <button
-                                    onClick={() => deleteBanner(banner.id)}
+                                    onClick={() => handleDeleteBanner(banner._id)}
                                     className="p-1 px-2 border border-white/20 bg-red-600/80 backdrop-blur-md text-white hover:bg-white hover:text-red-600 transition-all shadow-sm active:scale-95"
                                 >
                                     <Trash2 size={12} />
                                 </button>
                             </div>
+
 
                             {/* Content Preview Simulation Overlay */}
                             <div className="absolute bottom-3 left-3 right-10 pointer-events-none">
@@ -213,9 +245,10 @@ const BannerManagement = () => {
                         {/* Logic Data Component */}
                         <div className="p-3 flex-1 flex flex-col font-outfit">
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="text-[7px] font-black text-gray-300 uppercase tracking-widest">{banner.id}</span>
+                                <span className="text-[7px] font-black text-gray-300 uppercase tracking-widest">{banner._id}</span>
                                 <div className="h-[1px] flex-1 bg-black/5"></div>
                             </div>
+
 
                             <div className="space-y-4 flex-1">
                                 <div className="grid grid-cols-2 gap-3">
@@ -230,7 +263,7 @@ const BannerManagement = () => {
                                         <p className="text-[8px] text-blue-500 font-bold truncate tracking-tight lowercase font-serif italic">{banner.secondaryLink}</p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-black/5 mt-auto">
                                     <div className="flex items-center gap-1.5 text-[8px] text-gray-400 font-black uppercase tracking-widest bg-gray-50 px-2 py-1 border border-black/5 rounded-none italic">
                                         <Calendar size={10} className="text-gold" />
@@ -274,15 +307,22 @@ const BannerManagement = () => {
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest px-1">Visual Primary Core (Background)</label>
-                                        <input
-                                            className="w-full bg-gray-50 border border-black/5 rounded-none py-2 px-3 text-[10px] font-black uppercase tracking-widest outline-none focus:border-gold transition-all text-black placeholder:text-gray-200"
-                                            value={formData.image}
-                                            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                            placeholder="CSS/CDN URL SOURCE..."
-                                            required
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                className="flex-1 bg-gray-50 border border-black/5 rounded-none py-2 px-3 text-[10px] font-black uppercase tracking-widest outline-none focus:border-gold transition-all text-black placeholder:text-gray-200"
+                                                value={formData.image}
+                                                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                                placeholder="CSS/CDN URL SOURCE..."
+                                                required
+                                            />
+                                            <label className="shrink-0 flex items-center justify-center w-10 bg-black text-white cursor-pointer hover:bg-gold hover:text-black transition-all">
+                                                {uploading.image ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                                                <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'image')} accept="image/*" />
+                                            </label>
+                                        </div>
                                     </div>
-                                    
+
+
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
                                             <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest px-1">Nomenclature Badge</label>
@@ -347,13 +387,20 @@ const BannerManagement = () => {
                                         </h4>
                                         <div className="space-y-1">
                                             <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Spotlight Resource URL</label>
-                                            <input
-                                                className="w-full bg-white border border-black/5 rounded-none p-2 text-[9px] font-black tracking-widest outline-none focus:border-gold"
-                                                value={formData.cardImage}
-                                                onChange={(e) => setFormData({ ...formData, cardImage: e.target.value })}
-                                                placeholder="ITEM IMAGE URL..."
-                                            />
+                                            <div className="flex gap-2">
+                                                <input
+                                                    className="flex-1 bg-white border border-black/5 rounded-none p-2 text-[9px] font-black tracking-widest outline-none focus:border-gold"
+                                                    value={formData.cardImage}
+                                                    onChange={(e) => setFormData({ ...formData, cardImage: e.target.value })}
+                                                    placeholder="ITEM IMAGE URL..."
+                                                />
+                                                <label className="shrink-0 flex items-center justify-center w-8 bg-gray-200 text-gray-600 cursor-pointer hover:bg-gold hover:text-black transition-all">
+                                                    {uploading.cardImage ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                                                    <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'cardImage')} accept="image/*" />
+                                                </label>
+                                            </div>
                                         </div>
+
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1">
                                                 <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Spotlight Nomenclature</label>

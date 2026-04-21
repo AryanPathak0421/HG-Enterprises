@@ -2,32 +2,44 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, Shield, ArrowRight, Sparkles } from 'lucide-react';
 import hgLogo from '../../user/assets/logo_final.jpg';
+import { useAuth } from '../../../context/AuthContext';
 
 const AdminLogin = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Mock Admin Credentials
-    const MOCK_ADMIN_EMAIL = 'admin@hgenterprises.com';
-    const MOCK_ADMIN_PASSWORD = 'admin123';
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(''); 
+        setError('');
         setLoading(true);
 
-        setTimeout(() => {
-            if (email === MOCK_ADMIN_EMAIL && password === MOCK_ADMIN_PASSWORD) {
-                localStorage.setItem('isAdminLoggedIn', 'true');
-                navigate('/admin');
+        try {
+            const res = await login(email, password);
+            if (res.success) {
+                // Verify if real admin
+                const token = localStorage.getItem('hg_token');
+                if (token) {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    if (payload.role === 'admin') {
+                        localStorage.setItem('isAdminLoggedIn', 'true');
+                        navigate('/admin');
+                    } else {
+                        setError('ACCESS DENIED: INSUFFICIENT PERMISSIONS');
+                        setLoading(false);
+                    }
+                }
             } else {
-                setError('AUTHENTICATION FAILURE: INVALID CREDENTIALS');
+                setError(res.message.toUpperCase());
                 setLoading(false);
             }
-        }, 1200);
+        } catch (err) {
+            setError('CRITICAL: CONNECTION UNSTABLE');
+            setLoading(false);
+        }
     };
 
     return (
@@ -43,9 +55,9 @@ const AdminLogin = () => {
                 <div className="bg-white rounded-none shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden border border-white/10">
                     {/* Editorial Header */}
                     <div className="bg-black p-8 text-center relative border-b border-white/5">
-                        <img 
-                            src={hgLogo} 
-                            alt="HG" 
+                        <img
+                            src={hgLogo}
+                            alt="HG"
                             className="h-12 w-auto mx-auto mb-6 object-contain mix-blend-screen grayscale brightness-200"
                         />
                         <div className="flex items-center justify-center gap-2 mb-2">

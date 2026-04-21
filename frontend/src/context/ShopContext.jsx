@@ -1,118 +1,249 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Check } from 'lucide-react';
-import { PRODUCTS as initialProducts, COUPONS as initialCoupons } from '../mockData/data';
+import api from '../utils/api';
+import { useAuth } from './AuthContext';
 
 const ShopContext = createContext();
 
 export const ShopProvider = ({ children }) => {
-    // Initialize from LocalStorage if available
+    const { user } = useAuth();
+
+    // Products and Data State
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [packs, setPacks] = useState([]);
+    const [coupons, setCoupons] = useState([]);
+    const [banners, setBanners] = useState([]);
+    const [settings, setSettings] = useState(null);
+    const [homepageSections, setHomepageSections] = useState({});
+    const [users, setUsers] = useState([]);
+    const [returns, setReturns] = useState([]);
+    const [userReviews, setUserReviews] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+
+
+    // Persisted Locally (Cart/Wishlist)
     const [cart, setCart] = useState(() => {
-        try {
-            const saved = localStorage.getItem('cart');
-            const parsed = saved ? JSON.parse(saved) : null;
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-            console.error("Error parsing cart from localStorage:", error);
-            return [];
-        }
+        const saved = localStorage.getItem('hg_cart');
+        return saved ? JSON.parse(saved) : [];
     });
     const [wishlist, setWishlist] = useState(() => {
-        try {
-            const saved = localStorage.getItem('wishlist');
-            const parsed = saved ? JSON.parse(saved) : null;
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-            console.error("Error parsing wishlist from localStorage:", error);
-            return [];
-        }
-    });
-    const [user, setUser] = useState(() => {
-        try {
-            const saved = localStorage.getItem('user');
-            return saved ? JSON.parse(saved) : null;
-        } catch (error) {
-            console.error("Error parsing user from localStorage:", error);
-            return null;
-        }
-    });
-    const [orders, setOrders] = useState(() => {
-        try {
-            const saved = localStorage.getItem('orders');
-            const parsed = saved ? JSON.parse(saved) : null;
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-            console.error("Error parsing orders from localStorage:", error);
-            return [];
-        }
-    });
-    const [addresses, setAddresses] = useState(() => {
-        try {
-            const saved = localStorage.getItem('addresses');
-            const parsed = saved ? JSON.parse(saved) : null;
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-            console.error("Error parsing addresses from localStorage:", error);
-            return [];
-        }
-    });
-    const [supportTickets, setSupportTickets] = useState(() => {
-        try {
-            const saved = localStorage.getItem('supportTickets');
-            if (saved) return JSON.parse(saved);
-        } catch (error) {
-            console.error("Error parsing supportTickets from localStorage:", error);
-        }
-
-        // Initial Dummy Data to show the flow
-        return [
-            {
-                id: 'TKT-827415',
-                userName: 'Aditi Singh',
-                userEmail: 'aditi.s@gmail.com',
-                subject: 'Polishing issue with Silver Necklace',
-                category: 'Product Feedback',
-                orderId: '1735921',
-                message: 'The necklace I bought last week seems to be losing its shine already. Is this normal or can I get it polished?',
-                date: new Date(Date.now() - 86400000).toISOString(),
-                status: 'In Progress',
-                replies: [
-                    {
-                        from: 'admin',
-                        text: 'Hello Aditi! We are sorry to hear that. 925 Silver can sometimes tarnish due to humidity, but it shouldn\'t happen so soon. Please bring it to our store or ship it back, and we will polish it for free!',
-                        date: new Date(Date.now() - 43200000).toISOString()
-                    }
-                ]
-            },
-            {
-                id: 'TKT-192837',
-                userName: 'Rahul Verma',
-                userEmail: 'rahul.v@yahoo.com',
-                subject: 'Tracking showing "Returned to Origin"',
-                category: 'Order Tracking',
-                orderId: '1735123',
-                message: 'My order tracking says the package is being sent back to the warehouse. I was at home all day!',
-                date: new Date(Date.now() - 172800000).toISOString(),
-                status: 'Open',
-                replies: []
-            }
-        ];
-    });
-    const [coupons, setCoupons] = useState(() => {
-        // Force refresh coupons from updated mock data
-        return initialCoupons;
-    });
-    const [defaultAddressId, setDefaultAddressId] = useState(() => {
-        return localStorage.getItem('defaultAddressId') || null;
+        const saved = localStorage.getItem('hg_wishlist');
+        return saved ? JSON.parse(saved) : [];
     });
 
-    const [products, setProducts] = useState(() => {
-        // Force refresh products from updated mock data (Bypassing LocalStorage to show new Jewellery data)
-        return initialProducts;
-    });
+    // User-specific state from backend (via User object)
+    const [orders, setOrders] = useState([]);
+    const [supportTickets, setSupportTickets] = useState([]);
+    const [addresses, setAddresses] = useState(user?.addresses || []);
+    const [defaultAddressId, setDefaultAddressId] = useState(user?.addresses?.find(a => a.isDefault)?._id || null);
 
     const [notification, setNotification] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+    // Initial Data Fetch
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [prodRes, catRes, packsRes, coupRes, banRes, setRes] = await Promise.all([
+                    api.get('/products'),
+                    api.get('/categories'),
+                    api.get('/products/packs'),
+                    api.get('/coupons'),
+                    api.get('/banners'),
+                    api.get('/settings')
+                ]);
+
+
+                // Normalize Data (Ensure products have 'id' and top-level price/mrp)
+                const normalizedProducts = prodRes.data.map(p => {
+                    const baseItem = { ...p, id: p._id || p.id };
+                    // If backend uses variants, extract first variant price for top-level usage
+                    if (p.variants && p.variants.length > 0) {
+                        baseItem.price = p.variants[0].price || 0;
+                        baseItem.originalPrice = p.variants[0].mrp || p.variants[0].price || 0;
+                        baseItem.stock = p.variants[0].stock || 0;
+                    }
+                    return baseItem;
+                });
+
+                const normalizedCategories = catRes.data.map(c => ({
+                    ...c,
+                    id: c.id || c._id
+                }));
+
+                const normalizedPacks = packsRes.data.map(p => ({
+                    ...p,
+                    id: p.id || p._id
+                }));
+
+                const normalizedBanners = banRes.data.map(b => ({
+                    ...b,
+                    id: b.id || b._id
+                }));
+
+                setProducts(normalizedProducts);
+                setCategories(normalizedCategories);
+                setPacks(normalizedPacks);
+                setCoupons(coupRes.data);
+                setBanners(normalizedBanners);
+                setSettings(setRes.data);
+                if (setRes.data?.homepageSections) {
+                    setHomepageSections(setRes.data.homepageSections);
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    // Private/Admin Data Fetch
+    const fetchPrivateData = useCallback(async () => {
+        if (!user) {
+            setOrders([]);
+            setUsers([]);
+            setSupportTickets([]);
+            return;
+        }
+
+        try {
+            if (user.role === 'admin') {
+                // Decoupled admin fetch for resilience
+                try {
+                    const [ordRes, userRes, prodRes, tktRes] = await Promise.all([
+                        api.get('/orders/admin/all'),
+                        api.get('/auth/users'),
+                        api.get('/products?adminView=true'),
+                        api.get('/support/admin/all').catch(() => ({ data: [] }))
+                    ]);
+                    setOrders(ordRes.data);
+                    setUsers(userRes.data);
+                    setSupportTickets(tktRes.data);
+                    const normalizedAdminProducts = prodRes.data.map(p => ({
+                        ...p, id: p._id || p.id,
+                        price: p.variants?.[0]?.price || p.price || 0,
+                        originalPrice: p.variants?.[0]?.mrp || p.originalPrice || 0,
+                        stock: p.variants?.[0]?.stock || p.stock || 0
+                    }));
+                    setProducts(normalizedAdminProducts);
+                } catch (adminErr) {
+                    console.warn("Admin fetch failed, falling back to user view:", adminErr);
+                    const ordRes = await api.get('/orders');
+                    setOrders(ordRes.data);
+                }
+            } else {
+                const [ordRes, retRes, revRes] = await Promise.all([
+                    api.get('/orders'),
+                    api.get('/returns/my'),
+                    api.get('/products/reviews/my')
+                ]);
+                setOrders(ordRes.data);
+                setReturns(retRes.data);
+                setUserReviews(revRes.data);
+            }
+        } catch (error) {
+            console.error("Critical error in fetchPrivateData:", error);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchPrivateData();
+    }, [fetchPrivateData]);
+
+    // Fetch user-specific data when user changes
+    useEffect(() => {
+        if (user) {
+            setAddresses(user.addresses || []);
+            setDefaultAddressId(user.addresses?.find(a => a.isDefault)?._id || null);
+        } else {
+            setOrders([]);
+            setSupportTickets([]);
+            setAddresses([]);
+            setDefaultAddressId(null);
+        }
+    }, [user]);
+
+    // LocalStorage Persistent Settings for Cart and Wishlist
+    useEffect(() => {
+        localStorage.setItem('hg_cart', JSON.stringify(cart));
+    }, [cart]);
+
+    useEffect(() => {
+        localStorage.setItem('hg_wishlist', JSON.stringify(wishlist));
+    }, [wishlist]);
+
+
+
+
+    const addToCart = (product, quantity = 1) => {
+        setCart((prev) => {
+            const isItemInCart = prev.find((item) => item.id === product.id);
+            if (isItemInCart) {
+                return prev.map((item) =>
+                    item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+                );
+            }
+            return [...prev, { ...product, quantity }];
+        });
+        showNotification("Added to Cart");
+    };
+
+    const removeFromCart = (productId) => {
+        setCart((prev) => prev.filter((item) => item.id !== productId));
+        showNotification("Removed from Cart");
+    };
+
+    const updateQuantity = (productId, quantity) => {
+        if (quantity < 1) return;
+        setCart((prev) =>
+            prev.map((item) =>
+                item.id === productId ? { ...item, quantity } : item
+            )
+        );
+    };
+
+    const clearCart = () => {
+        setCart([]);
+        showNotification("Cart cleared");
+    };
+
+    const addToWishlist = (product) => {
+        if (wishlist.some(item => item.id === product.id)) {
+            showNotification("Item already in wishlist");
+            return;
+        }
+        setWishlist((prev) => [...prev, product]);
+        showNotification("Item added to wishlist!");
+    };
+
+    const removeFromWishlist = (productId) => {
+        setWishlist((prev) => prev.filter(item => item.id !== productId && item._id !== productId));
+    };
+
+    const showNotification = (msg) => {
+        setNotification(msg);
+        setTimeout(() => setNotification(null), 3000);
+    };
+
+    // API-backed Support Tickets
+    const createTicket = async (ticketData) => {
+        try {
+            const res = await api.post('/support/create', ticketData);
+            setSupportTickets(prev => [res.data, ...prev]);
+            showNotification("Support ticket created!");
+            return res.data;
+        } catch (error) {
+            console.error("Error creating ticket:", error);
+            showNotification("Failed to create ticket.");
+            return null;
+        }
+    };
 
     const toggleMenu = (state) => {
         setIsMenuOpen(state !== undefined ? state : !isMenuOpen);
@@ -124,159 +255,36 @@ export const ShopProvider = ({ children }) => {
         if (state !== false && isMenuOpen) setIsMenuOpen(false);
     };
 
-    // Notification Preferences & List
-    const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
-        return localStorage.getItem('notificationsEnabled') === 'true';
-    });
+    const getActiveCoupons = () => coupons.filter(c => c.active);
 
-    const [userNotifications, setUserNotifications] = useState(() => {
+    const placeOrder = async (orderDetails) => {
         try {
-            const saved = localStorage.getItem('userNotifications');
-            return saved ? JSON.parse(saved) : [];
+            const res = await api.post('/orders/place', {
+                items: orderDetails.items || cart,
+                total: orderDetails.amount || (orderDetails.items || cart).reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0),
+                ...orderDetails
+            });
+            const newOrder = res.data.order;
+            setOrders(prev => [newOrder, ...prev]);
+            setCart([]);
+            showNotification("Order placed successfully!");
+            return newOrder.orderId;
         } catch (error) {
-            console.error("Error parsing userNotifications from localStorage:", error);
-            return [];
+            console.error("Error placing order:", error);
+            showNotification("Failed to place order.");
+            return null;
         }
-    });
-
-    const toggleNotificationSettings = () => {
-        setNotificationsEnabled(prev => !prev);
     };
 
-    const deleteUserNotification = (id) => {
-        setUserNotifications(prev => prev.filter(n => n.id !== id));
-    };
-
-    // Auto-hide notification after 3 seconds
-    useEffect(() => {
-        if (notification) {
-            const timer = setTimeout(() => setNotification(null), 3000);
-            return () => clearTimeout(timer);
+    const addAddress = async (addressData) => {
+        try {
+            const res = await api.post('/auth/address/add', addressData);
+            setAddresses(res.data.addresses);
+            showNotification("Address added!");
+        } catch (error) {
+            console.error("Error adding address:", error);
+            showNotification("Failed to add address.");
         }
-    }, [notification]);
-
-    // Persist Cart
-    useEffect(() => {
-        localStorage.setItem('cart', JSON.stringify(cart));
-    }, [cart]);
-
-    // Persist Wishlist
-    useEffect(() => {
-        localStorage.setItem('wishlist', JSON.stringify(wishlist));
-    }, [wishlist]);
-
-    // Persist Orders
-    useEffect(() => {
-        localStorage.setItem('orders', JSON.stringify(orders));
-    }, [orders]);
-
-    // Persist Support Tickets
-    useEffect(() => {
-        localStorage.setItem('supportTickets', JSON.stringify(supportTickets));
-    }, [supportTickets]);
-
-    // Persist Coupons
-    useEffect(() => {
-        localStorage.setItem('hg_coupons', JSON.stringify(coupons));
-    }, [coupons]);
-
-    // Persist Products
-    useEffect(() => {
-        localStorage.setItem('hg_products', JSON.stringify(products));
-    }, [products]);
-
-    useEffect(() => {
-        if (defaultAddressId) {
-            localStorage.setItem('defaultAddressId', defaultAddressId);
-        } else {
-            localStorage.removeItem('defaultAddressId');
-        }
-    }, [defaultAddressId]);
-
-    const showNotification = (message) => {
-        setNotification(message);
-    };
-
-    const login = (userData) => {
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        showNotification(`Welcome back, ${userData.name || 'User'}!`);
-    };
-
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('user');
-        // localStorage.removeItem('cart'); // Optional choice
-        // localStorage.removeItem('wishlist'); 
-        // localStorage.removeItem('orders'); // Usually keep orders history
-        setCart([]);
-        setWishlist([]);
-        showNotification("Logged out successfully");
-    };
-
-    const placeOrder = (orderDetails) => {
-        const newOrder = {
-            id: 'ORD-' + Date.now(),
-            date: new Date().toISOString(),
-            items: cart,
-            total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-            status: 'Processing',
-            ...orderDetails
-        };
-        setOrders(prev => [newOrder, ...prev]);
-        setCart([]); // Clear cart after order
-        showNotification("Order placed successfully!");
-        return newOrder.id;
-    };
-
-    const addToCart = (product) => {
-        setCart((prev) => {
-            const existing = prev.find((item) => item.id === product.id);
-            if (existing) {
-                return prev.map((item) =>
-                    item.id === product.id ? { ...item, quantity: (item.quantity || 1) + 1 } : item
-                );
-            }
-            return [...prev, { ...product, quantity: 1 }];
-        });
-    };
-
-    const updateQuantity = (productId, amount) => {
-        setCart((prev) => prev.map((item) => {
-            if (item.id === productId) {
-                const newQuantity = Math.max(1, (item.quantity || 1) + amount);
-                return { ...item, quantity: newQuantity };
-            }
-            return item;
-        }));
-    };
-
-    const addToWishlist = (product) => {
-        if (wishlist.find(item => item.id === product.id)) {
-            return;
-        }
-        setWishlist((prev) => [...prev, product]);
-    };
-
-    const removeFromCart = (productId) => {
-        setCart((prev) => prev.filter(item => item.id !== productId));
-    };
-
-    const removeFromWishlist = (productId) => {
-        setWishlist((prev) => prev.filter(item => item.id !== productId));
-    };
-
-    const clearCart = () => {
-        setCart([]);
-    };
-
-    const addAddress = (address) => {
-        const newAddress = { ...address, id: Date.now().toString() };
-        setAddresses(prev => [newAddress, ...prev]);
-        if (addresses.length === 0 || address.isDefault) {
-            setDefaultAddressId(newAddress.id);
-        }
-        showNotification("Address added successfully");
     };
 
     const setDefaultAddress = (addressId) => {
@@ -285,304 +293,161 @@ export const ShopProvider = ({ children }) => {
     };
 
     const removeAddress = (addressId) => {
-        setAddresses(prev => prev.filter(a => a.id !== addressId));
+        setAddresses(prev => prev.filter(a => a._id !== addressId));
         showNotification("Address removed");
     };
 
-    const updateAddress = (updatedAddress) => {
-        setAddresses(prev => prev.map(a => a.id === updatedAddress.id ? updatedAddress : a));
-        showNotification("Address updated");
-    };
-
-    const createTicket = (ticketData) => {
-        const newTicket = {
-            id: 'TKT-' + Date.now().toString().slice(-6),
-            date: new Date().toISOString(),
-            status: 'Open',
-            replies: [],
-            ...ticketData
+    const updateSection = async (id, data) => {
+        const updatedSections = {
+            ...homepageSections,
+            [id]: { ...homepageSections[id], ...data }
         };
-        setSupportTickets(prev => [newTicket, ...prev]);
-        showNotification("Support ticket created. We will get back to you soon!");
-        return newTicket.id;
-    };
+        setHomepageSections(updatedSections);
 
-    const updateTicketStatus = (ticketId, newStatus) => {
-        setSupportTickets(prev => prev.map(t =>
-            t.id === ticketId ? { ...t, status: newStatus } : t
-        ));
-    };
-
-    const addTicketReply = (ticketId, reply) => {
-        setSupportTickets(prev => prev.map(t => {
-            if (t.id === ticketId) {
-                return {
-                    ...t,
-                    status: reply.from === 'admin' ? 'In Progress' : t.status,
-                    replies: [...(t.replies || []), {
-                        ...reply,
-                        date: new Date().toISOString()
-                    }]
-                };
-            }
-            return t;
-        }));
-    };
-
-    const deleteTicket = (ticketId) => {
-        setSupportTickets(prev => prev.filter(t => t.id !== ticketId));
-        showNotification("Ticket removed successfully.");
-    };
-
-    const deleteAccount = () => {
-        setUser(null);
-        setOrders([]);
-        setAddresses([]);
-        setCart([]);
-        setWishlist([]);
-        setSupportTickets([]);
-        setDefaultAddressId(null);
-        localStorage.clear();
-        showNotification("Account deleted successfully.");
-    };
-
-    // Coupon Management
-    const addCoupon = (coupon) => {
-        setCoupons(prev => [...prev, { ...coupon, id: Date.now().toString() }]);
-        showNotification("Coupon created successfully");
-    };
-
-    const updateCoupon = (id, updatedData) => {
-        setCoupons(prev => prev.map(c => c.id === id ? { ...c, ...updatedData } : c));
-        showNotification("Coupon updated successfully");
-    };
-
-    const deleteCoupon = (id) => {
-        setCoupons(prev => prev.filter(c => c.id !== id));
-        showNotification("Coupon deleted successfully");
-    };
-
-    // Homepage Sections Management
-    const [homepageSections, setHomepageSections] = useState(() => {
         try {
-            const saved = localStorage.getItem('homepageSections');
-            const parsed = saved ? JSON.parse(saved) : null;
-
-            const defaultState = {
-                'category-showcase': {
-                    id: 'category-showcase',
-                    label: 'Category Showcase',
-                    items: []
-                },
-                'price-range-showcase': {
-                    id: 'price-range-showcase',
-                    label: 'Luxury in Range',
-                    items: []
-                },
-                'perfect-gift': {
-                    id: 'perfect-gift',
-                    label: 'Find the Perfect Gift',
-                    items: []
-                },
-                'new-launch': {
-                    id: 'new-launch',
-                    label: 'Limited Edition',
-                    items: []
-                },
-                'latest-drop': {
-                    id: 'latest-drop',
-                    label: 'Latest Drop',
-                    items: []
-                },
-                'most-gifted': {
-                    id: 'most-gifted',
-                    label: 'Most Gifted Items',
-                    items: []
-                },
-                'proposal-rings': {
-                    id: 'proposal-rings',
-                    label: 'Proposal Rings',
-                    items: []
-                },
-                'curated-for-you': {
-                    id: 'curated-for-you',
-                    label: 'Curated For You',
-                    items: []
-                },
-                'style-it-your-way': {
-                    id: 'style-it-your-way',
-                    label: 'Style It Your Way',
-                    items: []
-                }
-            };
-
-            // Force merge 'category-showcase' if missing (e.g. from older state)
-            if (parsed && !parsed['category-showcase']) {
-                parsed['category-showcase'] = defaultState['category-showcase'];
-            }
-
-            // Force merge 'price-range-showcase' if missing
-            if (parsed && !parsed['price-range-showcase']) {
-                parsed['price-range-showcase'] = defaultState['price-range-showcase'];
-            }
-
-            // Force merge 'perfect-gift' if missing
-            if (parsed && !parsed['perfect-gift']) {
-                parsed['perfect-gift'] = defaultState['perfect-gift'];
-            }
-
-            // Force merge 'new-launch' if missing
-            if (parsed && !parsed['new-launch']) {
-                parsed['new-launch'] = defaultState['new-launch'];
-            }
-
-            // Force merge 'latest-drop' if missing
-            if (parsed && !parsed['latest-drop']) {
-                parsed['latest-drop'] = defaultState['latest-drop'];
-            }
-
-            // Force merge 'most-gifted' if missing
-            if (parsed && !parsed['most-gifted']) {
-                parsed['most-gifted'] = defaultState['most-gifted'];
-            }
-
-            // Force merge 'proposal-rings' if missing
-            if (parsed && !parsed['proposal-rings']) {
-                parsed['proposal-rings'] = defaultState['proposal-rings'];
-            }
-
-            // Force merge 'curated-for-you' if missing
-            if (parsed && !parsed['curated-for-you']) {
-                parsed['curated-for-you'] = defaultState['curated-for-you'];
-            }
-
-            // Force merge 'style-it-your-way' if missing
-            if (parsed && !parsed['style-it-your-way']) {
-                parsed['style-it-your-way'] = defaultState['style-it-your-way'];
-            }
-
-            // Migration: Remove (15% OFF) from label if present
-            if (parsed && parsed['category-showcase'] && parsed['category-showcase'].label.includes('(15% OFF)')) {
-                parsed['category-showcase'].label = 'Category Showcase';
-            }
-
-            return parsed || defaultState;
+            const res = await api.post('/settings', { ...settings, homepageSections: updatedSections });
+            setSettings(res.data);
+            showNotification("Homepage section updated!");
         } catch (error) {
-            console.error("Error parsing homepageSections:", error);
-            return {
-                'category-showcase': {
-                    id: 'category-showcase',
-                    label: 'Category Showcase',
-                    items: []
-                }
-            };
+            console.error("Error updating section:", error);
+            showNotification("Failed to update section.");
         }
-    });
-
-    useEffect(() => {
-        localStorage.setItem('homepageSections', JSON.stringify(homepageSections));
-    }, [homepageSections]);
-
-    const updateSection = (sectionId, newData) => {
-        setHomepageSections(prev => ({
-            ...prev,
-            [sectionId]: { ...prev[sectionId], ...newData }
-        }));
-        showNotification("Section updated successfully");
     };
 
-    // Product & Bulk Management
-    const updateProduct = (id, updatedData) => {
-        setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updatedData } : p));
+
+
+    // Support userNotifications for Navbar (placeholder or from user object)
+    const userNotifications = user?.notifications || [];
+
+    const { login, logout, signup } = useAuth();
+
+    const toggleUserStatus = async (userId) => {
+        try {
+            const res = await api.patch(`/auth/users/${userId}/status`);
+            setUsers(prev => prev.map(u => (u._id === userId || u.id === userId) ? res.data.user : u));
+            showNotification(res.data.message);
+        } catch (error) {
+            console.error("Error toggling user status:", error);
+            showNotification("Failed to update user status");
+        }
     };
 
-    const bulkUpdatePrices = (config) => {
-        const { type, value, category, productIds } = config;
-        const numValue = parseFloat(value);
-        if (isNaN(numValue)) return;
-
-        setProducts(prev => prev.map(product => {
-            // Filter logic
-            const matchCategory = !category || category === 'all' || product.category === category;
-            const matchIds = !productIds || productIds.includes(product.id);
-
-            if (matchCategory && matchIds) {
-                // Products in mockData have variants. We need to update prices in variants.
-                const updatedVariants = (product.variants || []).map(variant => {
-                    let newPrice = variant.price;
-                    let newMrp = variant.mrp;
-
-                    switch (type) {
-                        case 'increase_amount':
-                            newPrice += numValue;
-                            newMrp += numValue;
-                            break;
-                        case 'decrease_amount':
-                            newPrice = Math.max(0, newPrice - numValue);
-                            newMrp = Math.max(0, newMrp - numValue);
-                            break;
-                        case 'increase_percent':
-                            newPrice = Math.round(newPrice * (1 + numValue / 100));
-                            newMrp = Math.round(newMrp * (1 + numValue / 100));
-                            break;
-                        case 'decrease_percent':
-                            newPrice = Math.round(newPrice * (1 - numValue / 100));
-                            newMrp = Math.round(newMrp * (1 - numValue / 100));
-                            break;
-                        case 'set_price':
-                            newPrice = numValue;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    return {
-                        ...variant,
-                        price: newPrice,
-                        mrp: newMrp,
-                        discount: newMrp > 0 ? `${Math.round(((newMrp - newPrice) / newMrp) * 100)}%off` : '0%off'
-                    };
-                });
-
-                return { ...product, variants: updatedVariants };
-            }
-            return product;
-        }));
-
-        showNotification("Bulk price update completed successfully!");
+    const updateCategory = async (id, data) => {
+        try {
+            const res = await api.patch(`/categories/${id}`, data);
+            setCategories(prev => prev.map(c => (c.id === id || c._id === id) ? res.data : c));
+            showNotification('Category updated successfully');
+        } catch (error) {
+            console.error('Error updating category:', error);
+            showNotification('Failed to update category');
+        }
     };
 
-    const getActiveCoupons = () => {
-        return coupons.filter(c => c.active);
+    const deleteCategory = async (id) => {
+        try {
+            await api.delete(`/categories/${id}`);
+            setCategories(prev => prev.filter(c => c.id !== id && c._id !== id));
+            showNotification('Category deleted successfully');
+        } catch (error) {
+            console.error('Error deleting category:', error);
+            showNotification('Failed to delete category');
+        }
     };
 
-    // Persist Notifications
-    useEffect(() => {
-        localStorage.setItem('notificationsEnabled', notificationsEnabled);
-    }, [notificationsEnabled]);
+    const createCoupon = async (data) => {
+        try {
+            const res = await api.post('/coupons', data);
+            setCoupons(prev => [res.data, ...prev]);
+            showNotification('Coupon created successfully');
+            return res.data;
+        } catch (error) {
+            console.error('Error creating coupon:', error);
+            showNotification('Failed to create coupon');
+            return null;
+        }
+    };
 
-    useEffect(() => {
-        localStorage.setItem('userNotifications', JSON.stringify(userNotifications));
-    }, [userNotifications]);
+    const updateCoupon = async (id, data) => {
+        try {
+            const res = await api.patch(`/coupons/${id}`, data);
+            setCoupons(prev => prev.map(c => (c.id === id || c._id === id) ? res.data : c));
+            showNotification('Coupon updated successfully');
+            return res.data;
+        } catch (error) {
+            console.error('Error updating coupon:', error);
+            showNotification('Failed to update coupon');
+            return null;
+        }
+    };
+
+    const deleteCoupon = async (id) => {
+        try {
+            await api.delete(`/coupons/${id}`);
+            setCoupons(prev => prev.filter(c => c.id !== id && c._id !== id));
+            showNotification('Coupon deleted successfully');
+        } catch (error) {
+            console.error('Error deleting coupon:', error);
+            showNotification('Failed to delete coupon');
+        }
+    };
+
+    const deleteProduct = async (id) => {
+        try {
+            await api.delete(`/products/${id}`);
+            setProducts(prev => prev.filter(p => p.id !== id && p._id !== id));
+            showNotification('Product deleted successfully');
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            showNotification('Failed to delete product');
+        }
+    };
+
+    const toggleProductStatus = async (id) => {
+        try {
+            const res = await api.patch(`/products/${id}/status`);
+            setProducts(prev => prev.map(p => (p.id === id || p._id === id) ? { ...res.data, id: res.data._id } : p));
+            showNotification(`Product status updated to ${res.data.isActive ? 'Active' : 'Inactive'}`);
+        } catch (error) {
+            console.error('Error toggling product status:', error);
+            showNotification('Failed to update product status');
+        }
+    };
+
+    const getOrderById = (userId, orderId) => {
+        return orders.find(o => (o.orderId === orderId || o._id === orderId || o.id === orderId));
+    };
+
+    const updateOrderStatus = async (orderId, status) => {
+        try {
+            const res = await api.patch(`/orders/${orderId}/status`, { status });
+            setOrders(prev => prev.map(o => (o.orderId === orderId || o._id === orderId) ? res.data : o));
+            showNotification(`Order status updated to ${status}`);
+            return true;
+        } catch (error) {
+            console.error("Error updating order status:", error);
+            showNotification("Failed to update status");
+            return false;
+        }
+    };
+
+    const getReturns = (userId) => {
+        return returns.filter(r => r.userId === userId);
+    };
 
     return (
         <ShopContext.Provider value={{
-            cart, wishlist, user, orders, addresses, supportTickets,
-            login, logout, placeOrder, addToCart, addToWishlist,
-            removeFromCart, removeFromWishlist, updateQuantity, clearCart,
-            addAddress, removeAddress, updateAddress, setDefaultAddress,
-            defaultAddressId, createTicket, updateTicketStatus, addTicketReply, deleteTicket,
-
-            showNotification, deleteAccount,
-            coupons, addCoupon, updateCoupon, deleteCoupon, getActiveCoupons,
-            notificationsEnabled, userNotifications, toggleNotificationSettings, deleteUserNotification,
-            isMenuOpen, toggleMenu,
-            isSearchOpen, toggleSearch,
-
-            products, updateProduct, bulkUpdatePrices,
-
-            // Homepage Sections Management
-            homepageSections, updateSection
+            products, categories, packs, coupons, banners, cart, wishlist, orders, addresses, supportTickets,
+            users, returns,
+            loading, notification, isMenuOpen, isSearchOpen, user, login, logout, signup, userNotifications,
+            settings, setSettings,
+            addToCart, removeFromCart, updateQuantity, clearCart,
+            addToWishlist, removeFromWishlist,
+            placeOrder, addAddress, removeAddress, setDefaultAddress, defaultAddressId,
+            createTicket, toggleMenu, toggleSearch, getActiveCoupons, showNotification,
+            homepageSections, updateSection, toggleUserStatus, updateCategory, deleteCategory,
+            createCoupon, updateCoupon, deleteCoupon, deleteProduct, toggleProductStatus,
+            getOrderById, updateOrderStatus, getReturns, userReviews,
+            refreshOrders: fetchPrivateData
         }}>
             {children}
             {/* Custom Toast Notification */}

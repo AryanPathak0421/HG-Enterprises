@@ -14,50 +14,45 @@ import {
     Filter
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useShop } from '../../../context/ShopContext';
 import Pagination from '../components/Pagination';
 import AdminStatsCard from '../components/AdminStatsCard';
 
 const OrderListPage = () => {
     const navigate = useNavigate();
+    const { orders } = useShop();
     const [searchParams, useSearchParamsHook] = useSearchParams();
     const statusParam = searchParams.get('status') || 'all';
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    // ------------------------------------------------------------------
-    // DUMMY DATA (Matching Screenshot & Extended for Approval Workflow)
-    // ------------------------------------------------------------------
-    const mockOrders = [
-        { id: '#ORD-PEND-001', date: '2026-02-08', customer: 'Rahul Kumar', type: 'New', payment: 'COD', items: 2, value: 1200, status: 'Pending', shipment: 'Pending' },
-        { id: '#ORD-REJ-002', date: '2026-02-07', customer: 'Sita Verma', type: 'Returning', payment: 'Online', items: 1, value: 850, status: 'Rejected', shipment: 'Cancelled' },
-        { id: '#ORD-SHIP-003', date: '2026-02-06', customer: 'Amit Singh', type: 'New', payment: 'Online', items: 3, value: 2400, status: 'Shipped', shipment: 'In Transit' },
-        { id: '#ORD-DEL-004', date: '2026-02-05', customer: 'Priya Sharma', type: 'Returning', payment: 'COD', items: 1, value: 500, status: 'Delivered', shipment: 'Delivered' },
-        { id: '#1561-941', date: '2026-02-07', customer: 'Unknown', type: 'New', payment: 'COD', items: 1, value: 400, status: 'Pending', shipment: 'Pending' },
-        { id: '#ORD-0998', date: '2026-01-20', customer: 'Amit Shah', type: 'New', payment: 'COD', items: 3, value: 5400, status: 'Cancelled', shipment: 'Cancelled' },
-    ];
-
     // Filter Logic
     const filteredOrders = useMemo(() => {
-        return mockOrders.filter(order => {
-            // Text Search
+        const list = orders || [];
+        return list.filter(order => {
+            // Text Search (Safely handle potentially missing fields)
+            const customerName = order.address?.name || 'Guest';
+            const oid = order.orderId || order._id || '';
+
             const matchesSearch =
-                order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.customer.toLowerCase().includes(searchTerm.toLowerCase());
+                oid.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                customerName.toLowerCase().includes(searchTerm.toLowerCase());
 
             // Status Filter matches (Tabs)
             let matchesStatus = true;
             if (statusParam !== 'all') {
-                if (statusParam === 'pending') matchesStatus = order.status === 'Pending' || order.status === 'Processing';
-                else if (statusParam === 'shipped') matchesStatus = order.status === 'Shipped';
-                else if (statusParam === 'delivered') matchesStatus = order.status === 'Delivered';
-                else if (statusParam === 'cancelled') matchesStatus = order.status === 'Cancelled' || order.status === 'Rejected';
-                else matchesStatus = order.status.toLowerCase() === statusParam;
+                const currentStatus = (order.status || 'Pending').toLowerCase();
+                if (statusParam === 'pending') matchesStatus = currentStatus === 'pending' || currentStatus === 'processing';
+                else if (statusParam === 'shipped') matchesStatus = currentStatus === 'shipped';
+                else if (statusParam === 'delivered') matchesStatus = currentStatus === 'delivered';
+                else if (statusParam === 'cancelled') matchesStatus = currentStatus === 'cancelled' || currentStatus === 'rejected';
+                else matchesStatus = currentStatus === statusParam;
             }
 
             return matchesSearch && matchesStatus;
         });
-    }, [mockOrders, searchTerm, statusParam]);
+    }, [orders, searchTerm, statusParam]);
 
     // Pagination Logic
     const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
@@ -68,9 +63,9 @@ const OrderListPage = () => {
 
     // Stats Logic
     const stats = {
-        total: mockOrders.length,
-        pending: mockOrders.filter(o => o.status === 'Pending' || o.status === 'Processing').length,
-        completed: mockOrders.filter(o => o.status === 'Delivered').length
+        total: (orders || []).length,
+        pending: (orders || []).filter(o => (o.status || 'Pending').toLowerCase() === 'pending' || (o.status || 'Pending').toLowerCase() === 'processing').length,
+        completed: (orders || []).filter(o => (o.status || 'Pending').toLowerCase() === 'delivered').length
     };
 
     const handleFilterChange = (status) => {
@@ -79,13 +74,13 @@ const OrderListPage = () => {
     };
 
     const getStatusColor = (status) => {
-        switch (status) {
-            case 'Pending': return 'bg-gray-100 text-gray-600';
-            case 'Processing': return 'bg-amber-100 text-amber-600';
-            case 'Shipped': return 'bg-blue-100 text-blue-600';
-            case 'Delivered': return 'bg-emerald-100 text-emerald-600';
-            case 'Cancelled': return 'bg-red-100 text-red-600';
-            case 'Rejected': return 'bg-red-50 text-red-600 border-red-100';
+        switch (status?.toLowerCase()) {
+            case 'pending': return 'bg-gray-100 text-gray-600';
+            case 'processing': return 'bg-amber-100 text-amber-600';
+            case 'shipped': return 'bg-blue-100 text-blue-600';
+            case 'delivered': return 'bg-emerald-100 text-emerald-600';
+            case 'cancelled': return 'bg-red-100 text-red-600';
+            case 'rejected': return 'bg-red-50 text-red-600 border-red-100';
             default: return 'bg-gray-100 text-gray-600';
         }
     };
@@ -99,7 +94,7 @@ const OrderListPage = () => {
                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] mt-2">Control Panel for Global Order Fulfillment</p>
                 </div>
                 <button className="px-4 py-2 bg-black text-white rounded-none text-[8px] font-black uppercase tracking-widest hover:bg-primary shadow-xl shadow-black/20 transition-all flex items-center gap-2 active:scale-95 group">
-                    <Download size={12} className="group-hover:translate-y-0.5 transition-transform" /> 
+                    <Download size={12} className="group-hover:translate-y-0.5 transition-transform" />
                     <span>Export Registry Reports</span>
                 </button>
             </div>
@@ -178,53 +173,63 @@ const OrderListPage = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 uppercase tracking-tighter text-[9px] text-footerBg font-outfit">
-                            {paginatedOrders.map((order, idx) => (
-                                <tr key={idx} className="hover:bg-gray-50/80 transition-colors group">
-                                    <td className="px-4 py-1.5 text-center text-[9px] font-black text-gray-300">
-                                        {(currentPage - 1) * itemsPerPage + idx + 1}
-                                    </td>
-                                    <td className="px-4 py-1.5">
-                                        <span className="font-black text-[9px] text-footerBg tracking-tight">{order.id}</span>
-                                    </td>
-                                    <td className="px-4 py-1.5 text-[9px] font-bold text-gray-400">
-                                        {order.date}
-                                    </td>
-                                    <td className="px-4 py-1.5">
-                                        <div className="font-black text-[9px] text-footerBg tracking-tight">{order.customer}</div>
-                                    </td>
-                                    <td className="px-4 py-1.5">
-                                        <span className={`px-2 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest ${order.type === 'Returning' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
-                                            }`}>
-                                            {order.type}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-1.5">
-                                        <span className={`font-black text-[9px] ${order.payment === 'COD' ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                            {order.payment}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-1.5 text-center font-black text-[9px] text-gray-500">
-                                        {order.items}
-                                    </td>
-                                    <td className="px-4 py-1.5 font-bold text-[10px] text-footerBg font-serif tabular-nums tracking-tighter">
-                                        ₹{order.value.toLocaleString()}
-                                    </td>
-                                    <td className="px-4 py-1.5">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest ${getStatusColor(order.status)}`}>
-                                            <span className="w-1 h-1 rounded-full bg-current"></span>
-                                            {order.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-1.5 text-right">
-                                        <button
-                                            onClick={() => navigate(`/admin/orders/${order.id.replace('#', '')}`)}
-                                            className="px-3 py-1 bg-black text-white rounded-none text-[8px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-md active:scale-95"
-                                        >
-                                            Inspect
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                            {paginatedOrders.map((order, idx) => {
+                                const customerName = order.address?.name || 'Guest';
+                                const oid = order.orderId || order._id || '';
+                                const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A';
+                                const payment = order.paymentMethod?.toUpperCase() || 'N/A';
+                                const itemsCount = order.items?.length || 0;
+                                const value = order.total || 0;
+                                const status = order.status || 'Pending';
+
+                                return (
+                                    <tr key={oid} className="hover:bg-gray-50/80 transition-colors group">
+                                        <td className="px-4 py-1.5 text-center text-[9px] font-black text-gray-300">
+                                            {(currentPage - 1) * itemsPerPage + idx + 1}
+                                        </td>
+                                        <td className="px-4 py-1.5">
+                                            <span className="font-black text-[9px] text-footerBg tracking-tight">#{oid.replace('ORD-', '')}</span>
+                                        </td>
+                                        <td className="px-4 py-1.5 text-[9px] font-bold text-gray-400">
+                                            {date} <span className="text-[8px] font-black opacity-50 ml-1">{order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                        </td>
+                                        <td className="px-4 py-1.5">
+                                            <div className="font-black text-[9px] text-footerBg tracking-tight">{customerName}</div>
+                                        </td>
+                                        <td className="px-4 py-1.5">
+                                            <span className={`px-2 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest ${order.type === 'Returning' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
+                                                }`}>
+                                                {order.type || 'New'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-1.5">
+                                            <span className={`font-black text-[9px] ${payment === 'COD' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                                {payment}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-1.5 text-center font-black text-[9px] text-gray-500">
+                                            {itemsCount}
+                                        </td>
+                                        <td className="px-4 py-1.5 font-bold text-[10px] text-footerBg font-serif tabular-nums tracking-tighter">
+                                            ₹{value.toLocaleString()}
+                                        </td>
+                                        <td className="px-4 py-1.5">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest ${getStatusColor(status)}`}>
+                                                <span className="w-1 h-1 rounded-full bg-current"></span>
+                                                {status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-1.5 text-right">
+                                            <button
+                                                onClick={() => navigate(`/admin/orders/${oid}`)}
+                                                className="px-3 py-1 bg-black text-white rounded-none text-[8px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-md active:scale-95"
+                                            >
+                                                Inspect
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             {filteredOrders.length === 0 && (
                                 <tr>
                                     <td colSpan="11" className="px-6 py-20 text-center">

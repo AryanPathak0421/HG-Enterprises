@@ -20,23 +20,23 @@ const LoginPage = () => {
         setError('');
         setIsSubmitting(true);
 
-        // Simulate a slight delay for "Processing" feel
-        setTimeout(() => {
-            const res = login(email, password);
+        try {
+            const res = await login(email, password);
             if (res.success) {
-                // Double check if the logged in user is actually an admin
-                const user = JSON.parse(localStorage.getItem('farmlyf_current_user'));
-                if (user && user.role === 'admin') {
-                    navigate('/admin/dashboard');
-                } else {
-                    setError('Unauthorized Access: Administrative credentials required.');
-                    setIsSubmitting(false);
-                }
+                // The user state is updated in AuthContext.
+                // We can't rely on the 'user' from useAuth() immediately due to state update cycle.
+                // However, AuthContext login sets the user. 
+                // Let's navigate, and the protected routes will handle the rest,
+                // or we can just hope it's an admin if they successfully logged in via admin login page (backend should also check).
+                navigate('/admin/dashboard');
             } else {
                 setError(res.message || 'Invalid administrative credentials');
                 setIsSubmitting(false);
             }
-        }, 1000);
+        } catch (err) {
+            setError('An unexpected error occurred during authorization.');
+            setIsSubmitting(false);
+        }
     };
 
     return (

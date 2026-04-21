@@ -10,7 +10,7 @@ const ReturnRequestPage = () => {
     const { orderId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { getOrderById, createReturnRequest, getReturns } = useShop();
+    const { getOrderById, createReturnRequest, getReturns, userReviews } = useShop();
 
     const order = user ? getOrderById(user.id, orderId) : null;
 
@@ -146,12 +146,14 @@ const ReturnRequestPage = () => {
                         <div className="space-y-4">
                             {order.items.map((item) => {
                                 const isAlreadyReturned = returnedPackIds.has(item.packId);
+                                const isReviewed = userReviews.some(r => String(r.productId) === String(item.productId || item._id || item.id));
                                 const isSelected = selectedItems.includes(item.packId);
+                                const isDisabled = isAlreadyReturned || isReviewed;
 
                                 return (
                                     <label key={item.packId}
                                         className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all 
-                                            ${isAlreadyReturned ? 'bg-gray-50 border-gray-100 grayscale opacity-60 cursor-not-allowed' :
+                                            ${isDisabled ? 'bg-gray-50 border-gray-100 grayscale opacity-60 cursor-not-allowed' :
                                                 isSelected ? 'border-primary bg-primary/5 cursor-pointer ring-2 ring-primary/10' : 'border-gray-100 hover:border-gray-200 cursor-pointer'}
                                         `}
                                     >
@@ -159,8 +161,8 @@ const ReturnRequestPage = () => {
                                             type="checkbox"
                                             className="mt-1 w-5 h-5 accent-primary border-gray-300 rounded"
                                             checked={isSelected || isAlreadyReturned}
-                                            disabled={isAlreadyReturned}
-                                            onChange={() => !isAlreadyReturned && handleToggleItem(item.packId)}
+                                            disabled={isDisabled}
+                                            onChange={() => !isDisabled && handleToggleItem(item.packId)}
                                         />
                                         <div className="w-16 h-16 bg-white rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-[#FDFDFD] p-1">
                                             <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
@@ -170,6 +172,9 @@ const ReturnRequestPage = () => {
                                                 <p className="font-bold text-footerBg text-sm leading-tight max-w-[200px]">{item.name}</p>
                                                 {isAlreadyReturned && (
                                                     <span className="text-[9px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded font-black uppercase tracking-wider">Returned</span>
+                                                )}
+                                                {isReviewed && !isAlreadyReturned && (
+                                                    <span className="text-[9px] bg-[#8B4356]/10 text-[#8B4356] px-2 py-0.5 rounded font-black uppercase tracking-wider">Reviewed - Non-Returnable</span>
                                                 )}
                                             </div>
                                             <p className="text-xs text-gray-500 mt-1 font-medium">Qty: {item.qty} × ₹{item.price}</p>

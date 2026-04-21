@@ -28,7 +28,7 @@ const OrderSuccess = () => {
                     <Link to="/shop" className="flex-1 bg-black text-white px-8 py-4 rounded-xl hover:bg-[#D39A9F] transition-all font-bold uppercase tracking-widest text-xs md:text-sm flex items-center justify-center gap-2 shadow-lg shadow-black/10 active:scale-95">
                         Continue Shopping <ArrowRight className="w-4 h-4" />
                     </Link>
-                    <Link to="/profile?tab=orders" className="flex-1 bg-white border border-gray-200 text-black px-8 py-4 rounded-xl hover:border-black hover:bg-gray-50 transition-all font-bold uppercase tracking-widest text-xs md:text-sm flex items-center justify-center active:scale-95">
+                    <Link to="/profile/orders" className="flex-1 bg-white border border-gray-200 text-black px-8 py-4 rounded-xl hover:border-black hover:bg-gray-50 transition-all font-bold uppercase tracking-widest text-xs md:text-sm flex items-center justify-center active:scale-95">
                         View My Orders
                     </Link>
                 </div>

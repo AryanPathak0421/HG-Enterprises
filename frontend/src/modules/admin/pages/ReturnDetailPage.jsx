@@ -32,423 +32,57 @@ import ringImg from '../../../assets/diamond_ring.png';
 import necklaceImg from '../../../assets/gold_necklace.png';
 import banglesImg from '../../../assets/gold_bangles.png';
 
+import api from '../../../utils/api';
+import { useShop } from '../../../context/ShopContext';
+
 const ReturnDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { showNotification } = useShop();
+    const [adminComment, setAdminComment] = useState('');
 
-    // DUMMY DATA CASES - JEWELRY THEMED
-    const DUMMY_CASES = {
-        // CASE 101: PENDING
-        '101': {
-            id: '101',
-            orderId: '5001',
-            type: 'Refund',
-            status: 'Pending',
-            requestDate: '2025-02-06T09:00:00Z',
-            amount: 120000,
-            refundAmount: 120000,
-            reason: 'Damaged Product',
-            userName: 'Rahul Sharma',
-            phone: '+91 98765 00001',
-            email: 'rahul.s@example.com',
-            address: {
-                line1: 'A-12, Green Park',
-                city: 'New Delhi',
-                state: 'Delhi',
-                pincode: '110016',
-                fullName: 'Rahul Sharma'
-            },
-            items: [
-                {
-                    name: "Bridal Gold Necklace Set 22k",
-                    sku: "JWL-NCK-001",
-                    qty: 1,
-                    reason: "Clasp Broken",
-                    condition: "Defective",
-                    price: 120000,
-                    image: necklaceImg
-                }
-            ],
-            evidence: {
-                comment: "The clasp of the necklace was broken when I opened the box.",
-                images: [necklaceImg],
-                video: null
-            },
-            timeline: [
-                { status: 'Return Requested', date: '2025-02-06', done: true },
-                { status: 'Admin Approved', date: null, done: false },
-                { status: 'Pickup Scheduled', date: null, done: false }
-            ],
-            logs: [
-                { type: 'Email', msg: 'Return Request Received', date: '06 Feb 2025, 09:00 AM' }
-            ]
-        },
-
-        // CASE 102: APPROVED (Pickup Scheduled)
-        '102': {
-            id: '102',
-            orderId: '5002',
-            type: 'Refund',
-            status: 'Approved',
-            requestDate: '2025-02-04T14:30:00Z',
-            amount: 85000,
-            refundAmount: 85000,
-            reason: 'Wrong Item Received',
-            userName: 'Priya Singh',
-            phone: '+91 98765 00002',
-            email: 'priya.s@example.com',
-            address: {
-                line1: 'B-402, Lotus Tower, Andheri West',
-                city: 'Mumbai',
-                state: 'Maharashtra',
-                pincode: '400053',
-                fullName: 'Priya Singh'
-            },
-            items: [
-                {
-                    name: "22k Gold Bangles (Set of 4)",
-                    sku: "JWL-BNG-002",
-                    qty: 1,
-                    reason: "Wrong Design",
-                    condition: "Unopened",
-                    price: 85000,
-                    image: banglesImg
-                }
-            ],
-            evidence: {
-                comment: "I ordered the floral design but received the geometric pattern instead.",
-                images: [banglesImg],
-                video: null
-            },
-            courier: {
-                partner: 'Delhivery',
-                awb: 'RT987654321',
-                pickupDate: '2025-02-07',
-                status: 'Scheduled'
-            },
-            timeline: [
-                { status: 'Return Requested', date: '2025-02-04', done: true },
-                { status: 'Admin Approved', date: '2025-02-05', done: true },
-                { status: 'Pickup Scheduled', date: '2025-02-05', done: true },
-                { status: 'Picked Up', date: null, done: false }
-            ],
-            logs: [
-                { type: 'Email', msg: 'Return Request Received', date: '04 Feb 2025, 02:30 PM' },
-                { type: 'System', msg: 'Pickup Scheduled via Delhivery', date: '05 Feb 2025, 10:00 AM' }
-            ]
-        },
-
-        // CASE 103: REFUNDED (Completed)
-        '103': {
-            id: '103',
-            orderId: '5003',
-            type: 'Refund',
-            status: 'Refunded',
-            requestDate: '2025-01-20T09:15:00Z',
-            amount: 250000,
-            refundAmount: 250000,
-            reason: 'Quality Issue',
-            userName: 'Amit Verma',
-            phone: '+91 98765 00003',
-            email: 'amit.v@example.com',
-            address: {
-                line1: 'C-15, Golf Links',
-                city: 'Bangalore',
-                state: 'Karnataka',
-                pincode: '560071',
-                fullName: 'Amit Verma'
-            },
-            items: [
-                {
-                    name: "Diamond Engagement Ring 1.5 Carat",
-                    sku: "JWL-RNG-003",
-                    qty: 1,
-                    reason: "Polish Issue",
-                    condition: "Opened",
-                    price: 250000,
-                    image: ringImg
-                }
-            ],
-            evidence: {
-                comment: "The diamond seems slightly loose and setting is not as expected.",
-                images: [ringImg],
-                video: null
-            },
-            courier: {
-                partner: 'BlueDart',
-                awb: 'RT555666777',
-                pickupDate: '2025-01-22',
-                status: 'Delivered'
-            },
-            refund: {
-                method: 'UPI',
-                amount: 250000,
-                transactionId: 'UPI-1234567890',
-                date: '2025-01-25'
-            },
-            timeline: [
-                { status: 'Return Requested', date: '2025-01-20', done: true },
-                { status: 'Admin Approved', date: '2025-01-21', done: true },
-                { status: 'Picked Up', date: '2025-01-22', done: true },
-                { status: 'Received', date: '2025-01-24', done: true },
-                { status: 'Refund Completed', date: '2025-01-25', done: true }
-            ],
-            logs: [
-                { type: 'Email', msg: 'Refund Processed successfully', date: '25 Jan 2025, 02:00 PM' }
-            ]
-        },
-
-        // CASE 104: REJECTED
-        '104': {
-            id: '104',
-            orderId: '5004',
-            type: 'Refund',
-            status: 'Rejected',
-            requestDate: '2025-02-01T16:45:00Z',
-            amount: 45000,
-            refundAmount: 0,
-            reason: 'Changed Mind',
-            userName: 'Sneha Gupta',
-            phone: '+91 98765 00004',
-            email: 'sneha.g@example.com',
-            address: {
-                line1: 'D-5, Civil Lines',
-                city: 'Jaipur',
-                state: 'Rajasthan',
-                pincode: '302006',
-                fullName: 'Sneha Gupta'
-            },
-            items: [
-                {
-                    name: "Gold Chain 18k (20 inches)",
-                    sku: "JWL-CHN-004",
-                    qty: 1,
-                    reason: "Changed Mind",
-                    condition: "Unopened",
-                    price: 45000,
-                    image: necklaceImg
-                }
-            ],
-            evidence: {
-                comment: "I don't need it anymore.",
-                images: [],
-                video: null
-            },
-            adminComment: 'Return policy does not cover "Change of Mind" for jewelry items.',
-            timeline: [
-                { status: 'Return Requested', date: '2025-02-01', done: true },
-                { status: 'Rejected', date: '2025-02-02', done: true }
-            ],
-            logs: [
-                { type: 'Email', msg: 'Return Request Rejected', date: '02 Feb 2025, 09:30 AM' }
-            ]
-        },
-
-        // CASE 201: REPLACEMENT APPROVED
-        '201': {
-            id: '201',
-            orderId: '6001',
-            type: 'Replacement',
-            status: 'Approved',
-            requestDate: '2025-02-02T14:30:00Z',
-            amount: 180000,
-            reason: 'Wrong Size',
-            userName: 'Priya Verma',
-            phone: '+91 98765 00005',
-            email: 'priya.v@example.com',
-            address: {
-                line1: 'E-20, Park Street',
-                city: 'Kolkata',
-                state: 'West Bengal',
-                pincode: '700016',
-                fullName: 'Priya Verma'
-            },
-            items: [
-                {
-                    name: "Diamond Engagement Ring 1.0 Carat",
-                    sku: "JWL-RNG-005",
-                    qty: 1,
-                    reason: "Wrong Size",
-                    condition: "Unopened",
-                    price: 180000,
-                    image: ringImg
-                }
-            ],
-            evidence: {
-                comment: "The ring is too small for my finger.",
-                images: [ringImg],
-                video: null
-            },
-            courier: {
-                partner: 'Delhivery',
-                awb: 'RPL123456',
-                pickupDate: '2025-02-03',
-                status: 'Scheduled'
-            },
-            timeline: [
-                { status: 'Return Requested', date: '2025-02-02', done: true },
-                { status: 'Approved', date: '2025-02-03', done: true },
-                { status: 'Pickup Scheduled', date: '2025-02-03', done: true }
-            ],
-            logs: []
-        },
-
-        // CASE 202: REPLACEMENT PENDING
-        '202': {
-            id: '202',
-            orderId: '6002',
-            type: 'Replacement',
-            status: 'Pending',
-            requestDate: '2025-02-04T12:00:00Z',
-            amount: 125000,
-            reason: 'Defective',
-            userName: 'Neha Gupta',
-            phone: '+91 99999 88888',
-            email: 'neha.g@example.com',
-            address: {
-                line1: 'F-45, Hitech City',
-                city: 'Hyderabad',
-                state: 'Telangana',
-                pincode: '500081',
-                fullName: 'Neha Gupta'
-            },
-            items: [
-                {
-                    name: "Gold Necklace Set 22k",
-                    sku: "JWL-NCK-006",
-                    qty: 1,
-                    reason: "Defective",
-                    condition: "Opened",
-                    price: 125000,
-                    image: necklaceImg
-                }
-            ],
-            evidence: {
-                comment: "Clasp is not working properly.",
-                images: [necklaceImg],
-                video: null
-            },
-            timeline: [
-                { status: 'Return Requested', date: '2025-02-04', done: true }
-            ],
-            logs: []
-        },
-
-        // CASE 203: REPLACEMENT SHIPPED
-        '203': {
-            id: '203',
-            orderId: '6003',
-            type: 'Replacement',
-            status: 'Shipped',
-            requestDate: '2025-02-06T09:00:00Z',
-            amount: 85000,
-            reason: 'Damaged',
-            userName: 'Rahul Roy',
-            phone: '+91 77777 66666',
-            email: 'rahul.r@example.com',
-            address: {
-                line1: 'G-10, Salt Lake',
-                city: 'Kolkata',
-                state: 'West Bengal',
-                pincode: '700091',
-                fullName: 'Rahul Roy'
-            },
-            items: [
-                {
-                    name: "22k Gold Bangles (Set of 4)",
-                    sku: "JWL-BNG-007",
-                    qty: 1,
-                    reason: "Damaged",
-                    condition: "Opened",
-                    price: 85000,
-                    image: banglesImg
-                }
-            ],
-            evidence: {
-                comment: "Surface has visible scratches.",
-                images: [banglesImg],
-                video: null
-            },
-            courier: {
-                partner: 'BlueDart',
-                awb: 'RPL987654',
-                pickupDate: '2025-02-07',
-                status: 'Picked Up'
-            },
-            timeline: [
-                { status: 'Return Requested', date: '2025-02-06', done: true },
-                { status: 'Approved', date: '2025-02-06', done: true },
-                { status: 'Shipped', date: '2025-02-07', done: true }
-            ],
-            logs: []
-        }
-    };
-
-    const currentDummyData = DUMMY_CASES[id] || DUMMY_CASES['101'];
-
-    // Fetch Return Details (with fallback to dummy data)
-    const { data: ret = currentDummyData, isLoading } = useQuery({
+    // Fetch Return Details
+    const { data: ret, isLoading, error } = useQuery({
         queryKey: ['return', id],
         queryFn: async () => {
-            try {
-                const res = await fetch(`http://localhost:5000/api/returns/${id}`);
-                if (!res.ok) throw new Error('Failed');
-                const data = await res.json();
-                return data || (DUMMY_CASES[id] || DUMMY_CASES['101']);
-            } catch (err) {
-                console.log("Using Dummy Data for ID:", id);
-                return DUMMY_CASES[id] || DUMMY_CASES['101'];
-            }
+            const res = await api.get(`/returns/${id}`);
+            return res.data;
         }
     });
 
-    // Update Status Mutation
     // Update Status Mutation
     const updateStatusMutation = useMutation({
         mutationFn: async ({ status, comment }) => {
-            await new Promise(r => setTimeout(r, 600)); // Simulate API
-            const updatedData = {
-                ...ret,
-                status,
-                adminComment: comment,
-                // Add dummy courier info if Approved
-                ...(status === 'Approved' && {
-                    courier: {
-                        partner: 'Delhivery',
-                        awb: 'RT987654321',
-                        pickupDate: new Date().toISOString().split('T')[0],
-                        status: 'Scheduled'
-                    },
-                    timeline: ret.timeline.map(t =>
-                        t.status === 'Admin Approved' || t.status === 'Pickup Scheduled'
-                            ? { ...t, date: new Date().toISOString().split('T')[0], done: true }
-                            : t
-                    )
-                })
-            };
-            return updatedData;
+            const res = await api.patch(`/returns/${id}`, { status, adminComment: comment });
+            return res.data.request;
         },
-        onSuccess: (newData) => {
-            queryClient.setQueryData(['return', id], newData);
-            toast.success(`Return request ${newData.status}`);
+        onSuccess: (updatedRequest) => {
+            queryClient.setQueryData(['return', id], updatedRequest);
+            toast.success(`Request status updated to ${updatedRequest.status}`);
+            setAdminComment('');
         },
-        onError: () => toast.error('Failed to update status')
+        onError: (err) => {
+            console.error('[UPDATE STATUS ERROR]', err);
+            toast.error(err.response?.data?.message || 'Failed to update status');
+        }
     });
 
-    const [adminComment, setAdminComment] = useState('');
 
-    if (isLoading) return <div className="p-20 text-center">Loading Return Details...</div>;
+    if (isLoading) return <div className="p-20 text-center text-[10px] font-black uppercase tracking-widest animate-pulse">Establishing Secure Neural Link to Protocol...</div>;
+    if (error) return <div className="p-20 text-center text-red-500 font-black text-[10px] uppercase tracking-widest">Neural Link Failure: Protocol {id} Not Located.</div>;
+    if (!ret) return <div className="p-20 text-center text-gray-400 font-black text-[10px] uppercase tracking-widest">Protocol Matrix Empty.</div>;
 
-    const isReplacement = ret.type === 'Replacement';
+    const isReplacement = ret.type?.toLowerCase() === 'exchange';
 
     const getStatusColor = (st) => {
-        switch (st) {
-            case 'Completed':
-            case 'Refunded': return 'text-emerald-600 bg-emerald-50 border-emerald-100';
-            case 'Approved': return 'text-blue-600 bg-blue-50 border-blue-100';
-            case 'Pending': return 'text-amber-600 bg-amber-50 border-amber-100';
-            case 'Rejected': return 'text-red-600 bg-red-50 border-red-100';
+        switch (st?.toLowerCase()) {
+            case 'completed':
+            case 'refunded':
+            case 'shipped': return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+            case 'approved': return 'text-blue-600 bg-blue-50 border-blue-100';
+            case 'pending': return 'text-amber-600 bg-amber-50 border-amber-100';
+            case 'rejected': return 'text-red-600 bg-red-50 border-red-100';
             default: return 'text-gray-600 bg-gray-50 border-gray-100';
         }
     };
@@ -476,13 +110,13 @@ const ReturnDetailPage = () => {
             {/* 1. Return Summary (Top Card) - High Density */}
             <div className="bg-white p-4 rounded-none border border-black/5 shadow-sm grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Return ID</p>
-                    <p className="text-xl font-serif font-black text-black">#{ret.id}</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Protocol Ref</p>
+                    <p className="text-xl font-serif font-black text-black">#{ret._id?.slice(-8)}</p>
                 </div>
                 <div>
                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Order Ref</p>
-                    <p 
-                        className="text-sm font-black text-gold hover:underline cursor-pointer tracking-tighter" 
+                    <p
+                        className="text-sm font-black text-gold hover:underline cursor-pointer tracking-tighter"
                         onClick={() => navigate(`/admin/orders/${ret.orderId}`)}
                     >
                         #{ret.orderId}
@@ -495,8 +129,8 @@ const ReturnDetailPage = () => {
                     </span>
                 </div>
                 <div>
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Refund Valuation</p>
-                    <p className="text-2xl font-serif font-black text-gold tabular-nums tracking-tighter">₹{(ret.refundAmount || 0).toLocaleString()}</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Fiscal Flux</p>
+                    <p className="text-2xl font-serif font-black text-gold tabular-nums tracking-tighter">₹{(ret.items?.reduce((acc, i) => acc + i.price, 0) || 0).toLocaleString()}</p>
                 </div>
             </div>
 
@@ -531,13 +165,10 @@ const ReturnDetailPage = () => {
                                                     <p className="text-[11px] font-black text-black tracking-tight line-clamp-1 uppercase">{item.name}</p>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-3 text-center font-bold text-black text-[11px] tabular-nums">{item.qty}</td>
-                                            <td className="px-6 py-3 text-right font-black text-gray-400 text-[11px] tabular-nums">₹{item.price.toLocaleString()}</td>
-                                            <td className="px-6 py-3">
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="inline-block w-fit px-2 py-0.5 bg-red-50 text-red-600 rounded-none text-[8px] font-black uppercase tracking-widest border border-red-100">{item.reason}</span>
-                                                    <span className="text-[9px] font-medium text-gray-400 italic">Condition: {item.condition}</span>
-                                                </div>
+                                            <td className="px-6 py-3 text-center font-bold text-black text-[11px] tabular-nums">{item.quantity || 1}</td>
+                                            <td className="px-6 py-3 text-right font-black text-gray-400 text-[11px] tabular-nums">₹{(item.price || 0).toLocaleString()}</td>
+                                            <td className="px-6 py-3 font-black text-gray-400 text-[11px] tabular-nums">
+                                                <span className="text-[9px] font-black text-gray-700 uppercase tracking-tight">{ret.reason}</span>
                                             </td>
                                         </tr>
                                     ))}
@@ -556,8 +187,8 @@ const ReturnDetailPage = () => {
                                 <MessageSquare size={16} />
                             </div>
                             <div>
-                                <p className="text-[9px] font-black text-gold uppercase tracking-widest mb-1">Customer Statement</p>
-                                <p className="text-xs font-bold text-black leading-relaxed italic uppercase tracking-tight">"{ret.evidence?.comment}"</p>
+                                <p className="text-[9px] font-black text-gold uppercase tracking-widest mb-1">Customer Observations</p>
+                                <p className="text-xs font-bold text-black leading-relaxed italic uppercase tracking-tight">"{ret.comment || 'No additional commentary provided.'}"</p>
                             </div>
                         </div>
                         <div>
@@ -571,11 +202,8 @@ const ReturnDetailPage = () => {
                                         </div>
                                     </div>
                                 ))}
-                                {ret.evidence?.video && (
-                                    <div className="w-24 h-24 rounded-none border border-black/5 bg-gray-50 flex flex-col items-center justify-center shrink-0 cursor-pointer hover:border-gold/50 transition-all group">
-                                        <Video className="text-gray-400 group-hover:text-gold" size={24} />
-                                        <p className="text-[8px] font-black uppercase text-gray-400 mt-2">Play Media</p>
-                                    </div>
+                                {(!ret.evidence?.images || ret.evidence.images.length === 0) && (
+                                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest italic">No visual evidence uploaded.</p>
                                 )}
                             </div>
                         </div>
@@ -610,7 +238,7 @@ const ReturnDetailPage = () => {
                 {/* Right Column: Customer, Timeline, Actions */}
                 <div className="space-y-4">
                     {/* Admin Actions */}
-                    {ret.status === 'Pending' && (
+                    {ret.status?.toLowerCase() === 'pending' && (
                         <div className="bg-white p-4 rounded-none border border-black/5 shadow-sm animate-in slide-in-from-top-4">
                             <div className="flex items-center gap-2 mb-4 border-l-2 border-gold pl-3">
                                 <h3 className="text-[10px] font-black text-black uppercase tracking-widest">Protocol Decision</h3>
@@ -639,7 +267,7 @@ const ReturnDetailPage = () => {
                     )}
 
                     {/* Decision Note (If resolved) */}
-                    {(ret.status === 'Approved' || ret.status === 'Rejected') && (
+                    {(ret.status?.toLowerCase() === 'approved' || ret.status?.toLowerCase() === 'rejected' || ret.status?.toLowerCase() === 'refunded' || ret.status?.toLowerCase() === 'shipped') && (
                         <div className={`${ret.status === 'Approved' ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'} p-4 rounded-none border shadow-sm`}>
                             <h3 className={`text-[9px] font-black ${ret.status === 'Approved' ? 'text-emerald-600' : 'text-red-500'} uppercase tracking-widest mb-2`}>
                                 Official Rationale
@@ -656,16 +284,16 @@ const ReturnDetailPage = () => {
                             <h3 className="text-[10px] font-black text-black uppercase tracking-widest">Client Portfolio</h3>
                         </div>
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-[#FDF5F6] rounded-none border border-black/5 flex items-center justify-center font-black text-gold text-lg shadow-sm">
-                                {ret.userName?.charAt(0)}
+                            <div className="w-12 h-12 bg-[#FDF5F6] rounded-none border border-black/5 flex items-center justify-center font-black text-gold text-lg shadow-sm uppercase">
+                                {ret.userId?.name?.charAt(0) || '?'}
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h3 className="font-black text-black text-[11px] uppercase tracking-widest truncate">{ret.userName}</h3>
+                                <h3 className="font-black text-black text-[11px] uppercase tracking-widest truncate">{ret.userId?.name || 'Patron Unknown'}</h3>
                                 <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-widest flex items-center gap-1">
-                                    <Phone size={10} /> {ret.phone}
+                                    <Phone size={10} /> {ret.userId?.phone || 'No Registry'}
                                 </p>
                                 <p className="text-[9px] font-bold text-gray-400 mt-0.5 uppercase tracking-widest flex items-center gap-1">
-                                    <Mail size={10} /> {ret.email}
+                                    <Mail size={10} /> {ret.userId?.email || 'No Identity'}
                                 </p>
                             </div>
                         </div>
@@ -697,22 +325,13 @@ const ReturnDetailPage = () => {
                         <div className="flex items-center gap-2 mb-5 border-l-2 border-gold pl-3">
                             <h3 className="text-[10px] font-black text-black uppercase tracking-widest">Processing Chronology</h3>
                         </div>
-                        <div className="space-y-5 relative pl-1.5">
-                            <div className="absolute left-[5px] top-2 bottom-2 w-[1px] bg-black/5"></div>
-                            {ret.timeline?.map((step, idx) => (
-                                <div key={idx} className={`relative flex items-start gap-4 z-10 transition-opacity ${step.done ? 'opacity-100' : 'opacity-40'}`}>
-                                    <div className={`w-2.5 h-2.5 rounded-none rotate-45 border shrink-0 z-10 ${step.done ? 'bg-gold border-gold' : 'bg-white border-black/10'}`}></div>
-                                    <div className="-mt-1">
-                                        <p className="text-[9px] font-black text-black uppercase tracking-widest">{step.status}</p>
-                                        <p className="text-[8px] font-bold text-gray-400 mt-0.5 uppercase tracking-widest">{step.date || 'Pending Cycle'}</p>
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="space-y-5 relative pl-1.5 text-[10px] font-black text-black uppercase tracking-widest italic">
+                            Protocol synchronized with Registry Cluster.
                         </div>
                     </div>
 
                     {/* Courier Tracking (If active) */}
-                    {(ret.status === 'Approved' || ret.status === 'Completed' || ret.status === 'Refunded') && (
+                    {(ret.status?.toLowerCase() === 'approved' || ret.status?.toLowerCase() === 'completed' || ret.status?.toLowerCase() === 'refunded' || ret.status?.toLowerCase() === 'shipped') && (
                         <div className="bg-white p-4 rounded-none border border-black/5 border-l-2 border-l-gold shadow-sm">
                             <h3 className="text-[10px] font-black text-black uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <Truck size={14} className="text-gold" strokeWidth={2.5} /> Tracking Protocol
@@ -720,18 +339,14 @@ const ReturnDetailPage = () => {
                             <div className="space-y-3">
                                 <div className="flex justify-between text-[9px] font-bold text-gray-400 uppercase tracking-widest">
                                     <span>Carrier</span>
-                                    <span className="text-black font-black">{ret.courier?.partner}</span>
+                                    <span className="text-black font-black">Shiprocket / Internal</span>
                                 </div>
                                 <div className="flex justify-between text-[9px] font-bold text-gray-400 uppercase tracking-widest">
                                     <span>AWB Reference</span>
-                                    <span className="text-black font-black select-all tracking-widest">{ret.courier?.awb}</span>
-                                </div>
-                                <div className="flex justify-between text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                                    <span>Cycle Window</span>
-                                    <span className="text-black font-black">{ret.courier?.pickupDate}</span>
+                                    <span className="text-black font-black select-all tracking-widest">AWAITING_MANIFEST</span>
                                 </div>
                                 <button className="w-full mt-2 py-2.5 bg-black text-white hover:bg-gold hover:text-black rounded-none text-[8px] font-black uppercase tracking-widest transition-all">
-                                    Synchronize Live Map
+                                    Synchronize Logistics
                                 </button>
                             </div>
                         </div>

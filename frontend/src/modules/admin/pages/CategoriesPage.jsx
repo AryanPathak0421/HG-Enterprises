@@ -20,7 +20,7 @@ import { useShop } from '../../../context/ShopContext';
 import Pagination from '../components/Pagination';
 
 const CategoriesPage = () => {
-    const { products } = useShop();
+    const { products, categories: allCategories } = useShop();
     const location = useLocation();
     const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
@@ -29,40 +29,24 @@ const CategoriesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
 
-    // Group categories and subcategories from existing products for initial view
-    const initialCategories = useMemo(() => {
-        const cats = {};
-        products.forEach(p => {
-            if (!cats[p.category]) {
-                cats[p.category] = {
-                    id: p.category,
-                    name: p.category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-                    image: p.image, // Just as a placeholder
-                    status: 'Active',
-                    department: (p.category === 'machine' || p.category === 'tools') ? p.category : 'jewellery',
-                    subCategories: new Set(),
-                    productCount: 0,
-                    createdAt: Date.now()
-                };
-            }
-            cats[p.category].subCategories.add(p.subcategory);
-            cats[p.category].productCount++;
+    // Merge categories with product counts
+    const categoriesWithStats = useMemo(() => {
+        return allCategories.map(cat => {
+            const productCount = products.filter(p => p.category === cat.name).length;
+            return {
+                ...cat,
+                productCount,
+                subCategories: cat.subcategories || []
+            };
         });
+    }, [allCategories, products]);
 
-        return Object.values(cats).map(c => ({
-            ...c,
-            showInNavbar: true,
-            showInShopByCategory: true,
-            subCategories: Array.from(c.subCategories).map(sc => ({
-                id: sc.toLowerCase().replace(/\s+/g, '-'),
-                name: sc,
-                image: '', // Initialize as empty for sub-categories
-                status: 'Active'
-            }))
-        }));
-    }, [products]);
+    const [categories, setCategories] = useState(categoriesWithStats);
 
-    const [categories, setCategories] = useState(initialCategories);
+    // Sync local state with context when context updates
+    React.useEffect(() => {
+        setCategories(categoriesWithStats);
+    }, [categoriesWithStats]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [newCat, setNewCat] = useState({ name: '', image: '', status: 'Active', showInNavbar: false, showInShopByCategory: false, department: departmentParam });

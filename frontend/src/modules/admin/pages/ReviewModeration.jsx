@@ -7,69 +7,76 @@ import {
 } from 'lucide-react';
 import AdminStatsCard from '../components/AdminStatsCard';
 
-const ReviewModeration = () => {
-    // Mock Reviews Data
-    const [reviews, setReviews] = useState([
-        {
-            id: 'REV-101',
-            userName: 'Aditi Singh',
-            productName: 'Classic Solitaire Ring',
-            rating: 5,
-            comment: 'Absolutely stunning! The quality of the silver is top-notch and it looks even better than the pictures.',
-            date: 'Dec 24, 2024',
-            status: 'Pending',
-            isVisible: true
-        },
-        {
-            id: 'REV-102',
-            userName: 'Rahul Verma',
-            productName: '925 Silver Chain',
-            rating: 2,
-            comment: 'The chain is too thin for my liking. Product delivery was also late by 3 days.',
-            date: 'Dec 20, 2024',
-            status: 'Approved',
-            isVisible: true
-        },
-        {
-            id: 'REV-103',
-            userName: 'Spam User',
-            productName: 'Minimalist Bangle',
-            rating: 1,
-            comment: 'BUY CHEAP COINS AT WWW.SPAM-SITE.COM !!! FAST AND EASY !!!',
-            date: 'Dec 18, 2024',
-            status: 'Rejected',
-            isVisible: false
-        },
-        {
-            id: 'REV-104',
-            userName: 'Sneha Kapoor',
-            productName: 'Infinity Silver Bracelet',
-            rating: 4,
-            comment: 'Very elegant design. The clasp is a bit tight but manageable.',
-            date: 'Dec 15, 2024',
-            status: 'Approved',
-            isVisible: true
-        }
-    ]);
+import api from '../../../utils/api';
 
+const ReviewModeration = () => {
+    const [reviews, setReviews] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
 
-    const handleStatusMove = (id, newStatus) => {
-        setReviews(reviews.map(rev =>
-            rev.id === id ? { ...rev, status: newStatus, isVisible: newStatus === 'Approved' } : rev
-        ));
+    const fetchReviews = async () => {
+        try {
+            const res = await api.get('/products/admin/reviews/all');
+            const normalizedReviews = res.data.map(r => ({
+                id: r._id,
+                userName: r.userId?.name || 'Anonymous',
+                productName: r.productId?.name || 'Unknown Product',
+                rating: r.rating,
+                comment: r.comment,
+                date: new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                status: r.status,
+                isVisible: r.isVisible
+            }));
+            setReviews(normalizedReviews);
+        } catch (error) {
+            console.error("Error fetching reviews:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const toggleVisibility = (id) => {
-        setReviews(reviews.map(rev =>
-            rev.id === id ? { ...rev, isVisible: !rev.isVisible } : rev
-        ));
+    React.useEffect(() => {
+        fetchReviews();
+    }, []);
+
+    const handleStatusMove = async (id, newStatus) => {
+        try {
+            await api.patch(`/products/admin/reviews/${id}/status`, {
+                status: newStatus,
+                isVisible: newStatus === 'Approved'
+            });
+            setReviews(reviews.map(rev =>
+                rev.id === id ? { ...rev, status: newStatus, isVisible: newStatus === 'Approved' } : rev
+            ));
+        } catch (error) {
+            console.error("Error updating status:", error);
+        }
     };
 
-    const deleteReview = (id) => {
+    const toggleVisibility = async (id) => {
+        const rev = reviews.find(r => r.id === id);
+        try {
+            await api.patch(`/products/admin/reviews/${id}/status`, {
+                isVisible: !rev.isVisible,
+                status: rev.status
+            });
+            setReviews(reviews.map(r =>
+                r.id === id ? { ...r, isVisible: !r.isVisible } : r
+            ));
+        } catch (error) {
+            console.error("Error toggling visibility:", error);
+        }
+    };
+
+    const deleteReview = async (id) => {
         if (window.confirm('Are you sure you want to permanently delete this review?')) {
-            setReviews(reviews.filter(rev => rev.id !== id));
+            try {
+                await api.delete(`/products/reviews/${id}`);
+                setReviews(reviews.filter(rev => rev.id !== id));
+            } catch (error) {
+                console.error("Error deleting review:", error);
+            }
         }
     };
 

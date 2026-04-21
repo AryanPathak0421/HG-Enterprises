@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MoveRight, ArrowRight, Menu } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
-import { categories } from '../data/data';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import navGiftWomen from '../assets/nav_gift_women.png';
@@ -76,14 +75,11 @@ const CategoryNav = () => {
     const blogsItem = { id: 'blogs', name: 'Blogs', path: '/blogs', type: 'link' };
     const aboutUsItem = { id: 'about', name: 'Our Story', path: '/about', type: 'link' };
 
-    // Combine all
+    // Group Categories by Department for Main Nav
     const navItems = [
-        collectionsItem,
-        giftsItem,
-        materialItem,
-        shopItem,
-        blogsItem,
-        aboutUsItem
+        { id: 'jewellery', name: 'Jewellery', path: '/shop?category=jewellery', type: 'link' },
+        { id: 'tools', name: 'Tools', path: '/shop?category=tools', type: 'link' },
+        { id: 'machines', name: 'Machines', path: '/shop?category=machines', type: 'link' }
     ];
 
 

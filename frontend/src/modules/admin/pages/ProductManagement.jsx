@@ -8,7 +8,7 @@ import BulkUpdateModal from '../components/BulkUpdateModal';
 
 const ProductManagement = () => {
     const navigate = useNavigate();
-    const { products, deleteProduct, bulkUpdatePrices } = useShop();
+    const { products, deleteProduct, toggleProductStatus, bulkUpdatePrices } = useShop();
     const [searchParams] = useSearchParams();
     const isSelectMode = searchParams.get('selectMode') === 'true';
     const returnUrl = searchParams.get('returnUrl') || '/admin/products';
@@ -25,14 +25,14 @@ const ProductManagement = () => {
     };
 
     const handleConfirmSelection = () => {
-        const selectedProducts = products.filter(p => selectedIds.includes(p.id));
-        localStorage.setItem('temp_selected_products', JSON.stringify(selectedProducts));
+        const selectedProducts = products.filter(p => selectedIds.includes(p.id || p._id));
+        sessionStorage.setItem('temp_selected_products', JSON.stringify(selectedProducts));
         navigate(returnUrl);
     };
 
     const handleDelete = (id) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
-            // Logic placeholder
+            deleteProduct(id);
         }
     };
 
@@ -40,9 +40,9 @@ const ProductManagement = () => {
         ...(isSelectMode ? [{
             header: '',
             render: (item) => (
-                <div onClick={(e) => { e.stopPropagation(); toggleSelection(item.id); }} className="cursor-pointer">
-                    <div className={`w-4 h-4 rounded-none border flex items-center justify-center transition-all ${selectedIds.includes(item.id) ? 'bg-black border-black text-white' : 'border-black/20 bg-white'}`}>
-                        {selectedIds.includes(item.id) && <Check size={10} strokeWidth={4} />}
+                <div onClick={(e) => { e.stopPropagation(); toggleSelection(item.id || item._id); }} className="cursor-pointer">
+                    <div className={`w-4 h-4 rounded-none border flex items-center justify-center transition-all ${selectedIds.includes(item.id || item._id) ? 'bg-black border-black text-white' : 'border-black/20 bg-white'}`}>
+                        {(selectedIds.includes(item.id || item._id)) && <Check size={10} strokeWidth={4} />}
                     </div>
                 </div>
             )
@@ -52,19 +52,17 @@ const ProductManagement = () => {
             render: (item) => (
                 <div className="flex flex-col py-0.5">
                     <span className="font-black text-black text-[10px] tracking-tight uppercase leading-tight">{item.name}</span>
-                    <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">id: {item.id?.slice(-6).toUpperCase() || 'N/A'}</span>
+                    <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">id: {(item._id || item.id || '').slice(-6).toUpperCase() || 'N/A'}</span>
                 </div>
             )
         },
         {
             header: 'Classification',
             render: (item) => {
-                const categories = item.categories || (item.category ? [{ category: item.category, subcategory: item.subcategory }] : []);
-                const primary = categories[0] || { category: 'Uncategorized', subcategory: '' };
                 return (
                     <div className="flex flex-col justify-center">
-                        <span className="font-black text-gold text-[9px] uppercase tracking-tight">{primary.category}</span>
-                        {primary.subcategory && <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">{primary.subcategory}</span>}
+                        <span className="font-black text-gold text-[9px] uppercase tracking-tight">{item.category || 'N/A'}</span>
+                        {item.subcategory && <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">{item.subcategory}</span>}
                     </div>
                 );
             }
@@ -73,7 +71,7 @@ const ProductManagement = () => {
             header: 'Valuation',
             align: 'center',
             render: (item) => {
-                const price = item.variants?.[0]?.price || '0';
+                const price = item.price || (item.variants?.[0]?.price) || '0';
                 return <span className="font-serif font-black text-black text-[11px] tabular-nums tracking-tighter">₹ {parseFloat(price).toLocaleString()}</span>;
             }
         },
@@ -81,7 +79,7 @@ const ProductManagement = () => {
             header: 'Inventory',
             align: 'center',
             render: (item) => {
-                const totalStock = (item.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0);
+                const totalStock = item.stock || (item.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0);
                 const inStock = totalStock > 0;
                 return (
                     <span className={`px-2 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest border ${inStock
@@ -99,7 +97,7 @@ const ProductManagement = () => {
             render: (item) => (
                 <div className="flex items-center justify-center gap-1">
                     <span className="text-gold text-[8px]">★</span>
-                    <span className="font-serif font-black text-black text-[10px]">4.2</span>
+                    <span className="font-serif font-black text-black text-[10px]">{item.rating || '0.0'}</span>
                 </div>
             )
         },
@@ -107,10 +105,10 @@ const ProductManagement = () => {
             header: 'Protocol',
             align: 'center',
             render: (item) => {
-                const isActive = item.active !== false;
+                const isActive = item.isActive !== false;
                 return (
                     <button
-                        onClick={(e) => { e.stopPropagation(); }}
+                        onClick={(e) => { e.stopPropagation(); toggleProductStatus(item._id || item.id); }}
                         className={`px-3 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest border transition-all ${isActive
                             ? 'bg-gold/10 text-gold border-gold/30'
                             : 'bg-gray-50 text-gray-400 border-black/5'
@@ -123,20 +121,20 @@ const ProductManagement = () => {
         {
             header: 'Log Date',
             align: 'center',
-            render: () => <span className="text-gray-400 text-[9px] font-black uppercase tracking-widest">20 Jan 24</span>
+            render: (item) => <span className="text-gray-400 text-[9px] font-black uppercase tracking-widest">{new Date(item.createdAt || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
         },
         ...(!isSelectMode ? [{
             header: 'Access',
             align: 'right',
             render: (item) => (
                 <div className="flex items-center justify-end gap-1">
-                    <button onClick={() => navigate(`/admin/products/view/${item.id}`)} className="p-1.5 text-gray-400 hover:text-black hover:bg-gold/10 transition-all">
+                    <button onClick={() => navigate(`/admin/products/view/${item._id || item.id}`)} title="View" className="p-1.5 text-gray-400 hover:text-black hover:bg-gold/10 transition-all">
                         <Eye size={12} />
                     </button>
-                    <button onClick={() => navigate(`/admin/products/edit/${item.id}`)} className="p-1.5 text-gray-400 hover:text-black hover:bg-gold/10 transition-all">
+                    <button onClick={() => navigate(`/admin/products/edit/${item._id || item.id}`)} title="Edit" className="p-1.5 text-gray-400 hover:text-black hover:bg-gold/10 transition-all">
                         <Edit2 size={12} />
                     </button>
-                    <button onClick={() => handleDelete(item.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                    <button onClick={() => handleDelete(item._id || item.id)} title="Delete" className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
                         <Trash2 size={12} />
                     </button>
                 </div>

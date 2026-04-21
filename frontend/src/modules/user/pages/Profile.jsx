@@ -1,43 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { useShop } from '../../../context/ShopContext';
-import { 
-    User, 
-    Package, 
-    LogOut, 
-    ShoppingBag, 
-    ChevronRight, 
-    ArrowLeft, 
-    Edit2, 
-    Check, 
-    MapPin, 
-    Plus, 
-    Trash2, 
-    Heart, 
-    HelpCircle, 
-    CreditCard, 
-    Banknote, 
-    ShieldCheck, 
-    Bell, 
-    BellOff, 
-    FileText, 
-    Shield, 
-    AlertTriangle, 
-    Mail, 
-    Smartphone, 
-    X, 
+import { useAuth } from '../../../context/AuthContext';
+import {
+    User,
+    Package,
+    LogOut,
+    ShoppingBag,
+    ChevronRight,
+    ArrowLeft,
+    Edit2,
+    Check,
+    MapPin,
+    Plus,
+    Trash2,
+    Heart,
+    HelpCircle,
+    CreditCard,
+    Banknote,
+    ShieldCheck,
+    Bell,
+    BellOff,
+    FileText,
+    Shield,
+    AlertTriangle,
+    Mail,
+    Smartphone,
+    X,
     RefreshCw,
     ShieldAlert,
-    Wallet
+    Wallet,
+    Upload,
+    Loader2,
+    Image as ImageIcon,
+    Download
 } from 'lucide-react';
+import api from '../../../utils/api';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReviewForm from '../components/ReviewForm';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { generateInvoice } from '../../../utils/invoiceGenerator';
+import hgLogoPremium from '../assets/logo_final.jpg';
 
-const ReturnActionModal = ({ isOpen, onClose, type, order, onSuccess }) => {
+const ReturnActionModal = ({ isOpen, onClose, type, order, onSuccess, userReviews = [] }) => {
     const { showNotification } = useShop();
     const [selectedItems, setSelectedItems] = useState([]);
     const [reason, setReason] = useState('');
-    const [resolution, setResolution] = useState(type === 'return' ? 'refund' : 'exchange');
     const [comment, setComment] = useState('');
+    const [images, setImages] = useState([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (!isOpen) return null;
 
@@ -49,97 +62,200 @@ const ReturnActionModal = ({ isOpen, onClose, type, order, onSuccess }) => {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleFileUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        setIsUploading(true);
+        try {
+            const uploadPromises = files.map(file => {
+                const formData = new FormData();
+                formData.append('image', file);
+                return api.post('/returns/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            });
+
+            const responses = await Promise.all(uploadPromises);
+            const newUrls = responses.map(res => res.data.imageUrl);
+            setImages(prev => [...prev, ...newUrls]);
+            showNotification(`${files.length} image(s) uploaded successfully.`);
+        } catch (error) {
+            console.error('[UPLOAD ERROR]', error);
+            showNotification("Failed to upload evidence images.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const removeImage = (index) => {
+        setImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (selectedItems.length === 0) {
-            alert("Please select at least one item to " + type);
+            showNotification("Please select at least one item.");
             return;
         }
 
-        const requestData = {
-            type,
-            items: order.items.filter(i => selectedItems.includes(i.id)),
-            reason,
-            resolution,
-            date: new Date().toISOString(),
-            status: 'requested'
-        };
+        setIsSubmitting(true);
+        try {
+            const requestData = {
+                orderId: order.orderId || order.id,
+                type,
+                items: order.items.filter(i => selectedItems.includes(i.id)),
+                reason,
+                comment,
+                images
+            };
 
-        showNotification(`${type === 'return' ? 'Return' : 'Exchange'} request initiated.`);
-        onSuccess(requestData);
-        onClose();
+            const res = await api.post('/returns', requestData);
+            showNotification(`${type === 'return' ? 'Return' : 'Exchange'} request submitted successfully.`);
+            onSuccess(res.data.request);
+            onClose();
+        } catch (error) {
+            console.error('[SUBMIT ERROR]', error);
+            showNotification("Failed to submit request. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+                className="absolute inset-0 bg-black/80 backdrop-blur-md"
                 onClick={onClose}
             ></motion.div>
 
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 className="bg-white relative z-10 w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
             >
-                <div className="p-8 border-b border-gray-100 flex items-center justify-between">
+                <div className="p-6 md:p-8 border-b border-gray-100 flex items-center justify-between">
                     <div>
                         <h3 className="text-2xl font-serif text-black capitalize">Request {type}</h3>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Order #{order.id.replace('ORD-', '')}</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Order #{(order?.orderId || order?.id || '').replace('ORD-', '')}</p>
                     </div>
                     <button onClick={onClose} className="p-3 hover:bg-gray-50 rounded-full transition-colors">
                         <X className="w-5 h-5 text-gray-400" />
                     </button>
                 </div>
 
-                <div className="p-8 overflow-y-auto max-h-[70vh] space-y-8">
+                <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh] space-y-8 custom-scrollbar">
+                    {/* Item Selection */}
                     <div>
-                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-4">1. Select Items</h4>
+                        <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="w-5 h-5 bg-black text-white rounded-full flex items-center justify-center text-[8px]">01</span>
+                            Select Items For {type}
+                        </h4>
                         <div className="space-y-3">
-                            {order.items.map((item) => (
-                                <div key={item.id} onClick={() => handleToggleItem(item.id)} className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all ${selectedItems.includes(item.id) ? 'border-black bg-gray-50' : 'border-gray-100 hover:bg-gray-50'}`}>
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${selectedItems.includes(item.id) ? 'bg-black border-black' : 'border-gray-300'}`}>
-                                        {selectedItems.includes(item.id) && <Check className="w-3 h-3 text-white" />}
+                            {order.items.map((item) => {
+                                const isReviewed = userReviews.some(r => r.productId === (item.productId || item._id || item.id));
+                                return (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => !isReviewed && handleToggleItem(item.id)}
+                                        className={`flex items-center gap-4 p-4 rounded-2xl border transition-all 
+                                            ${isReviewed ? 'opacity-50 grayscale cursor-not-allowed border-gray-100 bg-gray-50' :
+                                                selectedItems.includes(item.id) ? 'border-black bg-black/[0.02] cursor-pointer' : 'border-gray-100 hover:bg-gray-50 cursor-pointer'}`}
+                                    >
+                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${selectedItems.includes(item.id) ? 'bg-black border-black shadow-lg shadow-black/20' : 'border-gray-200'}`}>
+                                            {selectedItems.includes(item.id) && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                        </div>
+                                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-50">
+                                            <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-center">
+                                                <p className="text-sm font-serif italic text-black truncate uppercase tracking-tight">{item.name}</p>
+                                                {isReviewed && <span className="text-[7px] font-black uppercase text-[#8B4356] bg-[#8B4356]/10 px-2 py-1 rounded-full">Reviewed - Non Returnable</span>}
+                                            </div>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">₹{item.price.toLocaleString()}</p>
+                                        </div>
                                     </div>
-                                    <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0">
-                                        <img src={item.image} alt="" className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-serif italic text-black truncate">{item.name}</p>
-                                        <p className="text-xs font-bold text-gray-400">₹{item.price.toLocaleString()}</p>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
+                    {/* Reason Selection */}
                     <div>
-                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-4">2. Reason for {type}</h4>
+                        <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="w-5 h-5 bg-black text-white rounded-full flex items-center justify-center text-[8px]">02</span>
+                            Primary Reason
+                        </h4>
                         <select
-                            className="w-full p-4 rounded-2xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black bg-white font-serif italic"
+                            className="w-full p-4 rounded-2xl border border-gray-200 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-gold/5 focus:border-gold bg-gray-50/50"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                         >
-                            <option value="">Select a reason...</option>
-                            <option>Size doesn't fit</option>
-                            <option>Product damaged</option>
-                            <option>Incorrect item received</option>
-                            <option>Quality not as expected</option>
-                            <option>Changed my mind</option>
+                            <option value="">Choose your reason...</option>
+                            <option>Product is defective or damaged</option>
+                            <option>Incorrect item delivered</option>
+                            <option>Quality not meeting expectations</option>
+                            <option>Better price found elsewhere</option>
+                            <option>No longer needed / Change of mind</option>
                         </select>
+                    </div>
+
+                    {/* Evidence Upload */}
+                    <div>
+                        <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="w-5 h-5 bg-black text-white rounded-full flex items-center justify-center text-[8px]">03</span>
+                            Visual Inspection Evidence
+                        </h4>
+                        <div className="grid grid-cols-4 gap-3 mb-4">
+                            {images.map((url, idx) => (
+                                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-100 group">
+                                    <img src={url} className="w-full h-full object-cover" alt="" />
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); removeImage(idx); }}
+                                        className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X size={10} />
+                                    </button>
+                                </div>
+                            ))}
+                            {images.length < 4 && (
+                                <label className="flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-gray-100 hover:border-gold hover:bg-gold/5 transition-all cursor-pointer">
+                                    {isUploading ? <Loader2 className="w-5 h-5 text-gold animate-spin" /> : <Upload className="w-5 h-5 text-gray-300" />}
+                                    <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*" />
+                                </label>
+                            )}
+                        </div>
+                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest px-1">Limit: 4 Images. Required for damaged/wrong items.</p>
+                    </div>
+
+                    {/* Additional Details */}
+                    <div>
+                        <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="w-5 h-5 bg-black text-white rounded-full flex items-center justify-center text-[8px]">04</span>
+                            Observation Notes
+                        </h4>
+                        <textarea
+                            className="w-full p-4 rounded-2xl border border-gray-200 text-xs font-serif italic focus:outline-none focus:ring-2 focus:ring-gold/5 focus:border-gold bg-gray-50/50 resize-none"
+                            placeholder="Provide any additional context for our inspection team..."
+                            rows={3}
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                        />
                     </div>
                 </div>
 
-                <div className="p-8 bg-gray-50 border-t border-gray-100">
+                <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100">
                     <button
                         onClick={handleSubmit}
-                        disabled={selectedItems.length === 0 || !reason}
-                        className="w-full bg-black text-white py-4 rounded-full font-bold uppercase tracking-widest shadow-xl disabled:opacity-30 hover:bg-[#8B4356] transition-all text-sm"
+                        disabled={selectedItems.length === 0 || !reason || isSubmitting || isUploading}
+                        className="w-full bg-black text-white py-4 rounded-full font-black uppercase tracking-[0.3em] shadow-2xl shadow-black/20 disabled:opacity-30 hover:bg-gold hover:text-black transition-all text-[10px] flex items-center justify-center gap-3 active:scale-95"
                     >
-                        Confirm {type} Request
+                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                        Commit {type} Protocol
                     </button>
                 </div>
             </motion.div>
@@ -147,44 +263,127 @@ const ReturnActionModal = ({ isOpen, onClose, type, order, onSuccess }) => {
     );
 };
 
-const OrderCard = ({ order, isExpanded, onToggle }) => {
+const OrderCard = ({ order, isExpanded, onToggle, returnRequest: initialReturnRequest, userReviews = [], userReturns = [] }) => {
+    const { showNotification } = useShop();
     const navigate = useNavigate();
     const [localShow, setLocalShow] = useState(false);
     const [isActionModalOpen, setActionModalOpen] = useState(false);
     const [actionType, setActionType] = useState('return');
+    const [returnRequest, setReturnRequest] = useState(initialReturnRequest);
+    const [activeReviewItem, setActiveReviewItem] = useState(null);
 
-    const [returnRequest, setReturnRequest] = useState(() => {
-        const saved = localStorage.getItem(`return_request_${order.id}`);
-        return saved ? JSON.parse(saved) : null;
-    });
+    useEffect(() => {
+        setReturnRequest(initialReturnRequest);
+    }, [initialReturnRequest]);
+
+    const orderIdValue = order.orderId || order._id || order.id;
 
     const showDetails = isExpanded !== undefined ? isExpanded : localShow;
     const setShowDetails = onToggle || setLocalShow;
 
-    const subtotal = order.items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
-    const shipping = order.total - subtotal;
+    const subtotal = order.items?.reduce((acc, i) => acc + (i.price * i.quantity), 0) || 0;
+    const shipping = (order.total || 0) - subtotal;
+
+    const getItemReview = (item) => userReviews.find(r => String(r.productId) === String(item.productId || item._id || item.id));
+    const isItemReviewed = (item) => !!getItemReview(item);
+
+    // Check if order is fully returnable
+    const isOrderReturnable = () => {
+        if (order.status !== 'Delivered') return false;
+
+        // Delivery window check (7 days)
+        if (order.deliveredDate) {
+            const deliveryDate = new Date(order.deliveredDate);
+            const now = new Date();
+            const diffDays = Math.ceil((now - deliveryDate) / (1000 * 60 * 60 * 24));
+            if (diffDays > 7) return false;
+        }
+
+        const orderReturns = userReturns.filter(r => r.orderId === (order.orderId || order.id) && r.status !== 'Rejected');
+        const returnedPackIds = new Set();
+        orderReturns.forEach(ret => {
+            ret.items.forEach(item => returnedPackIds.add(item.packId));
+        });
+
+        const activeItems = order.items.filter(item =>
+            !returnedPackIds.has(item.packId) &&
+            !isItemReviewed(item)
+        );
+
+        return activeItems.length > 0;
+    };
+
+    const orderReturnable = isOrderReturnable();
 
     const openAction = (type) => {
+        if (!orderReturnable) {
+            showNotification(`Action not available for this ${order.status === 'Delivered' ? 'evaluated/returned' : 'current state'} order`);
+            return;
+        }
         setActionType(type);
         setActionModalOpen(true);
     };
 
     const handleActionSuccess = (data) => {
         setReturnRequest(data);
-        localStorage.setItem(`return_request_${order.id}`, JSON.stringify(data));
+    };
+
+    const handleDownloadInvoice = () => {
+        const img = new Image();
+        img.src = hgLogoPremium;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            const doc = generateInvoice(order, dataUrl);
+            doc.save(`Invoice_HG_${orderIdValue}.pdf`);
+        };
+        img.onerror = () => {
+            const doc = generateInvoice(order);
+            doc.save(`Invoice_HG_${orderIdValue}.pdf`);
+        };
     };
 
     return (
         <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-6">
             <AnimatePresence>
                 {isActionModalOpen && (
-                    <ReturnActionModal 
-                        isOpen={isActionModalOpen} 
-                        onClose={() => setActionModalOpen(false)} 
-                        type={actionType} 
-                        order={order} 
-                        onSuccess={handleActionSuccess} 
+                    <ReturnActionModal
+                        isOpen={isActionModalOpen}
+                        onClose={() => setActionModalOpen(false)}
+                        type={actionType}
+                        order={order}
+                        onSuccess={handleActionSuccess}
+                        userReviews={userReviews}
                     />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {activeReviewItem && (
+                    <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                            onClick={() => setActiveReviewItem(null)}
+                        ></motion.div>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-white relative z-10 w-full max-w-lg rounded-[2.5rem] overflow-y-auto max-h-[90vh] custom-scrollbar"
+                        >
+                            <ReviewForm
+                                productId={activeReviewItem.productId || activeReviewItem._id || activeReviewItem.id}
+                                productName={activeReviewItem.name}
+                                onClose={() => setActiveReviewItem(null)}
+                            />
+                        </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
 
@@ -193,16 +392,16 @@ const OrderCard = ({ order, isExpanded, onToggle }) => {
                 <div className="flex gap-5 md:gap-8">
                     <div>
                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Placed On</span>
-                        <p className="text-xs font-serif italic text-black">{new Date(order.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                        <p className="text-xs font-serif italic text-black">{new Date(order.date || order.createdAt || new Date()).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     </div>
                     <div>
                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Order Reference</span>
-                        <p className="text-xs font-bold text-black">#{order.id.replace('ORD-', '')}</p>
+                        <p className="text-xs font-bold text-black">#{(order.orderId || order.id || '').replace('ORD-', '')}</p>
                     </div>
                 </div>
                 <div className="text-right">
                     <span className="text-[9px] font-bold text-[#8B4356] uppercase tracking-widest block mb-0.5">Grand Total</span>
-                    <p className="text-base font-serif italic text-black">₹{order.total.toLocaleString()}</p>
+                    <p className="text-base font-serif italic text-black">₹{(order.total || 0).toLocaleString()}</p>
                 </div>
             </div>
 
@@ -211,17 +410,17 @@ const OrderCard = ({ order, isExpanded, onToggle }) => {
                 <div className="flex flex-wrap items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="flex -space-x-4">
-                            {order.items.slice(0, 3).map((item, idx) => (
+                            {order.items?.slice(0, 3).map((item, idx) => (
                                 <img key={idx} src={item.image} className="w-16 h-16 rounded-2xl border-4 border-white object-cover shadow-sm bg-white" alt="" />
                             ))}
-                            {order.items.length > 3 && (
+                            {(order.items?.length || 0) > 3 && (
                                 <div className="w-16 h-16 rounded-2xl border-4 border-white bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 shadow-sm">
                                     +{order.items.length - 3}
                                 </div>
                             )}
                         </div>
                         <div>
-                            <p className="text-sm font-serif italic text-black">{order.items.length} Package Contained</p>
+                            <p className="text-sm font-serif italic text-black">{order.items?.length || 0} Package Contained</p>
                             <button onClick={() => setShowDetails(!showDetails)} className="text-[10px] font-bold text-[#8B4356] uppercase tracking-[0.2em] mt-1 hover:underline underline-offset-4">
                                 {showDetails ? 'Hide Manifesto' : 'View Manifesto'}
                             </button>
@@ -231,15 +430,30 @@ const OrderCard = ({ order, isExpanded, onToggle }) => {
                     <div className="flex gap-1.5 w-full md:w-auto">
                         {!returnRequest ? (
                             <>
-                                <button onClick={() => openAction('return')} className="flex-1 md:flex-none px-3 md:px-6 py-2.5 rounded-full border border-gray-200 text-[9px] md:text-[10px] font-bold uppercase tracking-wider md:tracking-widest hover:bg-black hover:text-white transition-all">Return</button>
-                                <button onClick={() => openAction('exchange')} className="flex-1 md:flex-none px-3 md:px-6 py-2.5 rounded-full border border-gray-200 text-[9px] md:text-[10px] font-bold uppercase tracking-wider md:tracking-widest hover:bg-black hover:text-white transition-all">Exchange</button>
-                                <button onClick={() => navigate(`/order-tracking/${order.id}`)} className="flex-1 md:flex-none px-3 md:px-6 py-2.5 rounded-full bg-black text-white text-[9px] md:text-[10px] font-bold uppercase tracking-wider md:tracking-widest hover:bg-[#8B4356] transition-all shadow-lg shadow-black/10">Track Journey</button>
+                                {orderReturnable ? (
+                                    <>
+                                        <button onClick={() => openAction('return')} className="flex-1 md:flex-none px-3 md:px-6 py-2.5 rounded-full border border-gray-200 text-[9px] md:text-[10px] font-bold uppercase tracking-wider md:tracking-widest hover:bg-black hover:text-white transition-all">Return</button>
+                                        <button onClick={() => openAction('exchange')} className="flex-1 md:flex-none px-3 md:px-6 py-2.5 rounded-full border border-gray-200 text-[9px] md:text-[10px] font-bold uppercase tracking-wider md:tracking-widest hover:bg-black hover:text-white transition-all">Exchange</button>
+                                    </>
+                                ) : order.status === 'Delivered' && (
+                                    <div className="flex items-center px-4 py-2 bg-gray-50 border border-gray-100 rounded-full">
+                                        <span className="text-[8px] font-black uppercase text-gray-400">Order Evaluated / Non-Returnable</span>
+                                    </div>
+                                )}
+                                <button onClick={() => navigate(`/order-tracking/${orderIdValue}`)} className="flex-1 md:flex-none px-3 md:px-6 py-2.5 rounded-full bg-black text-white text-[9px] md:text-[10px] font-bold uppercase tracking-wider md:tracking-widest hover:bg-[#8B4356] transition-all shadow-lg shadow-black/10">Track Journey</button>
+                                <button
+                                    onClick={handleDownloadInvoice}
+                                    className="flex-1 md:flex-none px-3 md:px-6 py-2.5 rounded-full border border-[#8B4356]/20 text-[#8B4356] text-[9px] md:text-[10px] font-black uppercase tracking-wider md:tracking-widest hover:bg-[#8B4356] hover:text-white transition-all shadow-sm flex items-center justify-center gap-1.5"
+                                >
+                                    <Download size={12} />
+                                    Invoice
+                                </button>
                             </>
                         ) : (
-                            <div className="flex items-center gap-3 bg-gray-50 px-5 py-2.5 rounded-full border border-gray-100">
-                                <RefreshCw className="w-4 h-4 text-[#8B4356] animate-spin" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#8B4356]">{returnRequest.type} Pending</span>
-                                <Link to={`/order-tracking/${order.id}/return`} className="text-[10px] font-bold uppercase tracking-widest text-black underline underline-offset-4 ml-2">Detail</Link>
+                            <div className="flex items-center gap-3 bg-[#FDF5F6] px-5 py-2.5 rounded-full border border-[#8B4356]/10 shadow-sm">
+                                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[#8B4356]">{returnRequest.type} {returnRequest.status}</span>
+                                <Link to={`/order-tracking/${orderIdValue}/return`} className="text-[9px] font-black uppercase tracking-widest text-black underline underline-offset-4 ml-2 hover:text-[#8B4356] transition-colors">Inspect Status</Link>
                             </div>
                         )}
                     </div>
@@ -248,7 +462,7 @@ const OrderCard = ({ order, isExpanded, onToggle }) => {
                 {/* Expanded Details */}
                 <AnimatePresence>
                     {showDetails && (
-                        <motion.div 
+                        <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
@@ -260,9 +474,33 @@ const OrderCard = ({ order, isExpanded, onToggle }) => {
                                     {order.items.map((item, idx) => (
                                         <div key={idx} className="flex gap-4">
                                             <img src={item.image} className="w-12 h-12 rounded-xl object-cover grayscale-[0.2]" alt="" />
-                                            <div>
-                                                <p className="text-xs font-serif italic text-black">{item.name}</p>
-                                                <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">Qty: {item.quantity} • ₹{item.price.toLocaleString()}</p>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <p className="text-xs font-serif italic text-black">{item.name}</p>
+                                                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">Qty: {item.quantity} • ₹{item.price.toLocaleString()}</p>
+                                                    </div>
+                                                    {order.status === 'Delivered' && (
+                                                        getItemReview(item) ? (
+                                                            <div className="flex flex-col items-end gap-1">
+                                                                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-4 py-2 border border-emerald-100 rounded-full flex items-center gap-1.5">
+                                                                    <Check className="w-3 h-3" /> Submitted
+                                                                </span>
+                                                                <span className="text-[7px] font-bold text-gray-400 uppercase tracking-tight mr-2">
+                                                                    Status: {getItemReview(item).status || 'Pending'}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => setActiveReviewItem(item)}
+                                                                className="text-[9px] font-black uppercase tracking-widest text-[#8B4356] hover:bg-[#8B4356] hover:text-white px-4 py-2 border border-[#8B4356]/20 rounded-full transition-all flex items-center gap-2 group"
+                                                            >
+                                                                <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                                                                Review
+                                                            </button>
+                                                        )
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -283,7 +521,8 @@ const OrderCard = ({ order, isExpanded, onToggle }) => {
 };
 
 const Profile = () => {
-    const { user, login, logout, orders, wishlist, addresses, addAddress, removeAddress, setDefaultAddress, defaultAddressId, toggleNotificationSettings, notificationsEnabled } = useShop();
+    const { user, logout, setUser, loading } = useAuth();
+    const { orders, wishlist, addresses, removeAddress, toggleNotificationSettings, notificationsEnabled, userReviews, returns: userReturns } = useShop();
     const { activeTab: tabParam, subId } = useParams();
     const activeTab = tabParam || 'profile';
     const navigate = useNavigate();
@@ -304,7 +543,16 @@ const Profile = () => {
         }
     }, [subId, activeTab]);
 
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#f9fafb]">
+                <div className="w-12 h-12 border-4 border-[#8B4356] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
     if (!user) {
+
         return (
             <div className="min-h-screen pt-32 pb-20 px-4 flex items-center justify-center bg-[#f9fafb]">
                 <div className="text-center max-w-sm">
@@ -324,9 +572,10 @@ const Profile = () => {
     const handleLogout = () => { logout(); navigate('/'); };
     const handleSave = () => {
         const updatedUser = { ...user, name: `${formData.firstName} ${formData.lastName}`.trim(), email: formData.email, phone: formData.phone };
-        login(updatedUser);
+        setUser(updatedUser);
         navigate('/profile/profile');
     };
+
 
     const sidebarItems = [
         { id: 'profile', label: 'Identity Manifest', icon: <User className="w-4 h-4" />, path: '/profile/profile' },
@@ -378,7 +627,7 @@ const Profile = () => {
                                     <p className="px-5 text-[9px] font-bold text-gray-300 uppercase tracking-[0.4em] mb-4">Core Manifests</p>
                                     <nav className="grid grid-cols-2 lg:grid-cols-1 gap-2 px-1 lg:px-0">
                                         {sidebarItems.map((item) => (
-                                            <button 
+                                            <button
                                                 key={item.id}
                                                 onClick={() => navigate(item.path)}
                                                 className={`flex flex-col lg:flex-row items-center lg:items-center gap-2.5 lg:gap-4 p-4 lg:px-5 lg:py-3 rounded-2xl lg:rounded-full transition-all group relative ${activeTab === item.id ? 'bg-black text-white shadow-xl shadow-black/20 z-10' : 'bg-[#FDF5F6]/40 border border-transparent text-gray-500 hover:bg-white hover:shadow-md hover:text-black hover:border-gray-200'}`}
@@ -397,7 +646,7 @@ const Profile = () => {
                                     <p className="px-5 text-[9px] font-bold text-gray-300 uppercase tracking-[0.4em] mb-4">Registry Privacy</p>
                                     <nav className="grid grid-cols-2 lg:grid-cols-1 gap-2 px-1 lg:px-0">
                                         {legalItems.map((item) => (
-                                            <button 
+                                            <button
                                                 key={item.label}
                                                 onClick={() => navigate(item.path)}
                                                 className="flex flex-col lg:flex-row items-center gap-2.5 lg:gap-4 p-4 lg:px-5 lg:py-3 bg-[#FDF5F6]/40 border border-transparent rounded-2xl lg:rounded-full text-gray-500 hover:bg-white hover:shadow-md hover:text-black hover:border-gray-200 transition-all group"
@@ -423,7 +672,7 @@ const Profile = () => {
                     <div ref={contentRef} className="lg:col-span-3 min-h-[60vh] pt-4 lg:pt-0">
                         <AnimatePresence mode="wait">
                             {activeTab === 'profile' && (
-                                <motion.div 
+                                <motion.div
                                     key="profile"
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
@@ -437,7 +686,7 @@ const Profile = () => {
                                                     <h2 className="text-xl md:text-3xl font-serif text-black">Personal Ledger</h2>
                                                     <p className="text-[8px] md:text-[10px] font-bold text-zinc-400 uppercase tracking-[0.4em] mt-2 md:mt-3">Verified Patron Information</p>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => isEditing ? handleSave() : navigate('/profile/profile/edit')}
                                                     className={`p-3 md:p-4 rounded-full transition-all ${isEditing ? 'bg-black text-white shadow-xl' : 'bg-zinc-50 text-zinc-400 hover:bg-black hover:text-white'}`}
                                                 >
@@ -449,38 +698,38 @@ const Profile = () => {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
                                                     <div className="space-y-2">
                                                         <label className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] px-1">First Name</label>
-                                                        <input 
-                                                            type="text" 
-                                                            value={formData.firstName} 
+                                                        <input
+                                                            type="text"
+                                                            value={formData.firstName}
                                                             onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl" 
+                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl"
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <label className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] px-1">Last Name</label>
-                                                        <input 
-                                                            type="text" 
-                                                            value={formData.lastName} 
+                                                        <input
+                                                            type="text"
+                                                            value={formData.lastName}
                                                             onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl" 
+                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl"
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <label className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] px-1">Electronic Mail</label>
-                                                        <input 
-                                                            type="email" 
-                                                            value={formData.email} 
+                                                        <input
+                                                            type="email"
+                                                            value={formData.email}
                                                             onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl" 
+                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl"
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <label className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] px-1">Tele-Contact</label>
-                                                        <input 
-                                                            type="tel" 
-                                                            value={formData.phone} 
+                                                        <input
+                                                            type="tel"
+                                                            value={formData.phone}
                                                             onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl" 
+                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl"
                                                         />
                                                     </div>
                                                 </div>
@@ -517,7 +766,7 @@ const Profile = () => {
                                             <Bell className="w-6 h-6 text-amber-500 mb-6" />
                                             <h3 className="text-xl font-serif text-black mb-2 italic">Communications</h3>
                                             <p className="text-gray-400 text-xs font-serif leading-relaxed mb-8">Receive early invites to seasonal exhibitions and new collection manifests.</p>
-                                            <button 
+                                            <button
                                                 onClick={toggleNotificationSettings}
                                                 className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-[10px] transition-all border ${notificationsEnabled ? 'bg-black text-white border-black' : 'bg-transparent text-gray-400 border-gray-100 hover:border-black hover:text-black'}`}
                                             >
@@ -536,7 +785,7 @@ const Profile = () => {
                             )}
 
                             {activeTab === 'orders' && (
-                                <motion.div 
+                                <motion.div
                                     key="orders"
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
@@ -554,14 +803,23 @@ const Profile = () => {
                                         </div>
                                     ) : (
                                         <div className="space-y-0">
-                                            {orders.map(order => <OrderCard key={order.id} order={order} isExpanded={subId === order.id} />)}
+                                            {orders.map((order, i) => (
+                                                <OrderCard
+                                                    key={order.orderId || order._id || i}
+                                                    order={order}
+                                                    isExpanded={subId === order.id}
+                                                    returnRequest={userReturns.find(r => r.orderId === (order.orderId || order.id))}
+                                                    userReviews={userReviews}
+                                                    userReturns={userReturns}
+                                                />
+                                            ))}
                                         </div>
                                     )}
                                 </motion.div>
                             )}
 
                             {activeTab === 'addresses' && (
-                                <motion.div 
+                                <motion.div
                                     key="addresses"
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
@@ -576,7 +834,7 @@ const Profile = () => {
                                             <Plus className="w-5 h-5 md:w-6 md:h-6" />
                                         </button>
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                                         {addresses.map((addr) => (
                                             <div key={addr.id} className="bg-[#FDF5F6]/40 p-5 md:p-6 rounded-3xl border border-transparent shadow-sm relative group hover:border-[#8B4356]/20 transition-all">
@@ -604,7 +862,7 @@ const Profile = () => {
                             )}
 
                             {activeTab === 'payments' && (
-                                <motion.div 
+                                <motion.div
                                     key="payments"
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}

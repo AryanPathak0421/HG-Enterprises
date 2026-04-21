@@ -7,15 +7,22 @@ import {
     ArrowLeft, Package, MapPin, Phone, CreditCard,
     Truck, CheckCircle, Clock, Archive, RefreshCw, AlertCircle
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import ReviewForm from '../components/ReviewForm';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Download } from 'lucide-react';
+import { generateInvoice } from '../../../utils/invoiceGenerator';
+import hgLogoPremium from '../assets/logo_final.jpg';
 
 const OrderDetailPage = () => {
     const { orderId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { getOrderById, updateOrderStatus, getReturns } = useShop();
+    const { getOrderById, updateOrderStatus, getReturns, userReviews } = useShop();
     const [order, setOrder] = useState(null);
     const [availableItemsCount, setAvailableItemsCount] = useState(0);
+    const [activeReviewItem, setActiveReviewItem] = useState(null); // Selected item for review
 
     // Initial load and auto-refresh for simulation
     useEffect(() => {
@@ -53,17 +60,28 @@ const OrderDetailPage = () => {
         );
     }
 
-    // Check if eligible for return (delivered and within 7 days)
-    const isDelivered = order.deliveryStatus === 'Delivered';
-    const isWithinReturnWindow = () => {
-        if (!order.deliveredDate) return false;
-        const deliveryDate = new Date(order.deliveredDate);
-        const now = new Date();
-        const diffDays = Math.ceil((now - deliveryDate) / (1000 * 60 * 60 * 24));
-        return diffDays <= 7;
+    const getItemReview = (item) => userReviews.some ? userReviews.find(r => String(r.productId) === String(item.productId || item._id || item.id)) : null;
+    const isItemReviewed = (item) => !!getItemReview(item);
+    const isOrderReturnable = () => {
+        if (!isDelivered || !isWithinReturnWindow()) return false;
+
+        // Find items that are NEITHER returned NOR reviewed
+        const allReturns = getReturns(user.id);
+        const orderReturns = allReturns.filter(r => r.orderId === orderId && r.status !== 'Rejected');
+        const returnedPackIds = new Set();
+        orderReturns.forEach(ret => {
+            ret.items.forEach(item => returnedPackIds.add(item.packId));
+        });
+
+        const activeItems = order.items.filter(item =>
+            !returnedPackIds.has(item.packId) &&
+            !isItemReviewed(item)
+        );
+
+        return activeItems.length > 0;
     };
 
-    const canReturn = isDelivered && isWithinReturnWindow() && availableItemsCount > 0;
+    const canReturn = isOrderReturnable();
 
     // Timeline steps for UI
     const steps = [
@@ -74,19 +92,47 @@ const OrderDetailPage = () => {
         { status: 'Delivered', label: 'Delivered', icon: CheckCircle }
     ];
 
-    const currentStepIndex = steps.findIndex(s => s.status === order.deliveryStatus);
+    const currentStepIndex = steps.findIndex(s => s.status === order.status);
+
+    const handleDownloadInvoice = () => {
+        const img = new Image();
+        img.src = hgLogoPremium;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            const doc = generateInvoice(order, dataUrl);
+            doc.save(`Invoice_HG_${order.id}.pdf`);
+        };
+        img.onerror = () => {
+            const doc = generateInvoice(order);
+            doc.save(`Invoice_HG_${order.id}.pdf`);
+        };
+    };
 
     return (
         <div className="bg-[#fcfcfc] min-h-screen py-4 md:py-12">
             <div className="container mx-auto px-3 md:px-12 max-w-4xl">
-                <div className="flex items-center gap-2 md:gap-4 mb-6 md:mb-10">
-                    <button onClick={() => navigate('/orders')} className="p-2 -ml-2 hover:bg-gray-100 rounded-lg transition-colors text-footerBg/70">
-                        <ArrowLeft size={20} md:size={24} />
-                    </button>
-                    <div>
-                        <h1 className="text-xl md:text-3xl font-black text-footerBg uppercase tracking-tighter md:tracking-tight leading-none">Order Details</h1>
-                        <p className="text-[10px] md:text-sm font-mono text-slate-400 mt-1">#{order.id}</p>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-10">
+                    <div className="flex items-center gap-2 md:gap-4">
+                        <button onClick={() => navigate('/orders')} className="p-2 -ml-2 hover:bg-gray-100 rounded-lg transition-colors text-footerBg/70">
+                            <ArrowLeft size={20} md:size={24} />
+                        </button>
+                        <div>
+                            <h1 className="text-xl md:text-3xl font-black text-footerBg uppercase tracking-tighter md:tracking-tight leading-none">Order Details</h1>
+                            <p className="text-[10px] md:text-sm font-mono text-slate-400 mt-1">#{order.id}</p>
+                        </div>
                     </div>
+                    <button
+                        onClick={handleDownloadInvoice}
+                        className="flex items-center gap-2 bg-white border border-gray-100 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8B4356] hover:bg-[#8B4356] hover:text-white transition-all shadow-sm active:scale-95 w-fit"
+                    >
+                        <Download size={14} />
+                        Download Invoice
+                    </button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
@@ -185,12 +231,58 @@ const OrderDetailPage = () => {
                                         </div>
                                         <div className="text-right shrink-0">
                                             <p className="text-[13px] md:text-sm font-black text-footerBg">₹{item.price * item.qty}</p>
+                                            {isDelivered && (
+                                                <div className="flex flex-col gap-2 mt-2 items-end">
+                                                    {getItemReview(item) ? (
+                                                        <>
+                                                            <span className="text-[8px] font-black uppercase text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 flex items-center gap-1">
+                                                                <CheckCircle size={8} /> Submitted
+                                                            </span>
+                                                            <span className="text-[7px] font-bold text-gray-400 uppercase tracking-tight">
+                                                                Status: {getItemReview(item).status || 'Pending'}
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setActiveReviewItem(item)}
+                                                            className="text-[8px] font-black uppercase tracking-widest text-gold hover:text-primary transition-colors flex items-center gap-1 ml-auto"
+                                                        >
+                                                            <Star size={10} className="fill-gold" />
+                                                            Share Feedback
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     </div>
+
+                    <AnimatePresence>
+                        {activeReviewItem && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-footerBg/60 backdrop-blur-sm"
+                            >
+                                <motion.div
+                                    initial={{ scale: 0.9, y: 20 }}
+                                    animate={{ scale: 1, y: 0 }}
+                                    exit={{ scale: 0.9, y: 20 }}
+                                    className="bg-white rounded-[2rem] w-full max-w-md overflow-y-auto max-h-[90vh] shadow-2xl relative custom-scrollbar"
+                                >
+                                    <ReviewForm
+                                        productId={activeReviewItem.id}
+                                        productName={activeReviewItem.name}
+                                        onClose={() => setActiveReviewItem(null)}
+                                    />
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Sidebar / Detailed Info */}
                     <div className="lg:col-span-12 xl:col-span-4 space-y-4">
@@ -204,9 +296,11 @@ const OrderDetailPage = () => {
                                     </div>
                                     <div className="min-w-0">
                                         <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Delivered To</p>
-                                        <p className="text-sm font-black text-footerBg">{order.shippingAddress.fullName}</p>
-                                        <p className="text-[11px] font-medium text-slate-400 leading-tight pr-4 mt-0.5">
-                                            {order.shippingAddress.address}, {order.shippingAddress.city}, {order.shippingAddress.pincode}
+                                        <p className="text-sm font-black text-footerBg">{order.address?.name || order.shippingAddress?.fullName}</p>
+                                        <p className="text-[11px] font-medium text-slate-400 leading-tight pr-4 mt-0.5 uppercase tracking-tighter">
+                                            {order.address?.flatNo || order.address?.houseNo} {order.address?.street || order.address?.area}, <br />
+                                            {order.address?.landmark && <span className="text-[9px] opacity-70">Landmark: {order.address.landmark}<br /></span>}
+                                            {order.address?.city}, {order.address?.state} - {order.address?.zip || order.address?.pincode}
                                         </p>
                                     </div>
                                 </div>
@@ -224,10 +318,24 @@ const OrderDetailPage = () => {
                                 </div>
                             </div>
 
-                            <div className="pt-5 border-t border-gray-50">
-                                <div className="flex justify-between items-end">
+                            <div className="pt-5 border-t border-gray-50 space-y-3">
+                                <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                                    <span>Subtotal</span>
+                                    <span className="text-footerBg font-black">₹{(order.subtotal || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                                    <span>GST (Estimated)</span>
+                                    <span className="text-footerBg font-black">₹{(order.gstAmount || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                                    <span>Shipping</span>
+                                    <span className={order.shippingAmount > 0 ? "text-footerBg font-black" : "text-green-500 font-black"}>
+                                        {order.shippingAmount > 0 ? `₹${order.shippingAmount}` : 'FREE'}
+                                    </span>
+                                </div>
+                                <div className="pt-3 border-t border-dashed border-gray-100 flex justify-between items-end">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 pr-4 leading-none">Order Total</p>
-                                    <p className="text-2xl font-black text-footerBg leading-none">₹{order.amount}</p>
+                                    <p className="text-2xl font-black text-footerBg leading-none">₹{(order.total || 0).toLocaleString()}</p>
                                 </div>
                             </div>
                         </div>

@@ -1,95 +1,73 @@
 import React, { useState } from 'react';
-import { Eye, Trash2, Mail, Calendar, Inbox, AlertCircle, ShoppingBag, FileText, CheckCircle2 } from 'lucide-react';
+import { Eye, Trash2, Mail, Calendar, Inbox, AlertCircle, ShoppingBag, FileText, CheckCircle2, Clock } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import DataTable from '../components/common/DataTable';
 import AdminStatsCard from '../components/AdminStatsCard';
+import api from '../../../utils/api';
+import toast from 'react-hot-toast';
 
 const SupportManagement = () => {
-    // Mock Data mimicking the "Create Support Ticket" form
-    const [tickets, setTickets] = useState([
-        {
-            id: 'TKT-2024-001',
-            subject: 'Refund not received for returned item',
-            category: 'Payment & Refunds',
-            orderId: '1735123456',
-            message: 'I returned the "Polki Ruby Necklace" 5 days ago, and the app says return delivered, but I have not received the refund in my account yet.',
-            userName: 'Priya Sharma',
-            userEmail: 'priya.s@example.com',
-            status: 'Unread',
-            date: '2024-10-26T10:30:00',
-        },
-        {
-            id: 'TKT-2024-002',
-            subject: 'Wrong size delivered',
-            category: 'Order Issues',
-            orderId: '1735987654',
-            message: 'I ordered size 2.4 bangles but received 2.6. Please arrange for an exchange.',
-            userName: 'Rahul Verma',
-            userEmail: 'rahul.v@example.com',
-            status: 'Unread',
-            date: '2024-10-25T15:45:00',
-        },
-        {
-            id: 'TKT-2024-003',
-            subject: 'General enquiry about bridal sets',
-            category: 'General Enquiry',
-            orderId: '',
-            message: 'Do you provide customization for bridal sets? I want a specific color combination.',
-            userName: 'Sneha Patel',
-            userEmail: 'sneha.p@example.com',
-            status: 'Read',
-            date: '2024-10-24T11:20:00',
-        },
-        {
-            id: 'TKT-2024-004',
-            subject: 'Payment failed but money deducted',
-            category: 'Payment Issue',
-            orderId: '1735112233',
-            message: 'My UPI transaction failed on the checkout page, but the amount was debited from my bank.',
-            userName: 'Amit Kumar',
-            userEmail: 'amit.k@example.com',
-            status: 'Unread',
-            date: '2024-10-23T18:10:00',
-        },
-        {
-            id: 'TKT-2024-005',
-            subject: 'Change delivery address',
-            category: 'Shipping',
-            orderId: '1735445566',
-            message: 'I accidentally put my old address. Please update it to the new one before shipping.',
-            userName: 'Kavita Singh',
-            userEmail: 'kavita.s@example.com',
-            status: 'Read',
-            date: '2024-10-22T09:00:00',
-        }
-    ]);
-
+    const [tickets, setTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [selectedTicket, setSelectedTicket] = useState(null);
 
-    const handleDelete = (id) => {
-        if (window.confirm('Delete this ticket?')) {
-            setTickets(prev => prev.filter(t => t.id !== id));
+    const fetchTickets = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/support/admin/all');
+            setTickets(res.data);
+        } catch (error) {
+            console.error('Failed to fetch tickets:', error);
+            toast.error('Failed to load support manifest');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleStatusChange = (id, newStatus) => {
-        setTickets(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
+    React.useEffect(() => {
+        fetchTickets();
+    }, []);
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Delete this ticket?')) {
+            try {
+                await api.delete(`/support/admin/${id}`);
+                toast.success('Ticket purged');
+                fetchTickets();
+            } catch (error) {
+                console.error('Failed to delete ticket:', error);
+                toast.error('Deletion protocol failed');
+            }
+        }
+    };
+
+    const handleStatusChange = async (id, newStatus) => {
+        try {
+            await api.put(`/support/admin/${id}/status`, { status: newStatus });
+            toast.success(`Protocol updated: ${newStatus}`);
+            fetchTickets();
+        } catch (error) {
+            console.error('Failed to update status:', error);
+            toast.error('Status update failed');
+        }
     };
 
     const filteredTickets = tickets.filter(t => {
-        const matchesSearch = t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch =
+            (t.subject?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (t.userName?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (t.id?.toLowerCase().includes(searchTerm.toLowerCase()) || '');
         const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
 
     // Stats
     const totalTickets = tickets.length;
-    const unreadTickets = tickets.filter(t => t.status === 'Unread').length;
-    const readTickets = tickets.filter(t => t.status === 'Read').length;
+    const openTickets = tickets.filter(t => t.status === 'Open').length;
+    const progressTickets = tickets.filter(t => t.status === 'In Progress').length;
+    const closedTickets = tickets.filter(t => t.status === 'Closed').length;
 
     const columns = [
         {
@@ -126,11 +104,13 @@ const SupportManagement = () => {
                     value={item.status}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                    className={`text-[10px] font-bold uppercase tracking-wider bg-transparent border-none focus:ring-0 cursor-pointer ${item.status === 'Unread' ? 'text-red-600' : 'text-green-600'
+                    className={`text-[10px] font-bold uppercase tracking-wider bg-transparent border-none focus:ring-0 cursor-pointer ${item.status === 'Open' ? 'text-red-600' :
+                            item.status === 'In Progress' ? 'text-blue-600' : 'text-green-600'
                         }`}
                 >
-                    <option value="Unread">Unread</option>
-                    <option value="Read">Read</option>
+                    <option value="Open">Open</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Closed">Closed</option>
                 </select>
             )
         },
@@ -162,8 +142,9 @@ const SupportManagement = () => {
         {
             options: [
                 { label: 'All', value: 'All' },
-                { label: 'Unread', value: 'Unread' },
-                { label: 'Read', value: 'Read' }
+                { label: 'Open', value: 'Open' },
+                { label: 'In Progress', value: 'In Progress' },
+                { label: 'Closed', value: 'Closed' }
             ],
             onChange: (val) => setStatusFilter(val)
         }
@@ -176,8 +157,8 @@ const SupportManagement = () => {
                 subtitle="Track and resolve customer support requests"
             />
 
-            {/* 3 Stats Cards: All, Unread, Read */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 mb-8 shrink-0">
+            {/* 4 Stats Cards: All, Open, In Progress, Closed */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 mb-8 shrink-0">
                 <AdminStatsCard
                     label="Total Tickets"
                     value={totalTickets}
@@ -186,15 +167,22 @@ const SupportManagement = () => {
                     bgColor="bg-gray-50"
                 />
                 <AdminStatsCard
-                    label="Unread"
-                    value={unreadTickets}
+                    label="Open"
+                    value={openTickets}
                     icon={AlertCircle}
                     color="text-red-500"
                     bgColor="bg-red-50"
                 />
                 <AdminStatsCard
-                    label="Read"
-                    value={readTickets}
+                    label="In Progress"
+                    value={progressTickets}
+                    icon={Clock}
+                    color="text-blue-500"
+                    bgColor="bg-blue-50"
+                />
+                <AdminStatsCard
+                    label="Closed"
+                    value={closedTickets}
                     icon={CheckCircle2}
                     color="text-green-500"
                     bgColor="bg-green-50"
@@ -242,8 +230,9 @@ const SupportManagement = () => {
                                         <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{selectedTicket.category}</span>
                                     </div>
                                 </div>
-                                <div className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${selectedTicket.status === 'Unread' ? 'text-red-700 bg-red-50 border-red-100' :
-                                    'text-green-700 bg-green-50 border-green-100'
+                                <div className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${selectedTicket.status === 'Open' ? 'text-red-700 bg-red-50 border-red-100' :
+                                        selectedTicket.status === 'In Progress' ? 'text-blue-700 bg-blue-50 border-blue-100' :
+                                            'text-green-700 bg-green-50 border-green-100'
                                     }`}>
                                     {selectedTicket.status}
                                 </div>

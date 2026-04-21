@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Link as LinkIcon, Image as ImageIcon, Tag, Search, CheckCircle, Edit2 } from 'lucide-react';
 import { Input } from '../common/FormControls';
+import api from '../../../../utils/api';
+import toast from 'react-hot-toast';
 import ProductBrowserModal from './ProductBrowserModal';
 
 // Import default assets
@@ -30,6 +32,7 @@ const CategoryShowcaseEditor = ({ sectionData, onSave, defaultItems = [] }) => {
 
     const [items, setItems] = useState(initialItemsFromProps);
     const [editingId, setEditingId] = useState(null);
+    const [uploadingId, setUploadingId] = useState(null);
 
     // Initial Load & Restoration Logic
     useEffect(() => {
@@ -101,13 +104,24 @@ const CategoryShowcaseEditor = ({ sectionData, onSave, defaultItems = [] }) => {
         }));
     };
 
-    const handleImageUpload = (id, file, field = 'image') => {
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                handleItemChange(id, field, reader.result);
-            };
-            reader.readAsDataURL(file);
+    const handleImageUpload = async (id, file, field = 'image') => {
+        if (!file) return;
+
+        setUploadingId(`${id}_${field}`);
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const { data } = await api.post('/upload/image', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            handleItemChange(id, field, data.url);
+            toast.success('Media Synchronized');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            toast.error('Upload failed');
+        } finally {
+            setUploadingId(null);
         }
     };
 
@@ -260,9 +274,13 @@ const CategoryShowcaseEditor = ({ sectionData, onSave, defaultItems = [] }) => {
                                             </>
                                         ) : (
                                             <div className="text-center p-4">
-                                                <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                                {uploadingId === `${item.id}_image` ? (
+                                                    <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                                ) : (
+                                                    <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                                )}
                                                 <label className="cursor-pointer px-3 py-1.5 bg-[#3E2723] text-white text-xs font-bold rounded-lg block">
-                                                    Upload Main
+                                                    {uploadingId === `${item.id}_image` ? 'Syncing...' : 'Upload Main'}
                                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(item.id, e.target.files[0])} />
                                                 </label>
                                             </div>
@@ -309,7 +327,11 @@ const CategoryShowcaseEditor = ({ sectionData, onSave, defaultItems = [] }) => {
                                                                 </>
                                                             ) : (
                                                                 <label className="absolute inset-0 flex items-center justify-center cursor-pointer hover:bg-gray-100">
-                                                                    <Plus size={14} className="text-gray-400" />
+                                                                    {uploadingId === `${item.id}_extraImage_${i}` ? (
+                                                                        <div className="w-3 h-3 border border-gold border-t-transparent rounded-full animate-spin"></div>
+                                                                    ) : (
+                                                                        <Plus size={14} className="text-gray-400" />
+                                                                    )}
                                                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(item.id, e.target.files[0], `extraImage_${i}`)} />
                                                                 </label>
                                                             )}

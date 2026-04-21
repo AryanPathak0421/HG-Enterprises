@@ -1,42 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    Plus, Search, Edit2, Trash2, Image as ImageIcon, X, Save, ArrowLeft, Calendar, FileText
+    Plus, Search, Edit2, Trash2, Image as ImageIcon, X, Save, ArrowLeft, Calendar, FileText, Upload
 } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import PageHeader from '../components/common/PageHeader';
+import api from '../../../utils/api';
+import { toast } from 'react-hot-toast';
 
 const BlogManagement = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [blogs, setBlogs] = useState([]);
 
-    // Mock Data
-    const [blogs, setBlogs] = useState([
-        {
-            id: 1,
-            title: 'The Art of Layering Silver Necklaces',
-            category: 'Style Guide',
-            image: 'https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?auto=format&fit=crop&q=80&w=600',
-            excerpt: 'Discover how to create the perfect layered look with our guide to mixing and matching silver chains.',
-            content: '<p>Discover how to create the perfect layered look with our guide to mixing and matching silver chains and pendants.</p>',
-            date: '2024-02-15',
-            author: 'Admin'
-        },
-        {
-            id: 2,
-            title: 'Caring for Your Sterling Silver',
-            category: 'Care Tips',
-            image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&q=80&w=600',
-            excerpt: 'Learn the essential tips to keep your silver jewelry shining bright for years to come.',
-            content: '<p>Silver requires special care...</p>',
-            date: '2024-02-10',
-            author: 'Admin'
+    // Fetch Blogs from Database
+    const fetchBlogs = async () => {
+        setLoading(true);
+        try {
+            const { data } = await api.get('/blogs');
+            setBlogs(data);
+        } catch (error) {
+            toast.error('Failed to load logs');
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-    ]);
+    };
+
+    useEffect(() => {
+        fetchBlogs();
+    }, []);
 
     const [formData, setFormData] = useState({
-        id: null,
+        _id: null,
         title: '',
         category: '',
         image: '',
@@ -53,15 +52,21 @@ const BlogManagement = () => {
         setIsEditing(true);
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this blog post?')) {
-            setBlogs(blogs.filter(blog => blog.id !== id));
+            try {
+                await api.delete(`/blogs/admin/${id}`);
+                toast.success('Blog deleted');
+                fetchBlogs();
+            } catch (error) {
+                toast.error('Failed to delete blog');
+            }
         }
     };
 
     const handleAddNew = () => {
         setFormData({
-            id: null,
+            _id: null,
             title: '',
             category: categories[0],
             image: '',
@@ -72,20 +77,21 @@ const BlogManagement = () => {
         setIsEditing(true);
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        const newBlog = {
-            ...formData,
-            id: formData.id || Date.now(),
-            date: formData.id ? formData.date : new Date().toISOString().split('T')[0]
-        };
-
-        if (formData.id) {
-            setBlogs(blogs.map(b => b.id === formData.id ? newBlog : b));
-        } else {
-            setBlogs([newBlog, ...blogs]);
+        try {
+            if (formData._id) {
+                await api.put(`/blogs/admin/${formData._id}`, formData);
+                toast.success('Blog updated');
+            } else {
+                await api.post('/blogs/admin/create', formData);
+                toast.success('Blog created');
+            }
+            fetchBlogs();
+            setIsEditing(false);
+        } catch (error) {
+            toast.error('Failed to save blog');
         }
-        setIsEditing(false);
     };
 
     // Quill Modules
@@ -322,13 +328,24 @@ const BlogManagement = () => {
                             {/* Banner Image */}
                             <div className="space-y-2 text-left">
                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Banner Media</label>
-                                <div className="border border-dashed border-black/10 rounded-none p-3 text-center hover:bg-[#FDF5F6] transition-colors group">
-                                    {formData.image ? (
+                                <div
+                                    className="border border-dashed border-black/10 rounded-none p-3 text-center hover:bg-[#FDF5F6] transition-colors group cursor-pointer relative"
+                                    onClick={() => document.getElementById('blog-image-upload').click()}
+                                >
+                                    {uploading ? (
+                                        <div className="py-6 flex flex-col items-center justify-center gap-2">
+                                            <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin"></div>
+                                            <p className="text-[8px] font-black uppercase tracking-widest text-gold animate-pulse">Synchronizing...</p>
+                                        </div>
+                                    ) : formData.image ? (
                                         <div className="relative aspect-video rounded-none overflow-hidden mb-3">
                                             <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
                                             <button
                                                 type="button"
-                                                onClick={() => setFormData({ ...formData, image: '' })}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setFormData({ ...formData, image: '' });
+                                                }}
                                                 className="absolute top-1.5 right-1.5 p-1 bg-red-500 text-white rounded-none shadow-lg hover:scale-110 transition-transform"
                                             >
                                                 <X size={12} />
@@ -336,14 +353,43 @@ const BlogManagement = () => {
                                         </div>
                                     ) : (
                                         <div className="py-6 text-gray-300">
-                                            <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                                            <p className="text-[8px] font-black uppercase tracking-widest">Void</p>
+                                            <Upload className="w-8 h-8 mx-auto mb-2 opacity-20 group-hover:opacity-100 group-hover:text-gold transition-all" />
+                                            <p className="text-[8px] font-black uppercase tracking-widest">Click to Upload Media</p>
                                         </div>
                                     )}
                                     <input
+                                        id="blog-image-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+
+                                            setUploading(true);
+                                            const uploadData = new FormData();
+                                            uploadData.append('image', file);
+
+                                            try {
+                                                const { data } = await api.post('/upload/image', uploadData, {
+                                                    headers: { 'Content-Type': 'multipart/form-data' }
+                                                });
+                                                setFormData({ ...formData, image: data.url });
+                                                toast.success('Media Synchronized');
+                                            } catch (error) {
+                                                toast.error('Upload failed');
+                                                console.error(error);
+                                            } finally {
+                                                setUploading(false);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                <div className="relative mt-2">
+                                    <input
                                         type="text"
-                                        placeholder="PASTE URL..."
-                                        className="w-full p-2.5 bg-white border border-black/5 rounded-none text-[9px] font-black tracking-widest focus:border-gold outline-none"
+                                        placeholder="OR PASTE URL..."
+                                        className="w-full p-2.5 bg-[#FDF5F6] border border-black/5 rounded-none text-[9px] font-black tracking-widest focus:border-gold outline-none"
                                         value={formData.image}
                                         onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                                     />

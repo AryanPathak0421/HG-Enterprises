@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import Skeleton from './Skeleton';
 
 // Import generated images from project assets
 import dailyPackImg from '../../../assets/daily_pack.png';
@@ -55,6 +56,28 @@ const packs = [
 ];
 
 const ShopByPacks = () => {
+    const { packs: dbPacks, loading } = useShop();
+
+    if (loading) {
+        return (
+            <section className="bg-[#FFFBEB] py-20 px-12">
+                <div className="container mx-auto">
+                    <div className="flex flex-col items-center gap-4 mb-20">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-10 w-64" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        {[1, 2, 3].map(i => (
+                            <Skeleton key={i} className="w-full aspect-[4/3] rounded-[2rem]" />
+                        ))}
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
+    const displayPacks = dbPacks && dbPacks.length > 0 ? dbPacks : packs;
+
     return (
         <section className="bg-[#FFFBEB] py-8 md:py-20 px-3 md:px-12 relative overflow-hidden">
             <div className="container mx-auto relative z-10">
@@ -78,7 +101,7 @@ const ShopByPacks = () => {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-10">
-                    {packs.map((pack, index) => (
+                    {displayPacks.map((pack, index) => (
                         <motion.div
                             key={index}
                             initial={{ opacity: 0, y: 20 }}
