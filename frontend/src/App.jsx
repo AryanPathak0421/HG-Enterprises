@@ -7,6 +7,7 @@ import Navbar from './modules/user/components/Navbar';
 import Footer from './modules/user/components/Footer';
 import Home from './modules/user/pages/Home';
 import Shop from './modules/user/pages/Shop';
+import CollectionSubcategories from './modules/user/pages/CollectionSubcategories';
 import Cart from './modules/user/pages/Cart';
 import ProductDetails from './modules/user/pages/ProductDetails';
 import Login from './modules/user/pages/Login';
@@ -41,6 +42,7 @@ import SubcategoryView from './modules/admin/pages/SubcategoryView';
 import ProductManagement from './modules/admin/pages/ProductManagement';
 import ProductView from './modules/admin/pages/ProductView';
 import ItemEditor from './modules/admin/pages/ItemEditor';
+import SubcategoryAssets from './modules/admin/pages/SubcategoryAssets';
 import OrderListPage from './modules/admin/pages/OrderListPage';
 import OrderDetailPage from './modules/admin/pages/OrderDetailPage';
 import ReturnDetailPage from './modules/admin/pages/ReturnDetailPage';
@@ -58,6 +60,7 @@ import ReviewModeration from './modules/admin/pages/ReviewModeration';
 import SupportManagement from './modules/admin/pages/SupportManagement';
 import ContactInquiries from './modules/admin/pages/ContactInquiries';
 import BannerManagement from './modules/admin/pages/BannerManagement';
+import OfferManagement from './modules/admin/pages/OfferManagement';
 import GlobalNotificationManager from './modules/admin/pages/GlobalNotificationManager';
 import AddNotification from './modules/admin/pages/AddNotification';
 import FAQManagement from './modules/admin/pages/FAQManagement';
@@ -70,6 +73,8 @@ import SectionManagement from './modules/admin/pages/SectionManagement';
 import SectionEditor from './modules/admin/pages/SectionEditor';
 import DynamicPageEditor from './modules/admin/pages/DynamicPageEditor';
 import PlatformSettingsPage from './modules/admin/pages/PlatformSettingsPage';
+
+import SuggestionList from './modules/admin/pages/SuggestionList';
 import CancellationPolicy from './modules/user/pages/CancellationPolicy';
 import ShippingPolicy from './modules/user/pages/ShippingPolicy';
 import ContactPage from './modules/user/pages/ContactPage';
@@ -113,6 +118,7 @@ const AppContent = () => {
             {/* User Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/shop" element={<Shop />} />
+            <Route path="/collection/:categoryId" element={<CollectionSubcategories />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-success" element={<OrderSuccess />} />
@@ -157,11 +163,13 @@ const AppContent = () => {
                     <Route path="/subcategories/view/:id" element={<SubcategoryView />} />
                     <Route path="/subcategories/new" element={<ItemEditor />} />
                     <Route path="/subcategories/edit/:id" element={<ItemEditor />} />
+                    <Route path="/category-assets" element={<SubcategoryAssets />} />
                     <Route path="/products" element={<ProductManagement />} />
                     <Route path="/products/view/:id" element={<ItemEditor />} />
                     <Route path="/products/new" element={<ItemEditor />} />
                     <Route path="/products/edit/:id" element={<ItemEditor />} />
                     <Route path="/coupons" element={<CouponListPage />} />
+                    <Route path="/offers" element={<OfferManagement />} />
                     <Route path="/coupons/add" element={<CouponFormPage />} />
                     <Route path="/coupons/edit/:id" element={<CouponFormPage />} />
                     <Route path="/orders" element={<OrderListPage />} />
@@ -177,6 +185,7 @@ const AppContent = () => {
                     <Route path="/inventory/reports" element={<InventoryReportsPage />} />
                     <Route path="/users" element={<UserManagement />} />
                     <Route path="/users/view/:id" element={<UserView />} />
+                    <Route path="/suggestions" element={<SuggestionList />} />
                     <Route path="/reviews" element={<ReviewModeration />} />
                     <Route path="/support" element={<SupportManagement />} />
                     <Route path="/support/inquiries" element={<ContactInquiries />} />
@@ -191,6 +200,7 @@ const AppContent = () => {
                     <Route path="/pages/:pageId" element={<DynamicPageEditor />} />
                     <Route path="/settings" element={<GlobalSettings />} />
                     <Route path="/platform-settings" element={<PlatformSettingsPage />} />
+
                   </Routes>
                 </AdminLayout>
               </AdminProtectedRoute>

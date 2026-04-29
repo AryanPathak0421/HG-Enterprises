@@ -5,12 +5,13 @@ const InventoryLog = require('../models/InventoryLog');
 // Get all products with optional filters
 exports.getAllProducts = async (req, res) => {
     try {
-        const { category, subcategory, tag, adminView } = req.query;
+        const { category, subcategory, targetGroup, tag, adminView } = req.query;
         // If not adminView, only show active products
         let query = adminView === 'true' ? {} : { isActive: true };
 
         if (category) query.category = category;
         if (subcategory) query.subcategory = subcategory;
+        if (targetGroup) query.targetGroup = targetGroup;
         if (tag) query.tag = tag;
 
         const products = await Product.find(query).sort({ createdAt: -1 });

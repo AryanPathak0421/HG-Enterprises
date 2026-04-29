@@ -3,26 +3,14 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useShop } from '../../../context/ShopContext';
 
-// Import Pink Premium Images
-import braceletImg from '../assets/pink_bracelets_1767775488371.png';
-import earringsImg from '../assets/pink_earrings_1767775466166.png';
-import chainImg from '../assets/pink_chains_1767775516641.png';
-import ankletImg from '../assets/pink_anklets_1767775536388.png';
-import bannerModel from '../assets/gift_wife_silver.png';
-
-const categories = [
-    { id: 1, name: "Earrings", image: earringsImg, path: "/shop?category=earrings" },
-    { id: 2, name: "Bracelets", image: braceletImg, path: "/shop?category=bracelets" },
-    { id: 3, name: "Chains", image: chainImg, path: "/shop?category=chains" },
-    { id: 4, name: "Anklets", image: ankletImg, path: "/shop?category=anklets" },
-];
-
 const MostGifted = () => {
     const { homepageSections } = useShop();
 
-    // Use admin-configured items if available, otherwise fall back to defaults
+    // Use admin-configured items strictly from the DB
     const sectionData = homepageSections?.['most-gifted'];
-    const displayItems = sectionData?.items && sectionData.items.length > 0 ? sectionData.items : categories;
+    const displayItems = sectionData?.items && sectionData.items.length > 0 ? sectionData.items : [];
+
+    if (displayItems.length === 0) return null;
 
     return (
         <section className="py-8 md:py-12 bg-bg-light relative overflow-hidden">

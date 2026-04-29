@@ -7,7 +7,7 @@ const Settings = require('../models/Settings');
 
 exports.createOrder = async (req, res) => {
     try {
-        const { items, address, shippingAddress, paymentMethod, paymentStatus } = req.body;
+        const { items, address, shippingAddress, paymentMethod, paymentStatus, discount, couponCode } = req.body;
 
         const globalSettings = await Settings.findOne() || { gstPercentage: 18, shippingCharge: 50 };
         const gstRate = globalSettings.gstPercentage / 100;
@@ -45,8 +45,10 @@ exports.createOrder = async (req, res) => {
             };
         });
 
-        const gstAmount = Math.round(calculatedSubtotal * gstRate);
-        const total = calculatedSubtotal + gstAmount + shippingAmount;
+        const discountAmount = Number(discount) || 0;
+        const taxableSubtotal = calculatedSubtotal - discountAmount;
+        const gstAmount = Math.round(taxableSubtotal - (taxableSubtotal / (1 + gstRate)));
+        const total = taxableSubtotal + shippingAmount;
 
         const newOrder = {
             userId: req.user.id,
@@ -55,6 +57,8 @@ exports.createOrder = async (req, res) => {
             subtotal: calculatedSubtotal,
             gstAmount: gstAmount,
             shippingAmount: shippingAmount,
+            discount: discountAmount,
+            couponCode: couponCode,
             total: total,
             address: orderAddress,
             paymentMethod: paymentMethod || 'cod',

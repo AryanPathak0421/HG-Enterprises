@@ -4,27 +4,14 @@ import { motion } from 'framer-motion';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 
-// Import images
-import newEarrings from '../assets/new_launch_earrings.png';
-import newChains from '../assets/new_launch_chains.png';
-import newStuds from '../assets/new_launch_studs.png';
-import newBracelets from '../assets/new_launch_bracelets.png';
-import newAnklets from '../assets/new_launch_anklets.png';
-
-const newLaunches = [
-    { id: 'earrings', name: "Earrings", image: newEarrings, path: "/category/earrings" },
-    { id: 'chains', name: "Chains", image: newChains, path: "/category/chains" },
-    { id: 'studs', name: "Studs", image: newStuds, path: "/category/studs" },
-    { id: 'bracelets', name: "Bracelets", image: newBracelets, path: "/category/bracelets" },
-    { id: 'anklets', name: "Anklets", image: newAnklets, path: "/category/anklets" }
-];
-
 const NewLaunchSection = () => {
     const { homepageSections } = useShop();
 
-    // Use admin-configured items if available, otherwise fall back to defaults
+    // Use admin-configured items strictly from the DB
     const sectionData = homepageSections?.['new-launch'];
-    const displayItems = sectionData?.items && sectionData.items.length > 0 ? sectionData.items : newLaunches;
+    const displayItems = sectionData?.items && sectionData.items.length > 0 ? sectionData.items : [];
+
+    if (displayItems.length === 0) return null;
 
     return (
         <section className="pt-8 pb-10 md:pt-12 md:pb-16 bg-bg-light relative overflow-hidden">
@@ -59,7 +46,7 @@ const NewLaunchSection = () => {
                                 <Link to={item.path} className="group block relative">
                                     {/* Square Card Container - Tighter Corner */}
                                     <div className="relative rounded-2xl overflow-hidden aspect-square bg-white shadow-xl group-hover:shadow-2xl transition-all duration-500 transform group-hover:-translate-y-2 isolate">
-                                        
+
                                         {/* Image */}
                                         <div className="absolute inset-0 overflow-hidden">
                                             <img

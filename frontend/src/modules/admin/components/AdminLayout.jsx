@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-    LayoutDashboard, Package, ShoppingCart, Users, Image as ImageIcon,
+    LayoutDashboard, Package, ShoppingCart, Users, User, Image as ImageIcon,
     Bell, ChevronRight, ChevronDown, Star, HelpCircle, LogOut, Menu, X, ListTree,
     FileText, MessageSquare, Ticket, Settings, Plus, List, BookOpen,
     Clock, RefreshCw, RefreshCcw, RotateCcw, Boxes, ClipboardList, MapPin, Truck, CheckCircle2, XCircle,
@@ -29,7 +29,8 @@ const AdminLayout = ({ children }) => {
             subItems: [
                 { name: 'Jewellery', path: '/admin/categories?department=jewellery', icon: List },
                 { name: 'Machines', path: '/admin/categories?department=machine', icon: List },
-                { name: 'Tools', path: '/admin/categories?department=tools', icon: List }
+                { name: 'Tools', path: '/admin/categories?department=tools', icon: List },
+                { name: 'Visual Assets', path: '/admin/category-assets', icon: ImageIcon },
             ]
         },
         {
@@ -69,13 +70,16 @@ const AdminLayout = ({ children }) => {
             ]
         },
         { name: 'Users', icon: Users, path: '/admin/users' },
+        { name: 'Suggestions', icon: MessageSquare, path: '/admin/suggestions' },
         { name: 'Reviews', icon: Star, path: '/admin/reviews' },
         { name: 'Banners', icon: ImageIcon, path: '/admin/banners' },
+        { name: 'Offers', icon: Ticket, path: '/admin/offers' },
         { name: 'Notifications', icon: Bell, path: '/admin/notifications' },
 
         { name: 'FAQ', icon: MessageSquare, path: '/admin/faq' },
         {
             name: 'Pages',
+
             icon: FileText,
             path: '/admin/pages',
             subItems: [
@@ -95,6 +99,7 @@ const AdminLayout = ({ children }) => {
         { name: 'Sections', icon: LayoutDashboard, path: '/admin/sections' },
         { name: 'Platform Config', icon: LayoutDashboard, path: '/admin/platform-settings' },
         { name: 'Global Settings', icon: Settings, path: '/admin/settings' },
+
     ];
 
     // State for expanded menus

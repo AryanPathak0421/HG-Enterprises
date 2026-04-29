@@ -53,20 +53,23 @@ const ReturnDetailPage = () => {
 
     // Update Status Mutation
     const updateStatusMutation = useMutation({
-        mutationFn: async ({ status, comment }) => {
-            const res = await api.patch(`/returns/${id}`, { status, adminComment: comment });
-            return res.data.request;
+        mutationFn: async ({ status, comment, refundAmount }) => {
+            const res = await api.patch(`/returns/${id}`, { status, adminComment: comment, refundAmount });
+            return res.data;
         },
-        onSuccess: (updatedRequest) => {
-            queryClient.setQueryData(['return', id], updatedRequest);
-            toast.success(`Request status updated to ${updatedRequest.status}`);
+        onSuccess: (res) => {
+            queryClient.invalidateQueries(['return', id]);
+            toast.success(`Request status updated`);
             setAdminComment('');
+            setRefundAmount('');
         },
         onError: (err) => {
             console.error('[UPDATE STATUS ERROR]', err);
             toast.error(err.response?.data?.message || 'Failed to update status');
         }
     });
+
+    const [refundAmount, setRefundAmount] = useState('');
 
 
     if (isLoading) return <div className="p-20 text-center text-[10px] font-black uppercase tracking-widest animate-pulse">Establishing Secure Neural Link to Protocol...</div>;
@@ -209,27 +212,29 @@ const ReturnDetailPage = () => {
                         </div>
                     </div>
 
-                    {/* Refund Details */}
-                    {!isReplacement && (
-                        <div className="bg-white rounded-none border border-black/5 shadow-sm p-4">
-                            <div className="flex items-center gap-2 mb-4 border-l-2 border-gold pl-3">
-                                <h3 className="text-[10px] font-black text-black uppercase tracking-widest">Fiscal Disposition</h3>
+                    {/* Refund Banking Information (New) */}
+                    {!isReplacement && ret.bankDetails && (
+                        <div className="bg-white rounded-none border border-black/5 shadow-sm p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="flex items-center gap-2 mb-4 border-l-2 border-emerald-500 pl-3">
+                                <h3 className="text-[10px] font-black text-black uppercase tracking-widest">Refund Banking Protocol</h3>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 pt-1">
-                                <div className="bg-[#FDF5F6]/50 p-3 border border-black/5">
-                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Acquisition Method</p>
-                                    <p className="text-[11px] font-black text-black uppercase tracking-widest flex items-center gap-2">
-                                        <CreditCard size={12} className="text-gold" /> {ret.refund?.method || 'N/A'}
-                                    </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#FDF5F6]/30 p-6 border border-emerald-100">
+                                <div className="space-y-1">
+                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Account Holder</p>
+                                    <p className="text-sm font-black text-black uppercase">{ret.bankDetails.holderName}</p>
                                 </div>
-                                <div className="bg-[#FDF5F6]/50 p-3 border border-black/5">
-                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Transaction Ref</p>
-                                    <p className="text-[11px] font-black text-black tracking-widest uppercase truncate">{ret.refund?.transactionId || 'Awaiting Cycle'}</p>
+                                <div className="space-y-1">
+                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Account Number</p>
+                                    <p className="text-sm font-black text-black tracking-widest select-all">{ret.bankDetails.accountNumber}</p>
                                 </div>
-                            </div>
-                            <div className="mt-4 border-t border-black/5 pt-4 flex justify-between items-center">
-                                <span className="text-[10px] font-black text-black uppercase tracking-widest">Final Settlement Amount</span>
-                                <span className="text-2xl font-serif font-black text-emerald-600 tracking-tighter">₹{ret.refund?.amount?.toLocaleString() || '0'}</span>
+                                <div className="space-y-1">
+                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Bank Name</p>
+                                    <p className="text-[11px] font-bold text-gray-700 uppercase">{ret.bankDetails.bankName}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">IFSC Code</p>
+                                    <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-widest">{ret.bankDetails.ifscCode}</p>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -237,7 +242,7 @@ const ReturnDetailPage = () => {
 
                 {/* Right Column: Customer, Timeline, Actions */}
                 <div className="space-y-4">
-                    {/* Admin Actions */}
+                    {/* Admin Actions (Pending -> Approved/Rejected) */}
                     {ret.status?.toLowerCase() === 'pending' && (
                         <div className="bg-white p-4 rounded-none border border-black/5 shadow-sm animate-in slide-in-from-top-4">
                             <div className="flex items-center gap-2 mb-4 border-l-2 border-gold pl-3">
@@ -261,6 +266,36 @@ const ReturnDetailPage = () => {
                                     className="flex items-center justify-center gap-2 py-2 bg-[#FDF5F6] border border-black/10 text-gray-400 rounded-none text-[9px] font-black uppercase tracking-widest hover:border-red-500 hover:text-red-500 transition-all active:scale-95"
                                 >
                                     <XCircle size={14} strokeWidth={3} /> Reject
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Final Refund Action (Approved -> Refunded) */}
+                    {ret.status?.toLowerCase() === 'approved' && !isReplacement && (
+                        <div className="bg-[#0a0a0a] p-4 rounded-none border border-black shadow-xl animate-in slide-in-from-bottom-4">
+                            <div className="flex items-center gap-2 mb-4 border-l-2 border-gold pl-3">
+                                <h3 className="text-[10px] font-black text-white uppercase tracking-widest">Execute Fiscal Remittance</h3>
+                            </div>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-[8px] font-black text-gray-500 uppercase tracking-widest px-1">Refund Amount</label>
+                                    <div className="relative">
+                                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-gold" size={14} />
+                                        <input
+                                            type="number"
+                                            value={refundAmount}
+                                            onChange={(e) => setRefundAmount(e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 p-3 pl-10 text-white text-[11px] font-black outline-none focus:border-gold"
+                                            placeholder="Enter Amount"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => updateStatusMutation.mutate({ status: 'Refunded', comment: 'Refund processed via bank transfer.', refundAmount: Number(refundAmount) })}
+                                    className="w-full py-3 bg-gold text-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <CreditCard size={14} /> Process & Notify Patron
                                 </button>
                             </div>
                         </div>

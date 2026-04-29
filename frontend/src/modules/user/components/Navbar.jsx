@@ -7,7 +7,7 @@ import hgLogoPremium from '../assets/logo_final.jpg';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
-    const { cart, wishlist, user, userNotifications, isMenuOpen, toggleMenu, isSearchOpen, toggleSearch, categories } = useShop();
+    const { cart, wishlist, user, userNotifications, isMenuOpen, toggleMenu, isSearchOpen, toggleSearch, categories, settings } = useShop();
     const location = useLocation();
     const isHome = location.pathname === '/';
 
@@ -19,7 +19,7 @@ const Navbar = () => {
             { name: "Tools", path: "/category/tools" },
             { name: "Shop All", path: "/shop" }
         ],
-        support: [
+        support: (settings?.navbarLinks && settings.navbarLinks.length > 0) ? settings.navbarLinks : [
             { name: "Offers", path: "/offers" },
             { name: "Track Order", path: "/profile/orders" },
             { name: "About Us", path: "/about" },
@@ -252,7 +252,7 @@ const Navbar = () => {
                                                         </p>
 
                                                         <Link
-                                                            to={`/category/${activeMegaCategory?.id}`}
+                                                            to={`/collection/${activeMegaCategory?.id || activeMegaCategory?._id}`}
                                                             aria-label={`View all ${activeMegaCategory?.name} products`}
                                                             className="text-[10px] font-serif font-bold text-black group flex items-center gap-3 tracking-[0.3em] uppercase hover:text-primary transition-colors"
                                                         >
@@ -274,7 +274,7 @@ const Navbar = () => {
                                                                 .map((cat, idx) => (
                                                                     <Link
                                                                         key={idx}
-                                                                        to={`/shop?category=${cat.name.toLowerCase()}`}
+                                                                        to={`/collection/${cat.id || cat._id}`}
                                                                         aria-label={`Show ${cat.name}`}
                                                                         className="flex flex-col items-center gap-4 group/sub"
                                                                     >
@@ -301,14 +301,14 @@ const Navbar = () => {
                                 </div>
                             </div>
 
-                            {[
+                            {((settings?.navbarLinks && settings.navbarLinks.length > 0) ? settings.navbarLinks : [
                                 { name: "ABOUT", path: "/about" },
                                 { name: "BLOG", path: "/blogs" },
                                 { name: "OFFERS", path: "/offers" },
                                 { name: "SHOP", path: "/shop" },
                                 { name: "CONTACT US", path: "/help" },
                                 { name: "TRACK ORDER", path: "/profile/orders" }
-                            ].map((nav, idx) => (
+                            ]).map((nav, idx) => (
                                 <Link
                                     key={idx}
                                     to={nav.path}

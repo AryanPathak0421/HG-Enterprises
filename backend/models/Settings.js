@@ -62,6 +62,21 @@ const settingsSchema = new mongoose.Schema({
     footerDeliveryText: { type: String, default: 'Safe & Insured Express Worldwide Delivery' },
     footerCopyrightText: { type: String, default: 'HG Enterprises Pvt Ltd. All Rights Reserved.' },
 
+    // Navbar Settings
+    navbarLinks: {
+        type: [{
+            id: Number,
+            name: String,
+            path: String
+        }],
+        default: [
+            { id: 1, name: 'Shop', path: '/all-products' },
+            { id: 2, name: 'Best Sellers', path: '/best-sellers' },
+            { id: 3, name: 'New Arrivals', path: '/new-arrivals' },
+            { id: 4, name: 'About', path: '/about' }
+        ]
+    },
+
     // Dashboard Layout Configuration
     dashboardLayout: {
         type: [
@@ -96,6 +111,18 @@ const settingsSchema = new mongoose.Schema({
             'curated-for-you': { id: 'curated-for-you', label: 'Curated For You', items: [] },
             'style-it-your-way': { id: 'style-it-your-way', label: 'Style It Your Way', items: [] }
         }
+    },
+
+    homeTrendingSlides: {
+        type: [{
+            id: Number,
+            subtitle: String,
+            title: String,
+            titleItalic: String,
+            desc: String,
+            image: String
+        }],
+        default: []
     },
 
     // About Us Content

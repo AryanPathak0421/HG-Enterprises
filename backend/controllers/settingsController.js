@@ -21,6 +21,12 @@ exports.updateSettings = async (req, res) => {
         } else {
             Object.assign(settings, req.body);
         }
+
+        // Ensure homepageSections (Mixed type) is marked as modified if it exists in the update
+        if (req.body.homepageSections) {
+            settings.markModified('homepageSections');
+        }
+
         await settings.save();
         res.json(settings);
     } catch (error) {

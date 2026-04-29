@@ -21,8 +21,37 @@ const AdminDashboard = () => {
         return () => clearInterval(timer);
     }, []);
 
-    // Simulated Analytics Data for Chart
-    const performanceData = [40, 70, 45, 90, 65, 85, 95];
+    // Dynamic Analytics Data for Chart
+    const chartData = useMemo(() => {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const last7Months = [];
+        const revenuePerMonth = [];
+        const now = new Date();
+
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            last7Months.push(months[d.getMonth()]);
+
+            const monthOrders = (orders || []).filter(order => {
+                const orderDate = new Date(order.createdAt);
+                return orderDate.getMonth() === d.getMonth() && orderDate.getFullYear() === d.getFullYear();
+            });
+
+            const monthlyRevenue = monthOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+            revenuePerMonth.push(monthlyRevenue);
+        }
+
+        const maxRevenue = Math.max(...revenuePerMonth, 1000); // Min max of 1k for scaling
+        const normalizedValues = revenuePerMonth.map(rev => (rev / maxRevenue) * 80 + 10); // Scale to 10-90% range
+
+        const currentMonthRevenue = revenuePerMonth[6];
+        const prevMonthRevenue = revenuePerMonth[5] || 0;
+        const trend = prevMonthRevenue > 0 ? (((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100).toFixed(1) : (currentMonthRevenue > 0 ? '100' : '0');
+
+        return { labels: last7Months, values: normalizedValues, rawValues: revenuePerMonth, trend };
+    }, [orders]);
+
+    const performanceData = chartData.values;
 
     const quickActions = [
         { label: 'ADD PRODUCT', icon: Plus, bg: 'bg-[#FDFBF7]', text: 'text-primary', path: '/admin/products/new' },
@@ -164,7 +193,7 @@ const AdminDashboard = () => {
                                         <span className="text-[7px] font-black text-black uppercase tracking-widest">Active Cycle</span>
                                     </div>
                                     <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 uppercase tracking-widest">
-                                        <TrendingUp size={12} strokeWidth={2.5} /> +12.4%
+                                        <TrendingUp size={12} strokeWidth={2.5} /> {chartData.trend}%
                                     </div>
                                 </div>
                             </div>
@@ -184,7 +213,7 @@ const AdminDashboard = () => {
                                         </linearGradient>
                                     </defs>
                                     <path
-                                        d="M 0,60 L 100,30 L 200,55 L 300,10 L 400,35 L 500,15 L 600,5 L 700,40"
+                                        d={`M 0,${100 - (performanceData[0] || 0)} ${performanceData.slice(1).map((val, i) => `L ${(i + 1) * 100},${100 - val}`).join(' ')}`}
                                         fill="none"
                                         stroke="#AD8E4F"
                                         strokeWidth="3"
@@ -192,13 +221,13 @@ const AdminDashboard = () => {
                                         strokeLinejoin="round"
                                     />
                                     <path
-                                        d="M 0,60 L 100,30 L 200,55 L 300,10 L 400,35 L 500,15 L 600,5 L 700,40 V 100 H 0 Z"
+                                        d={`M 0,${100 - (performanceData[0] || 0)} ${performanceData.slice(1).map((val, i) => `L ${(i + 1) * 100},${100 - val}`).join(' ')} V 100 H 0 Z`}
                                         fill="url(#chartGradient)"
                                     />
                                 </svg>
 
                                 <div className="absolute inset-0 flex justify-between px-0 overflow-visible z-20">
-                                    {[40, 70, 45, 90, 65, 85, 95].map((val, i) => (
+                                    {performanceData.map((val, i) => (
                                         <div key={i} className="flex-1 flex flex-col items-center justify-end relative group/marker">
                                             <div className="absolute inset-y-0 w-[1px] bg-gold/10 opacity-0 group-hover/marker:opacity-100 transition-opacity"></div>
                                             <div
@@ -206,10 +235,10 @@ const AdminDashboard = () => {
                                                 style={{ bottom: `${val}%`, marginBottom: '-5px' }}
                                             >
                                                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] font-black px-2 py-1 opacity-0 group-hover/marker:opacity-100 pointer-events-none transition-all whitespace-nowrap shadow-xl">
-                                                    ₹ {val}k <span className="text-gold selection:bg-gold/20">•</span> Cycle {i + 1}
+                                                    ₹ {(chartData.rawValues[i] / 1000).toFixed(1)}k <span className="text-gold selection:bg-gold/20">•</span> {chartData.labels[i]}
                                                 </div>
                                             </div>
-                                            <span className="text-[7px] font-black text-gray-300 uppercase tracking-widest mt-2">{['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'][i]}</span>
+                                            <span className="text-[7px] font-black text-gray-300 uppercase tracking-widest mt-2">{chartData.labels[i]}</span>
                                         </div>
                                     ))}
                                 </div>

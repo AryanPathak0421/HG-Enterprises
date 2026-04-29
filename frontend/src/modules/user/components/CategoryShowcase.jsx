@@ -69,8 +69,8 @@ const CategoryShowcase = () => {
                     >
                         {filteredCats.map((cat, index) => {
                             return (
-                                <div key={cat.id} className="group flex flex-col items-center w-[100px] md:w-auto">
-                                    <Link to={`/shop?category=${cat.name.toLowerCase()}`} className="block">
+                                <div key={cat.id || cat._id} className="group flex flex-col items-center w-[100px] md:w-auto">
+                                    <Link to={`/collection/${cat.id || cat._id}`} className="block">
                                         <motion.div
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}

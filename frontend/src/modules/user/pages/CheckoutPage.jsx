@@ -54,7 +54,7 @@ const CheckoutPage = () => {
         pincode: '',
     });
 
-    const [paymentMethod, setPaymentMethod] = useState('cod');
+    const [paymentMethod, setPaymentMethod] = useState('online');
     const [loading, setLoading] = useState(false);
 
     // Coupon management state
@@ -265,30 +265,13 @@ const CheckoutPage = () => {
                                 Payment Method
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                                <label className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-gray-50 hover:border-gray-100'}`}>
-                                    <input
-                                        type="radio"
-                                        name="payment"
-                                        value="cod"
-                                        checked={paymentMethod === 'cod'}
-                                        onChange={() => setPaymentMethod('cod')}
-                                        className="w-4 h-4 text-primary focus:ring-primary"
-                                    />
-                                    <div className="flex-1">
-                                        <div className="font-bold text-footerBg flex items-center gap-2 text-sm md:text-base">
-                                            <Banknote size={14} /> Cash on Delivery
-                                        </div>
-                                        <div className="text-[10px] md:text-sm text-gray-500">COD Available</div>
-                                    </div>
-                                </label>
-
-                                <label className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'online' ? 'border-primary bg-primary/5' : 'border-gray-50 hover:border-gray-100'}`}>
+                                <label className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl border-2 cursor-pointer transition-all border-primary bg-primary/5`}>
                                     <input
                                         type="radio"
                                         name="payment"
                                         value="online"
-                                        checked={paymentMethod === 'online'}
-                                        onChange={() => setPaymentMethod('online')}
+                                        checked={true}
+                                        readOnly
                                         className="w-4 h-4 text-primary focus:ring-primary"
                                     />
                                     <div className="flex-1">

@@ -20,7 +20,13 @@ exports.getAllCategories = async (req, res) => {
 
 exports.getCategoryById = async (req, res) => {
     try {
-        const category = await Category.findOne({ id: req.params.id });
+        const { id } = req.params;
+        let category = await Category.findOne({ id });
+
+        if (!category && id.match(/^[0-9a-fA-F]{24}$/)) {
+            category = await Category.findById(id);
+        }
+
         if (!category) return res.status(404).json({ message: 'Category not found' });
         res.status(200).json(category);
     } catch (error) {
@@ -39,7 +45,13 @@ exports.createCategory = async (req, res) => {
 
 exports.updateCategory = async (req, res) => {
     try {
-        const category = await Category.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        const { id } = req.params;
+        let category = await Category.findOneAndUpdate({ id }, req.body, { new: true });
+
+        if (!category && id.match(/^[0-9a-fA-F]{24}$/)) {
+            category = await Category.findByIdAndUpdate(id, req.body, { new: true });
+        }
+
         if (!category) return res.status(404).json({ message: 'Category not found' });
         res.status(200).json(category);
     } catch (error) {
@@ -49,7 +61,13 @@ exports.updateCategory = async (req, res) => {
 
 exports.deleteCategory = async (req, res) => {
     try {
-        const category = await Category.findOneAndDelete({ id: req.params.id });
+        const { id } = req.params;
+        let category = await Category.findOneAndDelete({ id });
+
+        if (!category && id.match(/^[0-9a-fA-F]{24}$/)) {
+            category = await Category.findByIdAndDelete(id);
+        }
+
         if (!category) return res.status(404).json({ message: 'Category not found' });
         res.status(200).json({ message: 'Category deleted' });
     } catch (error) {

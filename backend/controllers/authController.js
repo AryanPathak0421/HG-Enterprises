@@ -169,10 +169,10 @@ exports.removeAddress = async (req, res) => {
 // Update Profile (Protected)
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, email, phone } = req.body;
+        const { name, email, phone, bankDetails } = req.body;
         const user = await User.findByIdAndUpdate(
             req.user.id,
-            { name, email, phone },
+            { name, email, phone, bankDetails },
             { new: true, runValidators: true }
         ).select('-password');
 
@@ -181,6 +181,27 @@ exports.updateProfile = async (req, res) => {
         res.status(200).json({ message: 'Profile updated successfully', user });
     } catch (error) {
         res.status(500).json({ message: 'Failed to update profile', error: error.message });
+    }
+};
+
+// Change Password (Protected)
+exports.changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Check current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) return res.status(400).json({ message: 'Passcode galat hai. Kripya sahi passcode daalein.' });
+
+        // Hash new password
+        user.password = await bcrypt.hash(newPassword, 10);
+        await user.save();
+
+        res.status(200).json({ message: 'Passcode successfully update ho gaya hai.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Passcode update fail ho gaya.', error: error.message });
     }
 };
 

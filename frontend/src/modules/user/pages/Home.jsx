@@ -10,6 +10,8 @@ import PerfectGift from '../components/PerfectGift';
 import NewLaunchSection from '../components/NewLaunchSection';
 import LatestDrop from '../components/LatestDrop';
 import MostGifted from '../components/MostGifted';
+import CuratedForYou from '../components/CuratedForYou';
+import ProposalRings from '../components/ProposalRings';
 import EditorialSection from '../components/EditorialSection';
 import StyleItYourWay from '../components/StyleItYourWay';
 import AllProducts from '../components/AllProducts';
@@ -211,6 +213,12 @@ const Home = () => {
 
             {/* PERFECT GIFT SECTION */}
             <PerfectGift />
+
+            {/* CURATED FOR YOU - Occasions */}
+            <CuratedForYou />
+
+            {/* PROPOSAL RINGS BANNER */}
+            <ProposalRings />
 
             {/* LATEST DROP SECTION */}
             <LatestDrop />

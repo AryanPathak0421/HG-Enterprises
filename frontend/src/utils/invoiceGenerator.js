@@ -131,7 +131,7 @@ export const generateInvoice = (order, logoUrl = null) => {
     doc.text(`INR ${subtotal.toLocaleString()}`, pageWidth - 15, finalY, { align: 'right' });
 
     if (gst > 0) {
-        doc.text('GST (Estimated):', summaryX, finalY + 7);
+        doc.text('GST (Included):', summaryX, finalY + 7);
         doc.text(`INR ${gst.toLocaleString()}`, pageWidth - 15, finalY + 7, { align: 'right' });
     }
 

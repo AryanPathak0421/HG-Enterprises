@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema({
         read: { type: Boolean, default: false },
         createdAt: { type: Date, default: Date.now }
     }],
+    bankDetails: {
+        holderName: { type: String },
+        accountNumber: { type: String },
+        ifscCode: { type: String },
+        bankName: { type: String }
+    },
     isBlocked: { type: Boolean, default: false }
 }, { timestamps: true });
 

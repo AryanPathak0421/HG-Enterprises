@@ -1,32 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useShop } from '../../../context/ShopContext';
-
-// Import images
-import giftMother from '../assets/gift_mother_silver.png';
-import giftFriends from '../assets/gift_friends_silver.png';
-import giftWife from '../assets/gift_wife_silver.png';
-import giftSister from '../assets/gift_sister_silver.png';
 import dividerImg from '../assets/ornament-divider.png';
-
-const recipients = [
-    { id: 'mother', name: "Mother", image: giftMother, path: "/shop?recipient=mother" },
-    { id: 'friends', name: "Friends", image: giftFriends, path: "/shop?recipient=friends" },
-    { id: 'wife', name: "Wife", image: giftWife, path: "/shop?recipient=wife" },
-    { id: 'sister', name: "Sister", image: giftSister, path: "/shop?recipient=sister" }
-];
 
 const PerfectGift = () => {
     const { homepageSections } = useShop();
 
-    // Use admin-configured items if available, otherwise fall back to defaults
+    // Use admin-configured items strictly from the DB
     const sectionData = homepageSections?.['perfect-gift'];
-    const displayItems = sectionData?.items && sectionData.items.length > 0 ? sectionData.items : recipients;
+    const displayItems = sectionData?.items && sectionData.items.length > 0 ? sectionData.items : [];
+
+    if (displayItems.length === 0) return null;
 
     return (
-        <section className="py-8 md:py-12 bg-gradient-to-b from-primary to-dark text-white"> {/* Reduced spacing */}
+        <section className="py-8 md:py-12 bg-gradient-to-b from-primary to-dark text-white">
             <div className="container mx-auto px-2 md:px-4">
                 <div className="text-center mb-8 md:mb-10">
                     <motion.h2
@@ -45,14 +33,11 @@ const PerfectGift = () => {
                     ></motion.div>
                 </div>
 
-
-
                 {/* Compact Grid Layout for Mobile, Staggered for Desktop */}
                 <div className="grid grid-cols-4 md:flex md:flex-nowrap justify-center gap-2 md:gap-8 px-1 md:px-4 mb-6 md:mb-12">
                     {displayItems.map((item, index) => {
                         // Desktop margin logic (compact):
                         const desktopMargin = (index === 0 || index === 3) ? 'md:mt-0' : 'md:mt-12';
-
                         const itemLabel = item.name || item.label;
 
                         return (
@@ -68,7 +53,6 @@ const PerfectGift = () => {
                                     to={item.path}
                                     className="group relative block w-full aspect-square md:aspect-[3/4] rounded-xl md:rounded-[2rem] overflow-hidden border border-gold/20 shadow-md transition-all duration-500 hover:shadow-[0_0_25px_rgba(201,162,77,0.3)] hover:border-gold/60 md:hover:-translate-y-2"
                                 >
-                                    {/* Image with Zoom Effect */}
                                     <div className="absolute inset-0 overflow-hidden">
                                         <img
                                             src={item.image}

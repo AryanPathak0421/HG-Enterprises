@@ -1,10 +1,11 @@
 const ReturnRequest = require('../models/ReturnRequest');
 const Order = require('../models/Order');
+const User = require('../models/User');
 
 // Create a new return/exchange request
 exports.createReturnRequest = async (req, res) => {
     try {
-        const { orderId, type, items, reason, comment, images } = req.body;
+        const { orderId, type, items, reason, comment, images, bankDetails } = req.body;
 
         const newRequest = new ReturnRequest({
             orderId,
@@ -13,6 +14,7 @@ exports.createReturnRequest = async (req, res) => {
             items,
             reason,
             comment,
+            bankDetails,
             evidence: {
                 images: images || []
             },
@@ -77,6 +79,24 @@ exports.updateReturnStatus = async (req, res) => {
         );
 
         if (!ret) return res.status(404).json({ message: 'Return request not found' });
+
+        // Notification Logic
+        if (['Approved', 'Refunded', 'Rejected'].includes(status)) {
+            const user = await User.findById(ret.userId);
+            if (user) {
+                user.notifications.push({
+                    title: `Return Request ${status}`,
+                    message: status === 'Approved' 
+                        ? `Your return request for Order #${ret.orderId} has been approved. Refund will be initiated.`
+                        : status === 'Refunded'
+                        ? `Refund of ₹${ret.refundAmount || 'the total amount'} for Order #${ret.orderId} has been processed.`
+                        : `Your return request for Order #${ret.orderId} has been rejected. ${adminComment || ''}`,
+                    type: 'account'
+                });
+                await user.save();
+            }
+        }
+
         res.status(200).json(ret);
     } catch (error) {
         res.status(500).json({ message: 'Failed to update return status', error: error.message });

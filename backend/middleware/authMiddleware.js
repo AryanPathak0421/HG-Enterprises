@@ -1,11 +1,19 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'No token provided' });
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Verify user exists in database
+        const userExists = await User.findById(decoded.id);
+        if (!userExists) {
+            return res.status(401).json({ message: 'User no longer exists' });
+        }
+
         req.user = decoded;
         console.log(`[AUTH] Token Verified for User: ${decoded.id}, Role: ${decoded.role}`);
         next();

@@ -23,6 +23,12 @@ const returnRequestSchema = new mongoose.Schema({
     },
     adminComment: { type: String },
     refundAmount: { type: Number },
+    bankDetails: {
+        holderName: String,
+        accountNumber: String,
+        ifscCode: String,
+        bankName: String
+    },
     courier: {
         partner: String,
         awb: String,

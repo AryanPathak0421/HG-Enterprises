@@ -18,31 +18,33 @@ const SectionManagement = () => {
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {Object.values(homepageSections || {}).map(section => (
-                        <div key={section.id} className="bg-white border border-black/5 rounded-none p-4 shadow-sm hover:border-gold/30 transition-all group">
-                            <div className="flex items-start justify-between mb-3 text-left">
-                                <div className="h-8 w-8 rounded-none bg-[#FDF5F6] text-gold flex items-center justify-center border border-black/5">
-                                    <ImageIcon size={16} />
+                    {Object.values(homepageSections || {})
+                        .filter(section => section.id !== 'category-showcase')
+                        .map(section => (
+                            <div key={section.id} className="bg-white border border-black/5 rounded-none p-4 shadow-sm hover:border-gold/30 transition-all group">
+                                <div className="flex items-start justify-between mb-3 text-left">
+                                    <div className="h-8 w-8 rounded-none bg-[#FDF5F6] text-gold flex items-center justify-center border border-black/5">
+                                        <ImageIcon size={16} />
+                                    </div>
+                                    <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                        Active
+                                    </span>
                                 </div>
-                                <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                    Active
-                                </span>
-                            </div>
-                            <div className="text-left">
-                                <h3 className="font-serif text-base font-black text-black mb-1 uppercase tracking-tight">{section.label}</h3>
-                                <p className="text-gray-400 text-[9px] font-black mb-4 line-clamp-1 uppercase tracking-[0.2em]">
-                                    Configuration Node
-                                </p>
+                                <div className="text-left">
+                                    <h3 className="font-serif text-base font-black text-black mb-1 uppercase tracking-tight">{section.label}</h3>
+                                    <p className="text-gray-400 text-[9px] font-black mb-4 line-clamp-1 uppercase tracking-[0.2em]">
+                                        Configuration Node
+                                    </p>
 
-                                <button
-                                    onClick={() => navigate(`/admin/sections/${section.id}`)}
-                                    className="w-full py-2 bg-black text-white font-black text-[9px] uppercase tracking-widest hover:bg-gold hover:text-black transition-all flex items-center justify-center gap-2 rounded-none"
-                                >
-                                    <Edit2 size={12} /> Edit Content
-                                </button>
+                                    <button
+                                        onClick={() => navigate(`/admin/sections/${section.id}`)}
+                                        className="w-full py-2 bg-black text-white font-black text-[9px] uppercase tracking-widest hover:bg-gold hover:text-black transition-all flex items-center justify-center gap-2 rounded-none"
+                                    >
+                                        <Edit2 size={12} /> Edit Content
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
 
                     {/* Placeholder for future sections */}
                     {[].map((name, i) => (

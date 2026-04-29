@@ -20,6 +20,8 @@ const orderSchema = new mongoose.Schema({
     subtotal: { type: Number, required: true },
     gstAmount: { type: Number, required: true },
     shippingAmount: { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
+    couponCode: { type: String },
     total: { type: Number, required: true },
     status: { type: String, enum: ['Pending', 'Received', 'Processing', 'Shipped', 'Out For Delivery', 'Delivered', 'Cancelled'], default: 'Processing' },
     paymentMethod: { type: String },

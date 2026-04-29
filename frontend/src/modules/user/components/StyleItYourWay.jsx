@@ -3,24 +3,6 @@ import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useShop } from '../../../context/ShopContext';
 
-// Importing assets for Banners (using available hero/trending assets)
-import bannerDaily from '../assets/banner_daily.png';
-import bannerOffice from '../assets/banner_office.png';
-import bannerParty from '../assets/banner_party.png';
-import bannerCasual from '../assets/trending_heritage.png';
-
-// Importing assets for Thumbnails (using available product assets)
-import prodChain from '../assets/silver_chain_product.png';
-import prodBracelet from '../assets/silver_bracelet_product.png';
-import prodEarring from '../assets/silver_earrings_product.png';
-import prodPendant from '../assets/cat_pendant.png';
-import prodRing from '../assets/cat_ring_wine.png';
-import prodAnklet from '../assets/cat_anklets.png'; // Premium Asset
-import prodGift from '../assets/gift_friends_silver.png';
-import prodSis from '../assets/gift_sister_silver.png';
-import prodWineEar from '../assets/cat_earrings_wine.png';
-import prodWineRing from '../assets/cat_ring_wine.png';
-
 const StyleItYourWay = () => {
     const { homepageSections } = useShop();
     const sectionData = homepageSections?.['style-it-your-way'];
@@ -39,41 +21,6 @@ const StyleItYourWay = () => {
         }
     };
 
-    const defaultCollections = [
-        {
-            id: 1,
-            title: "Daily Wear",
-            subtitle: "Effortless Everyday",
-            image: bannerDaily,
-            thumbnails: [prodPendant, prodWineEar, prodAnklet],
-            path: "/shop"
-        },
-        {
-            id: 2,
-            title: "Office Wear",
-            subtitle: "Professional Chic",
-            image: bannerOffice,
-            thumbnails: [prodEarring, prodPendant, prodRing],
-            path: "/shop"
-        },
-        {
-            id: 3,
-            title: "Party Wear",
-            subtitle: "Glamour & Shine",
-            image: bannerParty,
-            thumbnails: [prodWineEar, prodWineRing, prodAnklet],
-            path: "/shop"
-        },
-        {
-            id: 4,
-            title: "Casual Wear",
-            subtitle: "Relaxed Vibes",
-            image: bannerCasual,
-            thumbnails: [prodAnklet, prodBracelet, prodSis],
-            path: "/shop"
-        }
-    ];
-
     const displayCollections = sectionData?.items && sectionData.items.length > 0
         ? sectionData.items.map(item => ({
             id: item.id,
@@ -83,9 +30,11 @@ const StyleItYourWay = () => {
             thumbnails: item.extraImages || [],
             path: item.path || "/shop"
         }))
-        : defaultCollections;
+        : [];
 
     React.useEffect(() => {
+        if (displayCollections.length === 0) return;
+
         const isMobile = window.innerWidth < 768;
         if (!isMobile) return;
 
@@ -104,7 +53,9 @@ const StyleItYourWay = () => {
         }, 3000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [displayCollections.length]);
+
+    if (displayCollections.length === 0) return null;
 
     return (
         <section className="pt-8 pb-2 md:pt-12 md:pb-4 bg-white relative">

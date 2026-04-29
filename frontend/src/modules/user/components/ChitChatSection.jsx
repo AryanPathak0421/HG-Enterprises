@@ -1,24 +1,38 @@
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import sandsLogo from '../assets/sands-logo.png';
+import api from '../../../utils/api';
+import { useAuth } from '../../../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const ChitChatSection = () => {
+    const { user } = useAuth();
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
+        name: user?.name || '',
+        email: user?.email || '',
         message: ''
     });
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle submission logic here
-        console.log("Form submitted:", formData);
-        alert("Thanks for chatting with us! We'll get back to you shortly.");
-        setFormData({ name: '', email: '', message: '' });
+        setLoading(true);
+        try {
+            await api.post('/suggestions', {
+                ...formData,
+                userId: user?.id
+            });
+            toast.success("Thank you for your suggestion! We value your feedback.");
+            setFormData({ ...formData, message: '' });
+        } catch (error) {
+            toast.error("Failed to send suggestion. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -35,16 +49,16 @@ const ChitChatSection = () => {
                         <div className="w-full md:w-5/12 p-5 md:p-10 bg-[#4A1015]/50 relative flex flex-col justify-center">
                             <div className="mb-3 md:mb-5 text-left">
                                 <img src={sandsLogo} alt="Sands Jewels" className="w-10 md:w-12 h-auto mb-3 md:mb-5 opacity-90" />
-                                <h2 className="font-display text-2xl md:text-3xl text-white mb-2 md:mb-3">We're Here for You</h2>
+                                <h2 className="font-display text-2xl md:text-3xl text-white mb-2 md:mb-3 font-serif italic">Help Us Improve</h2>
                                 <p className="text-gray-300 font-serif text-xs md:text-base leading-relaxed">
-                                    Have a question? Styling advice? Or just want to say hello?
-                                    We'd love to hear from you!
+                                    Have a suggestion? A new idea?
+                                    Tell us what you'd like to see next on HG Enterprises!
                                 </p>
                             </div>
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3 text-white/80">
                                     <div className="w-1.5 h-1.5 rounded-full bg-[#34D399]"></div>
-                                    <span className="text-[10px] md:text-xs tracking-wide">Replies within 2 hours</span>
+                                    <span className="text-[10px] md:text-xs tracking-wide">Direct to Admin Panel</span>
                                 </div>
                             </div>
                         </div>
@@ -79,7 +93,7 @@ const ChitChatSection = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="message" className="block text-[10px] font-bold text-[#4A1015] uppercase tracking-wider mb-1">Query</label>
+                                    <label htmlFor="message" className="block text-[10px] font-bold text-[#4A1015] uppercase tracking-wider mb-1">Suggestion</label>
                                     <textarea
                                         id="message"
                                         name="message"
@@ -87,16 +101,21 @@ const ChitChatSection = () => {
                                         onChange={handleChange}
                                         rows="2"
                                         className="w-full px-3 py-2 bg-[#F5F5F5] border border-transparent rounded-lg focus:bg-white focus:border-[#4A1015] transition-all outline-none text-[#4A1015] placeholder-gray-400 resize-none text-xs md:text-sm"
-                                        placeholder="How can we help?"
+                                        placeholder="Enter your suggestion here..."
                                         required
                                     ></textarea>
                                 </div>
                                 <button
+                                    disabled={loading}
                                     type="submit"
-                                    className="w-full bg-[#4A1015] text-white font-bold py-2.5 md:py-3.5 rounded-lg hover:bg-[#2F0005] transition-all transform hover:-translate-y-1 shadow-lg flex items-center justify-center gap-2 text-xs md:text-sm uppercase tracking-widest"
+                                    className="w-full bg-[#4A1015] text-white font-bold py-2.5 md:py-3.5 rounded-lg hover:bg-[#2F0005] transition-all transform hover:-translate-y-1 shadow-lg flex items-center justify-center gap-2 text-xs md:text-sm uppercase tracking-widest disabled:opacity-50"
                                 >
-                                    <span>Send Message</span>
-                                    <Send className="w-3.5 h-3.5" />
+                                    {loading ? 'Submitting...' : (
+                                        <>
+                                            <span>Send Suggestion</span>
+                                            <Send className="w-3.5 h-3.5" />
+                                        </>
+                                    )}
                                 </button>
                             </form>
                         </div>

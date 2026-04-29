@@ -68,8 +68,8 @@ const Checkout = () => {
     const shipping = finalIsFirstOrder ? 0 : (settings?.shippingCharge || 0);
 
     const gstRate = (settings?.gstPercentage || 18) / 100;
-    const gstAmount = Math.round(subtotal * gstRate);
-    const total = subtotal + shipping + gstAmount - discount;
+    const gstAmount = Math.round(subtotal - (subtotal / (1 + gstRate)));
+    const total = subtotal + shipping - discount;
 
     // Get active coupons from context
     const availableCoupons = coupons ? coupons.filter(c => c.active) : [];
@@ -574,14 +574,14 @@ const Checkout = () => {
                         </h2>
 
                         <div className="space-y-4">
-                            <label className={`flex items-center gap-4 border p-4 rounded-xl cursor-pointer transition-all ${paymentMethod === 'online' ? 'border-black bg-gray-50' : 'border-gray-100 hover:border-gray-300'}`}>
+                            <label className={`flex items-center gap-4 border p-4 rounded-xl cursor-pointer transition-all border-black bg-gray-50`}>
                                 <div className="relative flex items-center">
                                     <input
                                         type="radio"
                                         name="payment"
                                         value="online"
-                                        checked={paymentMethod === 'online'}
-                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                        checked={true}
+                                        readOnly
                                         className="peer h-4 w-4 cursor-pointer appearance-none rounded-full border border-gray-300 checked:border-black checked:bg-black focus:outline-none"
                                     />
                                     <div className="pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white opacity-0 peer-checked:opacity-100"></div>
@@ -593,29 +593,6 @@ const Checkout = () => {
                                     <div>
                                         <p className="font-bold text-sm md:text-base text-black font-display uppercase tracking-wide">SwiftPay</p>
                                         <p className="text-xs text-gray-500 font-serif">Fast and secure online payment</p>
-                                    </div>
-                                </div>
-                            </label>
-
-                            <label className={`flex items-center gap-4 border p-4 rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-black bg-gray-50' : 'border-gray-100 hover:border-gray-300'}`}>
-                                <div className="relative flex items-center">
-                                    <input
-                                        type="radio"
-                                        name="payment"
-                                        value="cod"
-                                        checked={paymentMethod === 'cod'}
-                                        onChange={(e) => setPaymentMethod(e.target.value)}
-                                        className="peer h-4 w-4 cursor-pointer appearance-none rounded-full border border-gray-300 checked:border-black checked:bg-black focus:outline-none"
-                                    />
-                                    <div className="pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white opacity-0 peer-checked:opacity-100"></div>
-                                </div>
-                                <div className="flex items-center gap-4 flex-1">
-                                    <div className="bg-[#D39A9F] p-2.5 rounded-full text-white">
-                                        <Banknote size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-sm md:text-base text-black font-display uppercase tracking-wide">Cash on Delivery</p>
-                                        <p className="text-xs text-gray-500 font-serif">Pay when you receive your order</p>
                                     </div>
                                 </div>
                             </label>
@@ -694,7 +671,7 @@ const Checkout = () => {
                                 </span>
                             </div>
                             <div className="flex justify-between items-center text-gray-400">
-                                <span className="font-serif">GST ({settings?.gstPercentage || 18}%)</span>
+                                <span className="font-serif">GST ({settings?.gstPercentage || 18}% Included)</span>
                                 <span className="font-sans font-bold">₹{gstAmount.toLocaleString()}</span>
                             </div>
                             {appliedCoupon && (
@@ -736,98 +713,100 @@ const Checkout = () => {
                 </div>
             </div>
             {/* Coupon Modal */}
-            {showCouponModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-white">
-                            <h3 className="font-bold text-sm font-display uppercase tracking-widest text-[#4a1d1d]">Available Coupons</h3>
-                            <button
-                                onClick={() => setShowCouponModal(false)}
-                                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                            >
-                                <X className="w-4 h-4 text-gray-500" />
-                            </button>
-                        </div>
-
-                        <div className="p-5 space-y-5 bg-white">
-                            {/* Manual Input - Compact */}
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder={appliedCoupon ? "Coupon already applied" : "Enter Coupon Code"}
-                                    value={couponCode}
-                                    disabled={!!appliedCoupon}
-                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                    className={`flex-1 border rounded-xl px-4 py-2 text-xs outline-none font-bold uppercase placeholder:normal-case h-10 ${appliedCoupon ? 'bg-gray-50 border-gray-100 text-gray-400' : 'border-gray-200 focus:border-black'}`}
-                                />
+            {
+                showCouponModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+                        <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-white">
+                                <h3 className="font-bold text-sm font-display uppercase tracking-widest text-[#4a1d1d]">Available Coupons</h3>
                                 <button
-                                    onClick={() => {
-                                        if (appliedCoupon) return;
-                                        const found = availableCoupons.find(c => c.code === couponCode);
-                                        if (found) {
-                                            handleApplyCoupon(found);
-                                        } else {
-                                            alert("Invalid coupon code");
-                                        }
-                                    }}
-                                    disabled={!!appliedCoupon}
-                                    className={`px-5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all h-10 ${appliedCoupon ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-black text-white hover:bg-[#D39A9F]'}`}
+                                    onClick={() => setShowCouponModal(false)}
+                                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
                                 >
-                                    Apply
+                                    <X className="w-4 h-4 text-gray-500" />
                                 </button>
                             </div>
 
-                            {/* List - Compact Heritage Style */}
-                            <div className="space-y-3">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Personalized Offers</p>
-                                <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
-                                    {availableCoupons.length > 0 ? availableCoupons.map((coupon, idx) => {
-                                        const isApplied = appliedCoupon?.code === coupon.code;
-                                        return (
-                                            <div
-                                                key={idx}
-                                                className={`border rounded-2xl p-4 transition-all group flex flex-col gap-2 ${isApplied ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-100 bg-gray-50/30 hover:bg-white hover:shadow-lg hover:border-[#D39A9F]/30'}`}
-                                            >
-                                                <div className="flex justify-between items-center">
-                                                    <div className={`px-3 py-1 rounded-lg font-bold text-[10px] tracking-widest border ${isApplied ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-[#f0dae4] text-[#8b4356] border-[#f0dae4]'}`}>
-                                                        {coupon.code}
-                                                    </div>
-                                                    {isApplied ? (
-                                                        <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
-                                                            <Check className="w-3.5 h-3.5" />
-                                                            Applied
+                            <div className="p-5 space-y-5 bg-white">
+                                {/* Manual Input - Compact */}
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder={appliedCoupon ? "Coupon already applied" : "Enter Coupon Code"}
+                                        value={couponCode}
+                                        disabled={!!appliedCoupon}
+                                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                        className={`flex-1 border rounded-xl px-4 py-2 text-xs outline-none font-bold uppercase placeholder:normal-case h-10 ${appliedCoupon ? 'bg-gray-50 border-gray-100 text-gray-400' : 'border-gray-200 focus:border-black'}`}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (appliedCoupon) return;
+                                            const found = availableCoupons.find(c => c.code === couponCode);
+                                            if (found) {
+                                                handleApplyCoupon(found);
+                                            } else {
+                                                alert("Invalid coupon code");
+                                            }
+                                        }}
+                                        disabled={!!appliedCoupon}
+                                        className={`px-5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all h-10 ${appliedCoupon ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-black text-white hover:bg-[#D39A9F]'}`}
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+
+                                {/* List - Compact Heritage Style */}
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Personalized Offers</p>
+                                    <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
+                                        {availableCoupons.length > 0 ? availableCoupons.map((coupon, idx) => {
+                                            const isApplied = appliedCoupon?.code === coupon.code;
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    className={`border rounded-2xl p-4 transition-all group flex flex-col gap-2 ${isApplied ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-100 bg-gray-50/30 hover:bg-white hover:shadow-lg hover:border-[#D39A9F]/30'}`}
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <div className={`px-3 py-1 rounded-lg font-bold text-[10px] tracking-widest border ${isApplied ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-[#f0dae4] text-[#8b4356] border-[#f0dae4]'}`}>
+                                                            {coupon.code}
                                                         </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleApplyCoupon(coupon)}
-                                                            disabled={!!appliedCoupon}
-                                                            className={`font-bold text-[10px] uppercase tracking-widest transition-all ${appliedCoupon ? 'text-gray-300 cursor-not-allowed' : 'text-[#8b4356] hover:scale-105'}`}
-                                                        >
-                                                            {appliedCoupon ? 'Coupon Applied' : 'Tap to Apply'}
-                                                        </button>
-                                                    )}
+                                                        {isApplied ? (
+                                                            <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
+                                                                <Check className="w-3.5 h-3.5" />
+                                                                Applied
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleApplyCoupon(coupon)}
+                                                                disabled={!!appliedCoupon}
+                                                                className={`font-bold text-[10px] uppercase tracking-widest transition-all ${appliedCoupon ? 'text-gray-300 cursor-not-allowed' : 'text-[#8b4356] hover:scale-105'}`}
+                                                            >
+                                                                {appliedCoupon ? 'Coupon Applied' : 'Tap to Apply'}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-bold text-black mb-1">
+                                                            {coupon.type === 'percent'
+                                                                ? `${coupon.value}% OFF`
+                                                                : `Save ₹${(coupon.value || 0).toLocaleString()}`
+                                                            }
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-500 font-serif italic leading-relaxed">{coupon.description || coupon.desc}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-black mb-1">
-                                                        {coupon.type === 'percent'
-                                                            ? `${coupon.value}% OFF`
-                                                            : `Save ₹${(coupon.value || 0).toLocaleString()}`
-                                                        }
-                                                    </p>
-                                                    <p className="text-[10px] text-gray-500 font-serif italic leading-relaxed">{coupon.description || coupon.desc}</p>
-                                                </div>
-                                            </div>
-                                        );
-                                    }) : (
-                                        <p className="text-center py-6 text-xs text-gray-400 font-serif italic">No coupons available at the moment.</p>
-                                    )}
+                                            );
+                                        }) : (
+                                            <p className="text-center py-6 text-xs text-gray-400 font-serif italic">No coupons available at the moment.</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

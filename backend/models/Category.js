@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const subcategorySchema = new mongoose.Schema({
     name: { type: String, required: true },
     image: { type: String },
-    path: { type: String }
+    path: { type: String },
+    status: { type: String, enum: ['Active', 'Hidden'], default: 'Active' }
 });
 
 const categorySchema = new mongoose.Schema({

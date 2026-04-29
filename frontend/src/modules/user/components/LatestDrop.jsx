@@ -4,25 +4,14 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Star } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 
-// Import images
-import latestRing from '../assets/latest_drop_ring.png';
-import latestNecklace from '../assets/latest_drop_necklace.png';
-import latestEarrings from '../assets/latest_drop_earrings.png';
-import latestBracelet from '../assets/latest_drop_bracelet.png';
-
-const latestItems = [
-    { id: 1, name: "Midnight Silver Ring", price: "₹2,499", image: latestRing, path: "/product/midnight-ring" },
-    { id: 2, name: "Lunar Pendant", price: "₹4,999", image: latestNecklace, path: "/product/lunar-pendant" },
-    { id: 3, name: "Noir Drop Earrings", price: "₹3,299", image: latestEarrings, path: "/product/noir-earrings" },
-    { id: 4, name: "Obsidian Chain", price: "₹5,999", image: latestBracelet, path: "/product/obsidian-chain" }
-];
-
 const LatestDrop = () => {
     const { homepageSections, products } = useShop();
 
-    // Use admin-configured items if available, otherwise fall back to defaults
+    // Use admin-configured items strictly from the DB
     const sectionData = homepageSections?.['latest-drop'];
-    const displayItems = sectionData?.items && sectionData.items.length > 0 ? sectionData.items : latestItems;
+    const displayItems = sectionData?.items && sectionData.items.length > 0 ? sectionData.items : [];
+
+    if (displayItems.length === 0) return null;
 
     return (
         <section className="pt-4 pb-8 md:pt-8 md:pb-16 bg-white">
@@ -30,7 +19,7 @@ const LatestDrop = () => {
                 {/* Header - Matched to Style It Your Way */}
                 <div className="text-center mb-6 md:mb-10">
                     <span className="text-primary font-serif tracking-[0.2em] font-normal italic text-[10px] md:text-sm mb-1 block">
-                        Fresh Arrivals
+                        {sectionData?.subtitle || "Fresh Arrivals"}
                     </span>
                     <h2 className="font-serif text-3xl md:text-4xl font-normal text-dark tracking-tight">
                         {sectionData?.label || "Latest Drops"}

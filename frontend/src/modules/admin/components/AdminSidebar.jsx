@@ -31,7 +31,8 @@ import {
     RefreshCw,
     AlertTriangle,
     FileBarChart,
-    Percent
+    Percent,
+    Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
@@ -78,6 +79,7 @@ const AdminSidebar = () => {
     const secondaryMenuItems = [
         { icon: Ticket, label: 'Coupons', path: '/admin/coupons' },
         { icon: Monitor, label: 'Banners', path: '/admin/banners' },
+        { icon: Zap, label: 'Offers', path: '/admin/offers' },
         { icon: LayoutDashboard, label: 'Platform Config', path: '/admin/platform-settings' },
         { icon: Share2, label: 'Referrals', path: '/admin/referrals' },
     ];

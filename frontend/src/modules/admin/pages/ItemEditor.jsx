@@ -9,17 +9,6 @@ import 'react-quill-new/dist/quill.snow.css';
 import api from '../../../utils/api';
 import toast from 'react-hot-toast';
 
-const CATEGORY_HIERARCHY = {
-    'necklaces': ['Kundan', 'Oxidized', 'Gold Chain', 'Temple', 'Diamond', 'Choker', 'Pendant', 'Mangalsutra'],
-    'rings': ['Solitaire', 'Gold Band', 'Diamond Ring', 'Engagement', 'Cocktail', 'Couple Rings'],
-    'earrings': ['Studs', 'Jhumkas', 'Drops', 'Hoops', 'Sui Dhaga', 'Chandbali'],
-    'bangles': ['Temple Jewellery', 'Gold Bangles', 'Bracelets', 'Kada', 'Cuff'],
-    'anklets': ['Silver Anklets', 'Gold Anklets', 'Chain Anklets'],
-    'sets': ['Bridal Sets', 'Party Wear', 'Minimal Sets'],
-    'combos-packs': ['Office Wear', 'Gift Sets', 'Daily Wear'],
-    'nose-pins': ['Gold', 'Diamond', 'Silver']
-};
-
 const quillModules = {
     toolbar: [
         [{ 'header': [1, 2, 3, false] }],
@@ -41,6 +30,10 @@ const ItemEditor = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Dynamic Categories from Database
+    const [dbCategories, setDbCategories] = useState([]);
+    const [loadingCats, setLoadingCats] = useState(true);
 
     // Determine context
     const isCategory = location.pathname.includes('/categories');
@@ -76,6 +69,7 @@ const ItemEditor = () => {
         sizes: [],
         variantStock: {},
         categories: [{ id: Date.now(), category: '', subcategory: '' }],
+        targetGroup: 'Unisex',
         tags: {
             isNewArrival: false,
             isMostGifted: false,
@@ -84,6 +78,17 @@ const ItemEditor = () => {
     });
 
     useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await api.get('/categories');
+                setDbCategories(res.data);
+            } catch (err) {
+                console.error("Failed to fetch categories:", err);
+            } finally {
+                setLoadingCats(false);
+            }
+        };
+
         const fetchResource = async () => {
             if (!isEditMode && !isViewMode) {
                 const searchParams = new URLSearchParams(location.search);
@@ -121,6 +126,7 @@ const ItemEditor = () => {
             }
         };
 
+        fetchCategories();
         fetchResource();
     }, [id, isEditMode, isViewMode, isCategory, isSubcategory, isProduct]);
 
@@ -354,12 +360,12 @@ const ItemEditor = () => {
                                             onChange={(e) => handleCategoryChange(formData.categories?.[0]?.id, 'category', e.target.value)}
                                             options={[
                                                 { label: 'Select Category', value: '' },
-                                                ...Object.keys(CATEGORY_HIERARCHY).map(cat => ({
-                                                    label: cat.toUpperCase(),
-                                                    value: cat
+                                                ...dbCategories.map(cat => ({
+                                                    label: cat.name.toUpperCase(),
+                                                    value: cat.id
                                                 }))
                                             ]}
-                                            disabled={isViewMode}
+                                            disabled={isViewMode || loadingCats}
                                         />
                                         <Select
                                             label="Sub-Category"
@@ -367,14 +373,26 @@ const ItemEditor = () => {
                                             onChange={(e) => handleCategoryChange(formData.categories?.[0]?.id, 'subcategory', e.target.value)}
                                             options={[
                                                 { label: 'Select Sub-Category', value: '' },
-                                                ...(CATEGORY_HIERARCHY[formData.categories?.[0]?.category] || []).map(sub => ({
-                                                    label: sub,
-                                                    value: sub
+                                                ...(dbCategories.find(c => c.id === formData.categories?.[0]?.category)?.subcategories || []).map(sub => ({
+                                                    label: sub.name,
+                                                    value: sub.name
                                                 }))
                                             ]}
-                                            disabled={isViewMode || !formData.categories[0]?.category}
+                                            disabled={isViewMode || !formData.categories?.[0]?.category || loadingCats}
                                         />
                                     </div>
+                                    <Select
+                                        label="Target Group"
+                                        value={formData.targetGroup}
+                                        onChange={(e) => setFormData({ ...formData, targetGroup: e.target.value })}
+                                        options={[
+                                            { label: 'Male', value: 'Male' },
+                                            { label: 'Female', value: 'Female' },
+                                            { label: 'Children', value: 'Children' },
+                                            { label: 'Unisex', value: 'Unisex' }
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
                                 </div>
                             )}
 

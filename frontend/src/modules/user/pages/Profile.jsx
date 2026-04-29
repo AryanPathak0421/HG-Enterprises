@@ -51,6 +51,13 @@ const ReturnActionModal = ({ isOpen, onClose, type, order, onSuccess, userReview
     const [images, setImages] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { user, setUser } = useAuth();
+    const [bankDetails, setBankDetails] = useState({
+        holderName: user?.bankDetails?.holderName || '',
+        accountNumber: user?.bankDetails?.accountNumber || '',
+        ifscCode: user?.bankDetails?.ifscCode || '',
+        bankName: user?.bankDetails?.bankName || ''
+    });
 
     if (!isOpen) return null;
 
@@ -107,7 +114,8 @@ const ReturnActionModal = ({ isOpen, onClose, type, order, onSuccess, userReview
                 items: order.items.filter(i => selectedItems.includes(i.id)),
                 reason,
                 comment,
-                images
+                images,
+                bankDetails: type === 'return' ? bankDetails : undefined
             };
 
             const res = await api.post('/returns', requestData);
@@ -240,12 +248,61 @@ const ReturnActionModal = ({ isOpen, onClose, type, order, onSuccess, userReview
                         </h4>
                         <textarea
                             className="w-full p-4 rounded-2xl border border-gray-200 text-xs font-serif italic focus:outline-none focus:ring-2 focus:ring-gold/5 focus:border-gold bg-gray-50/50 resize-none"
-                            placeholder="Provide any additional context for our inspection team..."
-                            rows={3}
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
                         />
                     </div>
+
+                    {/* Bank Details for Return */}
+                    {type === 'return' && (
+                        <div className="bg-gray-50 p-6 rounded-[2.5rem] border border-gray-100">
+                            <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <span className="w-5 h-5 bg-black text-white rounded-full flex items-center justify-center text-[8px]">05</span>
+                                Refund Destination (Banking)
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest px-1">Account Holder</label>
+                                    <input
+                                        type="text"
+                                        value={bankDetails.holderName}
+                                        onChange={e => setBankDetails({ ...bankDetails, holderName: e.target.value })}
+                                        className="w-full p-3 rounded-xl border border-gray-200 text-[10px] font-bold uppercase focus:ring-2 focus:ring-gold/5 outline-none"
+                                        placeholder="Name as per Bank"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest px-1">Account Number</label>
+                                    <input
+                                        type="text"
+                                        value={bankDetails.accountNumber}
+                                        onChange={e => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
+                                        className="w-full p-3 rounded-xl border border-gray-200 text-[10px] font-bold uppercase focus:ring-2 focus:ring-gold/5 outline-none"
+                                        placeholder="Bank Account Number"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest px-1">IFSC Code</label>
+                                    <input
+                                        type="text"
+                                        value={bankDetails.ifscCode}
+                                        onChange={e => setBankDetails({ ...bankDetails, ifscCode: e.target.value })}
+                                        className="w-full p-3 rounded-xl border border-gray-200 text-[10px] font-bold uppercase focus:ring-2 focus:ring-gold/5 outline-none"
+                                        placeholder="IFSC Code"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest px-1">Bank Name</label>
+                                    <input
+                                        type="text"
+                                        value={bankDetails.bankName}
+                                        onChange={e => setBankDetails({ ...bankDetails, bankName: e.target.value })}
+                                        className="w-full p-3 rounded-xl border border-gray-200 text-[10px] font-bold uppercase focus:ring-2 focus:ring-gold/5 outline-none"
+                                        placeholder="Full Bank Name"
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-[7px] font-bold text-amber-600 uppercase tracking-widest mt-3 px-1 italic">Note: These details will be used exclusively for this refund process.</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100">
@@ -532,7 +589,13 @@ const Profile = () => {
         firstName: user?.name ? user.name.split(' ')[0] : '',
         lastName: user?.name ? user.name.split(' ').slice(1).join(' ') : '',
         email: user?.email || '',
-        phone: user?.phone || ''
+        phone: user?.phone || '',
+        bankDetails: {
+            holderName: user?.bankDetails?.holderName || '',
+            accountNumber: user?.bankDetails?.accountNumber || '',
+            ifscCode: user?.bankDetails?.ifscCode || '',
+            bankName: user?.bankDetails?.bankName || ''
+        }
     });
 
     const contentRef = React.useRef(null);
@@ -570,10 +633,22 @@ const Profile = () => {
     }
 
     const handleLogout = () => { logout(); navigate('/'); };
-    const handleSave = () => {
-        const updatedUser = { ...user, name: `${formData.firstName} ${formData.lastName}`.trim(), email: formData.email, phone: formData.phone };
-        setUser(updatedUser);
-        navigate('/profile/profile');
+    const handleSave = async () => {
+        try {
+            const updatedData = {
+                name: `${formData.firstName} ${formData.lastName}`.trim(),
+                email: formData.email,
+                phone: formData.phone,
+                bankDetails: formData.bankDetails
+            };
+            const res = await api.put('/auth/profile', updatedData);
+            setUser(res.data.user || res.data);
+            showNotification("Manifest Updated Successfully");
+            navigate('/profile/profile');
+        } catch (error) {
+            console.error('[PROFILE SAVE ERROR]', error);
+            showNotification("Failed to update manifest.");
+        }
     };
 
 
@@ -581,6 +656,7 @@ const Profile = () => {
         { id: 'profile', label: 'Identity Manifest', icon: <User className="w-4 h-4" />, path: '/profile/profile' },
         { id: 'orders', label: 'Order Archive', icon: <Package className="w-4 h-4" />, path: '/profile/orders', count: orders.length },
         { id: 'addresses', label: 'Atlas Of Address', icon: <MapPin className="w-4 h-4" />, path: '/profile/addresses', count: addresses.length },
+        { id: 'bank', label: 'Refund Banking', icon: <Banknote className="w-4 h-4" />, path: '/profile/bank' },
         { id: 'wishlist', label: 'Curated Desires', icon: <Heart className="w-4 h-4" />, path: '/wishlist', count: wishlist.length, color: 'text-red-500' },
         { id: 'payments', label: 'Vault & Ledger', icon: <CreditCard className="w-4 h-4" />, path: '/profile/payments' },
     ];
@@ -857,6 +933,99 @@ const Profile = () => {
                                                 )}
                                             </div>
                                         ))}
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {activeTab === 'bank' && (
+                                <motion.div
+                                    key="bank"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="space-y-8"
+                                >
+                                    <div className="bg-white rounded-[2.5rem] md:rounded-[3rem] p-6 md:p-14 border border-gray-100 shadow-sm relative overflow-hidden group">
+                                        <div className="relative z-10">
+                                            <div className="flex justify-between items-start mb-6 md:mb-12">
+                                                <div>
+                                                    <h2 className="text-xl md:text-3xl font-serif text-black">Refund Banking</h2>
+                                                    <p className="text-[8px] md:text-[10px] font-bold text-zinc-400 uppercase tracking-[0.4em] mt-2 md:mt-3">Verified Settlement Accounts</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => isEditing ? handleSave() : navigate('/profile/bank/edit')}
+                                                    className={`p-3 md:p-4 rounded-full transition-all ${isEditing ? 'bg-black text-white shadow-xl' : 'bg-zinc-50 text-zinc-400 hover:bg-black hover:text-white'}`}
+                                                >
+                                                    {isEditing ? <Check className="w-4 h-4 md:w-5 md:h-5" /> : <Edit2 className="w-4 h-4 md:w-5 md:h-5" />}
+                                                </button>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] px-1">Account Holder</label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={formData.bankDetails.holderName}
+                                                            onChange={e => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, holderName: e.target.value } })}
+                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl"
+                                                            placeholder="Legal name as per bank"
+                                                        />
+                                                    ) : (
+                                                        <p className="text-base md:text-xl font-sans font-medium text-black px-4">{user?.bankDetails?.holderName || 'Not Provided'}</p>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] px-1">Account Number</label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={formData.bankDetails.accountNumber}
+                                                            onChange={e => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, accountNumber: e.target.value } })}
+                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl"
+                                                            placeholder="Bank Account Number"
+                                                        />
+                                                    ) : (
+                                                        <p className="text-base md:text-xl font-sans font-semibold text-black px-4 tracking-widest">{user?.bankDetails?.accountNumber ? `•••• •••• ${user.bankDetails.accountNumber.slice(-4)}` : 'Not Provided'}</p>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] px-1">IFSC Code</label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={formData.bankDetails.ifscCode}
+                                                            onChange={e => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, ifscCode: e.target.value } })}
+                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl"
+                                                            placeholder="IFSC Code"
+                                                        />
+                                                    ) : (
+                                                        <p className="text-base md:text-xl font-sans font-semibold text-black px-4 uppercase">{user?.bankDetails?.ifscCode || 'Not Provided'}</p>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] px-1">Bank Name</label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={formData.bankDetails.bankName}
+                                                            onChange={e => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, bankName: e.target.value } })}
+                                                            className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl"
+                                                            placeholder="Full Bank Name"
+                                                        />
+                                                    ) : (
+                                                        <p className="text-base md:text-xl font-sans font-medium text-black px-4">{user?.bankDetails?.bankName || 'Not Provided'}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+                                    </div>
+
+                                    <div className="bg-[#0a0a0a] text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                                        <ShieldCheck className="w-6 h-6 text-emerald-500 mb-6" />
+                                        <h3 className="text-xl font-serif text-white mb-2 italic">Secure Remittance</h3>
+                                        <p className="text-zinc-500 text-xs font-serif leading-relaxed">Your banking credentials are used only for processing refunds of approved return requests. We do not share these details with third-party vendors.</p>
                                     </div>
                                 </motion.div>
                             )}

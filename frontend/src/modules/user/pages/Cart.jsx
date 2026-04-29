@@ -15,8 +15,8 @@ const Cart = () => {
     const shipping = isFirstOrder ? 0 : (settings?.shippingCharge || 0);
 
     const gstRate = (settings?.gstPercentage || 18) / 100;
-    const gstAmount = Math.round(subtotal * gstRate);
-    const total = subtotal + shipping + gstAmount;
+    const gstAmount = Math.round(subtotal - (subtotal / (1 + gstRate)));
+    const total = subtotal + shipping;
 
     if (cart.length === 0) {
         return (
@@ -192,7 +192,7 @@ const Cart = () => {
                                     )}
                                 </div>
                                 <div className="flex justify-between text-sm md:text-base font-semibold text-gray-500">
-                                    <span className="uppercase tracking-widest text-[10px] md:text-xs">GST ({settings?.gstPercentage || 18}%)</span>
+                                    <span className="uppercase tracking-widest text-[10px] md:text-xs">GST ({settings?.gstPercentage || 18}% Included)</span>
                                     <span className="text-black">₹{gstAmount.toLocaleString()}</span>
                                 </div>
                             </div>

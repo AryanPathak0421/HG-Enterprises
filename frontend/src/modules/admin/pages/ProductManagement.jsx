@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Edit2, Trash2, Eye, Package, TrendingUp, Check, Plus } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import DataTable from '../components/common/DataTable';
@@ -9,26 +9,10 @@ import BulkUpdateModal from '../components/BulkUpdateModal';
 const ProductManagement = () => {
     const navigate = useNavigate();
     const { products, deleteProduct, toggleProductStatus, bulkUpdatePrices } = useShop();
-    const [searchParams] = useSearchParams();
-    const isSelectMode = searchParams.get('selectMode') === 'true';
-    const returnUrl = searchParams.get('returnUrl') || '/admin/products';
 
     const [searchTerm, setSearchTerm] = useState('');
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('all');
-    const [selectedIds, setSelectedIds] = useState([]);
-
-    const toggleSelection = (id) => {
-        setSelectedIds(prev =>
-            prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
-        );
-    };
-
-    const handleConfirmSelection = () => {
-        const selectedProducts = products.filter(p => selectedIds.includes(p.id || p._id));
-        sessionStorage.setItem('temp_selected_products', JSON.stringify(selectedProducts));
-        navigate(returnUrl);
-    };
 
     const handleDelete = (id) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
@@ -37,16 +21,6 @@ const ProductManagement = () => {
     };
 
     const columns = [
-        ...(isSelectMode ? [{
-            header: '',
-            render: (item) => (
-                <div onClick={(e) => { e.stopPropagation(); toggleSelection(item.id || item._id); }} className="cursor-pointer">
-                    <div className={`w-4 h-4 rounded-none border flex items-center justify-center transition-all ${selectedIds.includes(item.id || item._id) ? 'bg-black border-black text-white' : 'border-black/20 bg-white'}`}>
-                        {(selectedIds.includes(item.id || item._id)) && <Check size={10} strokeWidth={4} />}
-                    </div>
-                </div>
-            )
-        }] : []),
         {
             header: 'Identification',
             render: (item) => (
@@ -123,7 +97,7 @@ const ProductManagement = () => {
             align: 'center',
             render: (item) => <span className="text-gray-400 text-[9px] font-black uppercase tracking-widest">{new Date(item.createdAt || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
         },
-        ...(!isSelectMode ? [{
+        {
             header: 'Access',
             align: 'right',
             render: (item) => (
@@ -139,7 +113,7 @@ const ProductManagement = () => {
                     </button>
                 </div>
             )
-        }] : [])
+        }
     ];
 
     const filters = [
@@ -169,13 +143,13 @@ const ProductManagement = () => {
     return (
         <div className="space-y-4 animate-in fade-in duration-500 pb-12 text-left font-outfit px-1">
             <PageHeader
-                title={isSelectMode ? "Selection Protocol" : "Global Inventory"}
-                subtitle={isSelectMode ? `${selectedIds.length} items staged for showcase` : "Manage your premium jewelry catalog and valuation metrics."}
-                action={!isSelectMode ? {
+                title="Global Inventory"
+                subtitle="Manage your premium jewelry catalog and valuation metrics."
+                action={{
                     label: "ADD NEW PRODUCT",
                     onClick: () => navigate('/admin/products/new'),
                     icon: <Plus className="w-3.5 h-3.5" />
-                } : undefined}
+                }}
             />
 
             <DataTable
@@ -186,28 +160,14 @@ const ProductManagement = () => {
                 searchPlaceholder="Search product by nomenclature..."
                 filters={filters}
             >
-                {!isSelectMode && (
-                    <button
-                        onClick={() => setIsBulkModalOpen(true)}
-                        className="bg-black text-white rounded-none px-4 py-2 text-[9px] font-black uppercase tracking-widest hover:bg-gold hover:text-black transition-all flex items-center gap-2 active:scale-95 shadow-md"
-                    >
-                        <TrendingUp size={14} />
-                        <span>Bulk Protocol</span>
-                    </button>
-                )}
+                <button
+                    onClick={() => setIsBulkModalOpen(true)}
+                    className="bg-black text-white rounded-none px-4 py-2 text-[9px] font-black uppercase tracking-widest hover:bg-gold hover:text-black transition-all flex items-center gap-2 active:scale-95 shadow-md"
+                >
+                    <TrendingUp size={14} />
+                    <span>Bulk Protocol</span>
+                </button>
             </DataTable>
-
-            {isSelectMode && selectedIds.length > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-black text-white px-8 py-3 rounded-none shadow-2xl flex items-center gap-6 z-50 animate-in slide-in-from-bottom-5 border border-gold/30">
-                    <span className="font-black text-[10px] uppercase tracking-[0.2em]">{selectedIds.length} Items Stage Ready</span>
-                    <button
-                        onClick={handleConfirmSelection}
-                        className="bg-gold text-black px-6 py-2 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all active:scale-95"
-                    >
-                        Execute Selection
-                    </button>
-                </div>
-            )}
 
             <BulkUpdateModal
                 isOpen={isBulkModalOpen}

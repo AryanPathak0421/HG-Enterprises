@@ -32,36 +32,29 @@ const Shop = () => {
 
     // Sync with URL params & Normalize Category
     useEffect(() => {
-        const queryParam = urlCategory || filterParam || categoryParam;
-        if (queryParam) {
-            try {
-                const normalizedParam = decodeURIComponent(queryParam).toLowerCase();
+        const categoryQuery = searchParams.get('category');
+        const subcategoryQuery = searchParams.get('subcategory');
 
-                // Try to find if it matches a category
-                const catMatch = categories.find(c => (c.name?.toLowerCase() === normalizedParam) || (c.id?.toLowerCase() === normalizedParam));
-                if (catMatch) {
-                    setSelectedCategory(catMatch.name || 'Jewellery');
-                    setOpenCategory(catMatch.name || 'Jewellery');
-                    setSelectedSubCategory(null);
-                    return;
-                }
-
-                // Try to find if it matches a subcategory
-                const subMatch = categories.flatMap(c => c.subcategories || []).find(s =>
-                    s.name?.toLowerCase() === normalizedParam ||
-                    (s.path && s.path.toLowerCase() === normalizedParam.replace(' ', '-'))
-                );
-                if (subMatch) {
-                    const parent = categories.find(c => (c.subcategories || []).some(s => s.name === subMatch.name));
-                    setSelectedCategory(parent?.name || 'Jewellery');
-                    setOpenCategory(parent?.name || 'Jewellery');
-                    setSelectedSubCategory(subMatch.name);
-                }
-            } catch (err) {
-                console.error("Discovery Sync Error:", err);
+        if (categoryQuery) {
+            const normalizedCat = decodeURIComponent(categoryQuery).toLowerCase();
+            const catMatch = categories.find(c => (c.name?.toLowerCase() === normalizedCat) || (c.id?.toLowerCase() === normalizedCat));
+            if (catMatch) {
+                setSelectedCategory(catMatch.name);
+                setOpenCategory(catMatch.name);
             }
         }
-    }, [urlCategory, filterParam]);
+
+        if (subcategoryQuery) {
+            const normalizedSub = decodeURIComponent(subcategoryQuery).toLowerCase();
+            // Check if subcategory exists in any category
+            categories.forEach(c => {
+                const subMatch = (c.subcategories || []).find(s => s.name.toLowerCase() === normalizedSub);
+                if (subMatch) {
+                    setSelectedSubCategory(subMatch.name);
+                }
+            });
+        }
+    }, [location.search, categories]);
 
     // Removal of all automatic scroll logic as requested by user
     // User wants to stay in the same place at all times during selection
@@ -96,7 +89,7 @@ const Shop = () => {
             }
         }
         if (selectedType !== 'All') result = result.filter(p => p.type?.toLowerCase() === selectedType.toLowerCase());
-        if (selectedGender !== 'All') result = result.filter(p => p.gender?.toLowerCase() === selectedGender.toLowerCase());
+        if (selectedGender !== 'All') result = result.filter(p => p.targetGroup?.toLowerCase() === selectedGender.toLowerCase());
         if (selectedMetal !== 'All') result = result.filter(p => p.metal?.toLowerCase() === selectedMetal.toLowerCase());
 
         // Price Filter
@@ -235,12 +228,12 @@ const Shop = () => {
                             </div>
                         </div>
 
-                        {/* GENDER FILTER - Restored */}
+                        {/* TARGET GROUP FILTER */}
                         <div>
                             <h4 className="text-[9.5px] font-bold uppercase tracking-[0.5em] text-zinc-500 mb-4 flex items-center gap-3">Target View <div className="h-[1px] flex-grow bg-zinc-50"></div></h4>
-                            <div className="flex gap-2 px-1">
-                                {['All', 'Women', 'Men'].map(g => (
-                                    <button key={g} onClick={() => setSelectedGender(g)} className={`flex-1 py-3 rounded-xl border text-[11.5px] font-serif uppercase tracking-widest transition-all ${selectedGender === g ? 'border-[#8B4356] bg-[#8B4356] text-white shadow-md font-bold' : 'border-zinc-100 text-zinc-800 border-zinc-200 hover:border-zinc-300'}`}>{g}</button>
+                            <div className="flex flex-wrap gap-2 px-1">
+                                {['All', 'Male', 'Female', 'Children', 'Unisex'].map(g => (
+                                    <button key={g} onClick={() => setSelectedGender(g)} className={`px-4 py-3 rounded-xl border text-[11.5px] font-serif uppercase tracking-widest transition-all ${selectedGender === g ? 'border-[#8B4356] bg-[#8B4356] text-white shadow-md font-bold' : 'border-zinc-100 text-zinc-800 border-zinc-200 hover:border-zinc-300'}`}>{g}</button>
                                 ))}
                             </div>
                         </div>
@@ -427,6 +420,20 @@ const Shop = () => {
                                         </div>
                                     </div>
                                     <div className="absolute top-0 right-0 flex items-center gap-3">
+                                        {/* Right Side Quick Filter */}
+                                        <div className="hidden lg:flex items-center gap-2 bg-white border border-zinc-100 rounded-2xl px-4 py-2 shadow-sm">
+                                            <span className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em]">Filter:</span>
+                                            <select
+                                                value={selectedGender}
+                                                onChange={(e) => setSelectedGender(e.target.value)}
+                                                className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest text-[#8B4356] focus:ring-0 cursor-pointer"
+                                            >
+                                                {['All', 'Male', 'Female', 'Children', 'Unisex'].map(opt => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
                                         <button
                                             onClick={() => setIsFilterOpen(true)}
                                             className="lg:hidden w-11 h-11 rounded-2xl border border-zinc-100 flex items-center justify-center bg-white text-[#8B4356] shadow-sm active:scale-95 transition-all"

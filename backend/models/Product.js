@@ -24,6 +24,7 @@ const productSchema = new mongoose.Schema({
     name: { type: String, required: true },
     category: { type: String, required: true },
     subcategory: { type: String },
+    targetGroup: { type: String, enum: ['Male', 'Female', 'Children', 'Unisex'], default: 'Unisex' },
     rating: { type: Number, default: 0 },
     tag: { type: String },
     image: { type: String }, // Cloudinary URL

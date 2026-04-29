@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tag, Clock, ArrowRight, Sparkles, Percent, Gift, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import api from '../../../utils/api';
 
 const CountdownTimer = ({ expiryDate }) => {
     const [timeLeft, setTimeLeft] = useState({
@@ -9,9 +10,10 @@ const CountdownTimer = ({ expiryDate }) => {
     });
 
     useEffect(() => {
+        if (!expiryDate) return;
         const timer = setInterval(() => {
             const now = new Date().getTime();
-            const distance = expiryDate - now;
+            const distance = new Date(expiryDate).getTime() - now;
 
             if (distance < 0) {
                 clearInterval(timer);
@@ -27,6 +29,8 @@ const CountdownTimer = ({ expiryDate }) => {
 
         return () => clearInterval(timer);
     }, [expiryDate]);
+
+    if (!expiryDate) return null;
 
     return (
         <div className="flex gap-2 text-white font-serif">
@@ -50,48 +54,23 @@ const CountdownTimer = ({ expiryDate }) => {
 
 const OffersPage = () => {
     const [activeTab, setActiveTab] = useState('all');
+    const [deals, setDeals] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const deals = [
-        {
-            id: 1,
-            title: "Midnight Sale",
-            discount: "30% OFF",
-            description: "Exclusive silver & midnight bands.",
-            tag: "FLASH",
-            expiry: new Date().getTime() + (8 * 60 * 60 * 1000),
-            color: "bg-zinc-950",
-            accent: "text-gold",
-            icon: <Zap className="w-4 h-4 text-gold" />,
-            category: "trending",
-            path: "/shop?offers=true&tag=Midnight"
-        },
-        {
-            id: 2,
-            title: "Lunar Series",
-            discount: "15% OFF",
-            description: "Only 50 units crafted.",
-            tag: "LIMITED",
-            expiry: new Date().getTime() + (24 * 60 * 60 * 1000),
-            color: "bg-[#4A1015]",
-            accent: "text-white",
-            icon: <Sparkles className="w-4 h-4 text-white" />,
-            category: "limited",
-            path: "/shop?offers=true&tag=Lunar"
-        },
-        {
-            id: 3,
-            title: "Traditional Deals",
-            discount: "₹5000 OFF",
-            description: "Save on heritage bundles.",
-            tag: "BUNDLE",
-            expiry: null,
-            color: "bg-zinc-800",
-            accent: "text-gold",
-            icon: <Gift className="w-4 h-4 text-gold" />,
-            category: "trending",
-            path: "/shop?offers=true&tag=Pendants" // Showing some heritage items
-        }
-    ];
+    useEffect(() => {
+        const fetchOffers = async () => {
+            try {
+                setLoading(true);
+                const res = await api.get('/offers');
+                setDeals(res.data);
+            } catch (err) {
+                console.error("Error fetching offers:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchOffers();
+    }, []);
 
     const filteredDeals = activeTab === 'all' ? deals : deals.filter(d => d.category === activeTab);
 
@@ -100,14 +79,14 @@ const OffersPage = () => {
             {/* Header Section - Compact */}
             <div className="bg-black py-10 md:py-16 relative overflow-hidden">
                 <div className="container mx-auto px-4 relative z-10 text-center">
-                    <motion.span 
+                    <motion.span
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="text-gold font-serif tracking-[0.3em] uppercase text-[10px] mb-2 block"
                     >
                         Exclusive Privileges
                     </motion.span>
-                    <motion.h1 
+                    <motion.h1
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
@@ -126,9 +105,8 @@ const OffersPage = () => {
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-1.5 rounded-full font-serif text-[9px] tracking-widest uppercase transition-all duration-300 ${
-                                activeTab === tab ? 'bg-black text-white' : 'text-gray-400 hover:text-black'
-                            }`}
+                            className={`px-4 py-1.5 rounded-full font-serif text-[9px] tracking-widest uppercase transition-all duration-300 ${activeTab === tab ? 'bg-black text-white' : 'text-gray-400 hover:text-black'
+                                }`}
                         >
                             {tab}
                         </button>
@@ -149,7 +127,7 @@ const OffersPage = () => {
                                     transition={{ duration: 0.4, delay: idx * 0.05 }}
                                     className="h-full"
                                 >
-                                    <Link 
+                                    <Link
                                         to={deal.path}
                                         className={`relative rounded-[1.5rem] overflow-hidden ${deal.color} p-4 shadow-lg border border-white/5 flex flex-col h-full group hover:shadow-2xl transition-all duration-500`}
                                     >
@@ -162,21 +140,35 @@ const OffersPage = () => {
                                                     {deal.tag}
                                                 </span>
                                                 <div className="opacity-40 group-hover:opacity-100 transition-opacity duration-500">
-                                                    {React.cloneElement(deal.icon, { className: "w-3 h-3" })}
+                                                    {(() => {
+                                                        const IconComp = { Zap, Sparkles, Gift, Tag, Percent }[deal.icon] || Tag;
+                                                        return <IconComp className="w-3 h-3" />;
+                                                    })()}
                                                 </div>
                                             </div>
 
-                                            <h2 className="text-base md:text-lg font-serif text-white mb-0.5 tracking-tight leading-tight group-hover:text-gold transition-colors">
-                                                {deal.title}
-                                            </h2>
-                                            
-                                            <div className={`text-xl md:text-2xl font-black mb-2 tracking-tighter italic ${deal.accent}`}>
-                                                {deal.discount}
+                                            <div className="flex gap-4">
+                                                <div className="flex-grow">
+                                                    <h2 className="text-base md:text-lg font-serif text-white mb-0.5 tracking-tight leading-tight group-hover:text-gold transition-colors">
+                                                        {deal.title}
+                                                    </h2>
+
+                                                    <div className={`text-xl md:text-2xl font-black mb-2 tracking-tighter italic ${deal.accent}`}>
+                                                        {deal.discount}
+                                                    </div>
+
+                                                    <p className="text-white/30 font-serif text-[10px] mb-4 line-clamp-2 leading-relaxed">
+                                                        {deal.description}
+                                                    </p>
+                                                </div>
+
+                                                {deal.image && (
+                                                    <div className="w-20 h-28 bg-white/5 rounded-2xl overflow-hidden shrink-0 border border-white/10 p-2 group-hover:bg-white/10 transition-all duration-500">
+                                                        <img src={deal.image} alt="" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            <p className="text-white/30 font-serif text-[10px] mb-4 flex-grow line-clamp-2 leading-relaxed">
-                                                {deal.description}
-                                            </p>
 
                                             {deal.expiry && (
                                                 <div className="mt-auto p-3 bg-white/5 rounded-xl border border-white/10 shadow-inner group-hover:bg-white/10 transition-colors">
@@ -193,7 +185,7 @@ const OffersPage = () => {
                             ))}
                         </div>
                     ) : (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             className="text-center py-20 px-6 border border-zinc-50 rounded-[3rem] bg-zinc-50/30"
@@ -234,9 +226,9 @@ const OffersPage = () => {
                             Join the inner circle for private offers.
                         </p>
                         <div className="flex flex-col md:flex-row gap-3">
-                            <input 
-                                type="email" 
-                                placeholder="Your elite email" 
+                            <input
+                                type="email"
+                                placeholder="Your elite email"
                                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-gold/50 transition-all font-serif"
                             />
                             <button className="bg-white text-black px-8 py-3 rounded-xl font-serif font-black uppercase tracking-widest text-[10px] hover:bg-gold transition-all shadow-xl">

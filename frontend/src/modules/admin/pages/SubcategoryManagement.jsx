@@ -6,78 +6,78 @@ import PageHeader from '../components/common/PageHeader';
 const SubcategoryManagement = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
+    const [categoryGroups, setCategoryGroups] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock grouped data structure
-    const [categoryGroups, setCategoryGroups] = useState([
-        {
-            id: 101,
-            name: 'Rings',
-            image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=100&h=100&fit=crop',
-            isExpanded: false,
-            subcategories: [
-                { id: 1, name: 'Solitaire', productCount: 42, status: 'Active' },
-                { id: 2, name: 'Band', productCount: 28, status: 'Active' },
-                { id: 5, name: 'Cocktail', productCount: 15, status: 'Hidden' }
-            ]
-        },
-        {
-            id: 102,
-            name: 'Earrings',
-            image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100&h=100&fit=crop',
-            isExpanded: false,
-            subcategories: [
-                { id: 3, name: 'Crystal Drop', productCount: 35, status: 'Active' },
-                { id: 4, name: 'Hoops', productCount: 18, status: 'Hidden' }
-            ]
-        },
-        {
-            id: 103,
-            name: 'Necklaces',
-            image: 'https://images.unsplash.com/photo-1599643478518-17488fbbcd75?w=100&h=100&fit=crop',
-            isExpanded: false,
-            subcategories: [
-                { id: 6, name: 'Pendants', productCount: 56, status: 'Active' },
-                { id: 7, name: 'Chokers', productCount: 22, status: 'Active' }
-            ]
-        }
-    ]);
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await api.get('/categories');
+                // Initialize expanded state for all groups
+                const groups = res.data.map(cat => ({
+                    ...cat,
+                    isExpanded: false
+                }));
+                setCategoryGroups(groups);
+            } catch (error) {
+                toast.error("Failed to fetch hierarchy data");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     // Derived stats
-    const totalSubcategories = categoryGroups.reduce((acc, cat) => acc + cat.subcategories.length, 0);
-    const activeSubcategories = categoryGroups.reduce((acc, cat) => acc + cat.subcategories.filter(s => s.status === 'Active').length, 0);
+    const totalSubcategories = categoryGroups.reduce((acc, cat) => acc + (cat.subcategories?.length || 0), 0);
+    const activeSubcategories = categoryGroups.reduce((acc, cat) => acc + (cat.subcategories?.filter(s => s.status !== 'Hidden').length || 0), 0);
     const totalParents = categoryGroups.length;
 
     const toggleGroupExpand = (groupId) => {
         setCategoryGroups(categoryGroups.map(group =>
-            group.id === groupId ? { ...group, isExpanded: !group.isExpanded } : group
+            (group.id === groupId || group._id === groupId) ? { ...group, isExpanded: !group.isExpanded } : group
         ));
     };
 
-    const toggleSubcategoryStatus = (groupId, subId) => {
-        setCategoryGroups(categoryGroups.map(group => {
-            if (group.id === groupId) {
-                return {
-                    ...group,
-                    subcategories: group.subcategories.map(sub =>
-                        sub.id === subId ? { ...sub, status: sub.status === 'Active' ? 'Hidden' : 'Active' } : sub
-                    )
-                };
-            }
-            return group;
-        }));
+    const toggleSubcategoryStatus = async (category, subName) => {
+        try {
+            const updatedSubcategories = category.subcategories.map(sub =>
+                sub.name === subName ? { ...sub, status: sub.status === 'Active' ? 'Hidden' : 'Active' } : sub
+            );
+
+            await api.put(`/categories/${category.id || category._id}`, {
+                subcategories: updatedSubcategories
+            });
+
+            setCategoryGroups(categoryGroups.map(group =>
+                (group.id === category.id || group._id === category._id)
+                    ? { ...group, subcategories: updatedSubcategories }
+                    : group
+            ));
+            toast.success("Protocol status updated");
+        } catch (error) {
+            toast.error("Failed to update status");
+        }
     };
 
-    const handleDeleteSubcategory = (groupId, subId) => {
-        if (window.confirm('Are you sure you want to delete this subcategory?')) {
-            setCategoryGroups(categoryGroups.map(group => {
-                if (group.id === groupId) {
-                    return {
-                        ...group,
-                        subcategories: group.subcategories.filter(sub => sub.id !== subId)
-                    };
-                }
-                return group;
-            }));
+    const handleDeleteSubcategory = async (category, subName) => {
+        if (!window.confirm('Are you sure you want to delete this sub-level node?')) return;
+
+        try {
+            const updatedSubcategories = category.subcategories.filter(sub => sub.name !== subName);
+
+            await api.put(`/categories/${category.id || category._id}`, {
+                subcategories: updatedSubcategories
+            });
+
+            setCategoryGroups(categoryGroups.map(group =>
+                (group.id === category.id || group._id === category._id)
+                    ? { ...group, subcategories: updatedSubcategories }
+                    : group
+            ));
+            toast.success("Node deleted successfully");
+        } catch (error) {
+            toast.error("Failed to delete node");
         }
     };
 
@@ -186,35 +186,35 @@ const SubcategoryManagement = () => {
                                         </thead>
                                         <tbody className="divide-y divide-black/5">
                                             {group.subcategories.length > 0 ? (
-                                                group.subcategories.map(sub => (
-                                                    <tr key={sub.id} className="hover:bg-white transition-colors group">
+                                                group.subcategories.map((sub, sIdx) => (
+                                                    <tr key={sIdx} className="hover:bg-white transition-colors group">
                                                         <td className="px-6 py-2.5 pl-20">
                                                             <span className="font-black text-black text-[10px] uppercase tracking-tight">{sub.name}</span>
                                                         </td>
                                                         <td className="px-6 py-2.5 text-center">
-                                                            <span className="font-black text-[10px] text-gray-400 tabular-nums tracking-widest font-outfit uppercase">{sub.productCount} SKUs</span>
+                                                            <span className="font-black text-[10px] text-gray-400 tabular-nums tracking-widest font-outfit uppercase">Sub-Node</span>
                                                         </td>
                                                         <td className="px-6 py-2.5 text-center">
                                                             <button
-                                                                onClick={() => toggleSubcategoryStatus(group.id, sub.id)}
-                                                                className={`inline-flex items-center justify-center px-3 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest border transition-all ${sub.status === 'Active'
+                                                                onClick={() => toggleSubcategoryStatus(group, sub.name)}
+                                                                className={`inline-flex items-center justify-center px-3 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest border transition-all ${sub.status !== 'Hidden'
                                                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                                     : 'bg-red-50 text-red-500 border-red-100'
                                                                     }`}
                                                             >
-                                                                {sub.status === 'Active' ? 'Operational' : 'Restricted'}
+                                                                {sub.status !== 'Hidden' ? 'Operational' : 'Restricted'}
                                                             </button>
                                                         </td>
                                                         <td className="px-6 py-2.5 text-right">
                                                             <div className="flex items-center justify-end gap-1">
                                                                 <button
-                                                                    onClick={() => navigate(`/admin/subcategories/edit/${sub.id}`)}
+                                                                    onClick={() => navigate(`/admin/subcategories/edit/${sub.name}?category=${group.id || group._id}`)}
                                                                     className="p-1.5 text-gray-400 hover:text-black transition-all hover:bg-gold/10"
                                                                 >
                                                                     <Edit2 className="w-3.5 h-3.5" />
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => handleDeleteSubcategory(group.id, sub.id)}
+                                                                    onClick={() => handleDeleteSubcategory(group, sub.name)}
                                                                     className="p-1.5 text-gray-400 hover:text-red-500 transition-all hover:bg-red-50"
                                                                 >
                                                                     <Trash2 className="w-3.5 h-3.5" />
