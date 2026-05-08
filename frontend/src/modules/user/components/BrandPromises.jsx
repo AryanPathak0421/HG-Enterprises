@@ -31,7 +31,7 @@ const BrandPromises = () => {
     ];
 
     return (
-        <section className="pt-4 md:pt-4 pb-4 md:pb-8 bg-white overflow-hidden">
+        <section className="pt-0 pb-4 md:pb-8 bg-white overflow-hidden">
             <div className="container mx-auto px-2 md:px-4">
 
                 {/* Header - Matched to Style It Your Way */}

@@ -23,10 +23,12 @@ import {
     Percent,
     Bookmark,
     Package,
-    Gift
+    Gift,
+    Download
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import watermarkLogo from '../../../assets/WhatsApp_Image_2026-03-12_at_1.38.09_PM__1_-removebg-preview.png';
 
 const ProductDetailPage = () => {
     const { id } = useParams();
@@ -43,7 +45,8 @@ const ProductDetailPage = () => {
         getRecentlyViewed,
         getRecommendations,
         addToSaved,
-        products
+        products,
+        showNotification
     } = useShop();
 
     const [product, setProduct] = useState(null);
@@ -77,7 +80,9 @@ const ProductDetailPage = () => {
         const foundProduct = getProductById(id);
         if (foundProduct) {
             setProduct(foundProduct);
-            setSelectedVariant(foundProduct.variants[0]);
+            if (foundProduct.variants && foundProduct.variants.length > 0) {
+                setSelectedVariant(foundProduct.variants[0]);
+            }
 
             // Track view
             if (user) {
@@ -94,7 +99,95 @@ const ProductDetailPage = () => {
             }
         }
         window.scrollTo(0, 0);
-    }, [id, user]);
+    }, [id]);
+
+    const handleDownloadImage = async () => {
+        try {
+            const imageUrl = product?.image;
+            if (!imageUrl) return;
+
+            if (typeof showNotification === 'function') {
+                showNotification('Preparing high-quality PNG download...');
+            }
+
+            // Fetch image as blob
+            const response = await fetch(imageUrl, { mode: 'cors' });
+            const blob = await response.blob();
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = URL.createObjectURL(blob);
+            
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                // Load and overlay the transparent brand logo at the bottom-left corner
+                const watermark = new Image();
+                watermark.src = watermarkLogo;
+                watermark.onload = () => {
+                    // Set watermark width to 10% of canvas width (beautifully compact)
+                    const wmWidth = canvas.width * 0.10;
+                    const wmHeight = watermark.naturalHeight * (wmWidth / watermark.naturalWidth);
+                    
+                    // Position at bottom-left corner with nice padding
+                    const padding = canvas.width * 0.04;
+                    const x = padding;
+                    // Leave space for text below logo
+                    const y = canvas.height - wmHeight - padding - (canvas.width * 0.02);
+                    
+                    // Set watermark transparency to 40% (subtle and high-end)
+                    ctx.globalAlpha = 0.40;
+                    ctx.drawImage(watermark, x, y, wmWidth, wmHeight);
+                    
+                    // Draw dark brown premium text below the logo
+                    ctx.globalAlpha = 0.70; // Highly readable
+                    ctx.fillStyle = '#4E3629'; // Premium Dark Earth Brown
+                    const fontSize = Math.round(canvas.width * 0.018); // Sized elegantly
+                    ctx.font = `bold ${fontSize}px "Cinzel", "Playfair Display", "Georgia", serif`;
+                    ctx.fillText('HG ENTERPRISES', x, y + wmHeight + (fontSize * 1.0));
+                    
+                    // Reset canvas alpha to default
+                    ctx.globalAlpha = 1.0;
+                    
+                    // Export to PNG data URL
+                    const pngUrl = canvas.toDataURL('image/png');
+                    
+                    const link = document.createElement('a');
+                    link.href = pngUrl;
+                    link.download = `${product.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    if (typeof showNotification === 'function') {
+                        showNotification('Downloaded successfully with brand watermark!');
+                    }
+                };
+            };
+        } catch (error) {
+            console.error('Download error:', error);
+            // Fallback: direct download link if fetch fails
+            try {
+                const link = document.createElement('a');
+                link.href = product?.image;
+                link.target = '_blank';
+                link.download = `${product.name}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                if (typeof showNotification === 'function') {
+                    showNotification('Downloaded image file');
+                }
+            } catch (e) {
+                window.open(product?.image, '_blank');
+            }
+        }
+    };
 
     if (!product) {
         return (
@@ -107,13 +200,13 @@ const ProductDetailPage = () => {
     }
 
     const isGroupProduct = !!product.variants;
-    const currentPrice = isGroupProduct ? selectedVariant.price : product.price;
-    const currentMrp = isGroupProduct ? selectedVariant.mrp : product.mrp;
-    const currentDiscount = isGroupProduct ? selectedVariant.discount : product.discount;
-    const currentUnitPrice = isGroupProduct ? selectedVariant.unitPrice : product.unitPrice;
+    const currentPrice = isGroupProduct && selectedVariant ? selectedVariant.price : product.price;
+    const currentMrp = isGroupProduct && selectedVariant ? selectedVariant.mrp : product.mrp;
+    const currentDiscount = isGroupProduct && selectedVariant ? selectedVariant.discount : product.discount;
+    const currentUnitPrice = isGroupProduct && selectedVariant ? selectedVariant.unitPrice : product.unitPrice;
 
-    const discountPercentage = Math.round(((currentMrp - currentPrice) / currentMrp) * 100);
-    const saveAmount = currentMrp - currentPrice;
+    const discountPercentage = currentMrp && currentPrice ? Math.round(((currentMrp - currentPrice) / currentMrp) * 100) : 0;
+    const saveAmount = currentMrp && currentPrice ? currentMrp - currentPrice : 0;
 
     const baseTabs = ['Description', 'Benefits', 'Specifications', 'Reviews', 'FAQ', 'Nutrition Info'];
     const tabs = product.contents ? ['Pack Includes', ...baseTabs] : baseTabs;
@@ -367,8 +460,8 @@ const ProductDetailPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-[#2A2A2A]">
 
                     {/* LEFT COLUMN - IMAGE */}
-                    <div className="lg:col-span-5 space-y-3">
-                        <div className="bg-white rounded-xl border border-gray-100 p-3 relative overflow-hidden group shadow-sm flex items-center justify-center h-[300px] md:h-[420px]">
+                    <div className="lg:col-span-5 space-y-2">
+                        <div className="bg-white rounded-xl border border-gray-100 p-2 relative overflow-hidden group shadow-sm flex items-center justify-center h-[200px] md:h-[260px]">
                             <motion.img
                                 key={isGroupProduct ? selectedVariant.id : product.id}
                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -379,7 +472,7 @@ const ProductDetailPage = () => {
                                 className="w-full h-full object-contain max-h-full mx-auto mix-blend-multiply transition-transform duration-700 group-hover:scale-105"
                             />
                             {product.tag && (
-                                <span className="absolute top-3 left-0 bg-[#A0522D] text-white text-[8px] md:text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-r w-fit shadow-md">
+                                <span className="absolute top-2 left-0 bg-[#A0522D] text-white text-[7px] md:text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-r w-fit shadow-md">
                                     {product.tag}
                                 </span>
                             )}
@@ -388,80 +481,95 @@ const ProductDetailPage = () => {
                                     if (!user) return navigate('/login');
                                     toggleWishlist(user.id, product.id);
                                 }}
-                                className={`absolute top-2 right-2 p-2 bg-white rounded-full border shadow-sm transition-all z-20 ${user && isInWishlist(user.id, product.id)
+                                className={`absolute top-1.5 right-1.5 p-1.5 bg-white rounded-full border shadow-sm transition-all z-20 ${user && isInWishlist(user.id, product.id)
                                     ? 'text-red-500 border-red-100 bg-red-50'
                                     : 'text-gray-400 border-gray-100 hover:text-red-500 hover:border-red-100 hover:bg-red-50'
                                     }`}
                             >
-                                <Heart size={16} fill={user && isInWishlist(user.id, product.id) ? "currentColor" : "none"} />
+                                <Heart size={14} fill={user && isInWishlist(user.id, product.id) ? "currentColor" : "none"} />
+                            </button>
+                            <button
+                                onClick={handleDownloadImage}
+                                title="Download Product Image as PNG"
+                                className="absolute bottom-1.5 right-1.5 p-1.5 bg-white rounded-full border shadow-sm transition-all z-20 text-gray-400 hover:text-primary hover:border-primary/20 hover:bg-primary/5"
+                            >
+                                <Download size={14} />
                             </button>
                         </div>
-                        {/* Thumbnails */}
-                        <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none justify-center">
-                            {[product.image, product.image, product.image, product.image].map((img, idx) => (
-                                <button key={idx} className={`shrink-0 w-12 h-12 md:w-16 md:h-16 bg-white border-2 ${idx === 0 ? 'border-primary' : 'border-gray-50'} rounded-lg p-1 hover:border-primary transition-all`}>
-                                    <img src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" />
+                        {/* Thumbnails - Show primary and hover images */}
+                        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                            <button className="shrink-0 w-10 h-10 md:w-12 md:h-12 bg-white border-2 border-primary rounded-lg p-1 hover:border-primary transition-all shadow-sm">
+                                <img src={product.image} alt="Primary" className="w-full h-full object-contain mix-blend-multiply" />
+                            </button>
+                            {product.hoverImage && (
+                                <button className="shrink-0 w-10 h-10 md:w-12 md:h-12 bg-white border-2 border-gray-100 rounded-lg p-1 hover:border-primary transition-all shadow-sm">
+                                    <img src={product.hoverImage} alt="Hover" className="w-full h-full object-contain mix-blend-multiply" />
                                 </button>
-                            ))}
+                            )}
                         </div>
                     </div>
 
                     {/* RIGHT COLUMN - DETAILS */}
                     <div className="lg:col-span-7 lg:pl-4">
-                        <div className="mb-3 border-b border-gray-100 pb-3">
+                        <div className="mb-4 pb-4 border-b border-gray-100">
                             {/* Brand Name */}
-                            <div className="mb-1">
-                                <span className="text-[10px] md:text-xs font-black text-gray-400 font-brand uppercase tracking-[0.2em]">
+                            <div className="mb-0.5">
+                                <span className="text-[9px] md:text-[10px] font-black text-gray-400 font-brand uppercase tracking-[0.2em]">
                                     {product.brand}
                                 </span>
                             </div>
 
-                            <h1 className="text-xl md:text-2xl font-bold text-[#222] leading-tight mb-1.5 font-['Poppins'] tracking-tight">
+                            <h1 className="text-lg md:text-xl font-bold text-[#222] leading-tight mb-1 font-['Poppins'] tracking-tight">
                                 {product.name}
                             </h1>
 
-                            <div className="flex items-center gap-3 mb-2.5">
-                                <div className="flex items-center gap-1 bg-primary text-white px-2 py-0.5 rounded text-[10px] md:text-xs font-bold shadow-sm">
+                            {/* Product Description */}
+                            <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed mb-2.5 line-clamp-2">
+                                {product.description || product.shortDescription || 'Premium quality product'}
+                            </p>
+
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-0.5 bg-primary text-white px-1.5 py-0.5 rounded text-[9px] md:text-[10px] font-bold shadow-sm">
                                     <span>{product.rating}</span>
-                                    <Star size={8} md:size={10} fill="currentColor" />
+                                    <Star size={8} fill="currentColor" />
                                 </div>
-                                <span className="text-[10px] md:text-xs text-gray-400 font-medium">11 reviews</span>
-                                <button className="text-gray-300 hover:text-primary transition-colors">
+                                <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">11 reviews</span>
+                                <button className="text-gray-300 hover:text-primary transition-colors ml-auto">
                                     <Share2 size={14} />
                                 </button>
                             </div>
 
                             <div className="space-y-0.5">
                                 <div className="flex items-baseline gap-2 flex-wrap">
-                                    <span className="text-xl md:text-2xl font-black text-primary">₹{currentPrice}</span>
-                                    <span className="text-sm md:text-base text-gray-300 line-through font-medium">₹{currentMrp}</span>
-                                    <span className="bg-[#E63946] text-white text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                    <span className="text-lg md:text-xl font-black text-primary">₹{currentPrice}</span>
+                                    <span className="text-xs md:text-sm text-gray-300 line-through font-medium">₹{currentMrp}</span>
+                                    <span className="bg-[#E63946] text-white text-[8px] md:text-[9px] font-bold px-1 py-0.5 rounded shadow-sm">
                                         {currentDiscount || `${discountPercentage}% OFF`}
                                     </span>
-                                    <span className="text-[10px] text-gray-400 font-medium ml-1">({currentUnitPrice})</span>
+                                    <span className="text-[9px] text-gray-400 font-medium ml-1">({currentUnitPrice})</span>
                                 </div>
-                                <p className="text-[10px] md:text-xs font-bold text-green-600">Save ₹{saveAmount} instantly</p>
+                                <p className="text-[9px] md:text-[10px] font-bold text-green-600">Save ₹{saveAmount} instantly</p>
                             </div>
                         </div>
 
                         {/* Variant Selection */}
-                        {isGroupProduct && (
+                        {isGroupProduct && selectedVariant && (
                             <div className="mb-4">
                                 <h3 className="text-[10px] font-black text-footerBg/40 mb-2 uppercase tracking-widest">Select Pack Size</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {product.variants.map((variant) => (
+                                    {product.variants && product.variants.map((variant) => (
                                         <div
                                             key={variant.id}
                                             onClick={() => setSelectedVariant(variant)}
-                                            className={`border-2 rounded-lg px-3 py-1.5 cursor-pointer transition-all min-w-[80px] text-center relative shadow-sm ${selectedVariant.id === variant.id
+                                            className={`border-2 rounded-lg px-3 py-1.5 cursor-pointer transition-all min-w-[80px] text-center relative shadow-sm ${selectedVariant?.id === variant.id
                                                 ? 'border-primary bg-primary/5 ring-1 ring-primary/10'
                                                 : 'border-gray-100 bg-white hover:border-gray-200'
                                                 }`}
                                         >
-                                            <div className={`text-xs font-black ${selectedVariant.id === variant.id ? 'text-primary' : 'text-footerBg'}`}>
+                                            <div className={`text-xs font-black ${selectedVariant?.id === variant.id ? 'text-primary' : 'text-footerBg'}`}>
                                                 {variant.weight}
                                             </div>
-                                            <div className={`text-[10px] font-bold ${selectedVariant.id === variant.id ? 'text-footerBg' : 'text-gray-400'}`}>
+                                            <div className={`text-[10px] font-bold ${selectedVariant?.id === variant.id ? 'text-footerBg' : 'text-gray-400'}`}>
                                                 ₹{variant.price}
                                             </div>
                                         </div>
@@ -589,6 +697,71 @@ const ProductDetailPage = () => {
                             </div>
                         </div>
 
+                        {/* Product Specifications Section */}
+                        {product.specifications && product.specifications.length > 0 && (
+                            <div className="bg-white border border-gray-100 rounded-xl p-6 mb-6 shadow-sm">
+                                <h3 className="text-sm font-black text-footerBg uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <Award size={16} className="text-gray-400" />
+                                    Product Details
+                                </h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {product.specifications.map((spec, idx) => (
+                                        <div key={idx} className="border border-gray-100 rounded-lg p-4 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{spec.label}</p>
+                                            <p className="text-sm md:text-base font-bold text-footerBg">{spec.value}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Product Description Section */}
+                        {(product.description || (product.specifications && product.specifications.length > 0)) && (
+                            <div className="bg-white border border-gray-100 rounded-xl p-6 mb-6 shadow-sm">
+                                <h3 className="text-sm font-black text-footerBg uppercase tracking-widest mb-4">About This Product</h3>
+                                {product.description && (
+                                    <p className="text-sm text-gray-600 leading-relaxed font-medium mb-6">
+                                        {product.description}
+                                    </p>
+                                )}
+                                
+                                {/* Display specifications as organized sections */}
+                                {product.specifications && product.specifications.length > 0 && (
+                                    <div className="space-y-6 border-t border-gray-100 pt-6">
+                                        {/* Group specifications by category */}
+                                        {(() => {
+                                            const grouped = {};
+                                            product.specifications.forEach(spec => {
+                                                // Extract category from label (e.g., "Choice of Metal" -> "Choice")
+                                                const parts = spec.label.split(' ');
+                                                const category = parts.length > 1 ? parts.slice(0, -1).join(' ') : spec.label;
+                                                if (!grouped[category]) grouped[category] = [];
+                                                grouped[category].push(spec);
+                                            });
+                                            
+                                            return Object.entries(grouped).map(([category, specs]) => (
+                                                <div key={category}>
+                                                    <h4 className="text-xs font-black text-footerBg uppercase tracking-widest mb-3 flex items-center justify-between">
+                                                        {category}
+                                                        {category.toLowerCase().includes('size') && <span className="text-[10px] text-primary font-bold">SIZE GUIDE</span>}
+                                                        {category.toLowerCase().includes('diamond') && <span className="text-[10px] text-primary font-bold">DIAMOND GUIDE</span>}
+                                                    </h4>
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                        {specs.map((spec, idx) => (
+                                                            <div key={idx} className="border border-gray-100 rounded-lg p-3 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                                                                <p className="text-[9px] font-bold text-gray-500 mb-1">{spec.label}</p>
+                                                                <p className="text-sm font-bold text-footerBg">{spec.value}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ));
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                     </div>
                 </div>
 
@@ -678,8 +851,17 @@ const ProductDetailPage = () => {
                                     <p className="text-[11px] md:text-xs text-gray-400 leading-6 text-justify px-2">
                                         {product.description || `Nutraj brings a premium assortment of walnut kernels to your plate in the form of ${product.name}. As the name says, these Anmol walnut kernels are nothing short of precious treats as they come from 1% of the Rarest Crop, grown worldwide. Since the crop is handpicked from the best, these walnut kernels are jumbo-sized, extra crunchier in taste, and contain exceptional nutritional value.`}
                                     </p>
-                                    <div className="flex justify-center">
-                                        <img src={product.image} className="w-40 md:w-60 h-auto object-contain rounded-xl opacity-90 mix-blend-multiply" alt="" />
+                                    <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <img src={product.image} className="w-32 md:w-40 h-auto object-contain rounded-lg opacity-90 mix-blend-multiply border border-gray-100 p-2 bg-white" alt="Primary" />
+                                            <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wider">Primary View</span>
+                                        </div>
+                                        {product.hoverImage && (
+                                            <div className="flex flex-col items-center gap-2">
+                                                <img src={product.hoverImage} className="w-32 md:w-40 h-auto object-contain rounded-lg opacity-90 mix-blend-multiply border border-gray-100 p-2 bg-white" alt="Hover" />
+                                                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wider">Alternate View</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

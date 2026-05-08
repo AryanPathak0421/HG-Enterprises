@@ -16,10 +16,10 @@ const CategoryShowcase = () => {
 
     if (loading) {
         return (
-            <section className="pt-10 pb-0 bg-white overflow-hidden">
+            <section className="pt-10 pb-0 bg-gradient-to-b from-[#1a0507] via-[#2d0a0d] to-[#150405] overflow-hidden">
                 <div className="container mx-auto px-6 md:px-12 text-center">
-                    <div className="flex justify-center gap-12 mb-10 border-b border-gray-100 pb-3">
-                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-4 w-24" />)}
+                    <div className="flex justify-center gap-12 mb-10 border-b border-white/10 pb-3">
+                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-4 w-24 bg-white/5" />)}
                     </div>
                 </div>
             </section>
@@ -34,23 +34,24 @@ const CategoryShowcase = () => {
     );
 
     return (
-        <section className="pt-6 pb-2 bg-white overflow-hidden">
-            <div className="container mx-auto px-6 lg:px-20 text-center">
+        <section className="pt-2 md:pt-4 pb-8 md:pb-10 bg-gradient-to-b from-[#1a0507] via-[#2d0a0d] to-[#150405] overflow-hidden">
+            <div className="container mx-auto px-4 md:px-6 lg:px-20 text-center">
 
                 {/* Refined Department Tabs - Strictly 3 */}
-                <div className="flex justify-center gap-12 md:gap-24 mb-14 border-b border-gray-100/50 pb-0.5 overflow-x-auto scrollbar-hide">
+                <div className="flex justify-center gap-12 md:gap-24 mb-6 md:mb-10 border-b border-white/10 pb-0.5 overflow-x-auto scrollbar-hide">
                     {DEPARTMENT_TABS.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`font-serif text-[11px] md:text-sm tracking-[0.3em] uppercase transition-all duration-500 relative py-4 px-2 whitespace-nowrap ${activeTab === tab.id ? 'text-black font-black' : 'text-gray-300 hover:text-gray-500 font-medium'
-                                }`}
+                            className={`font-serif text-[11px] md:text-sm tracking-[0.3em] uppercase transition-all duration-500 relative py-4 px-2 whitespace-nowrap ${
+                                activeTab === tab.id ? 'text-white font-black' : 'text-white/40 hover:text-white/70 font-medium'
+                            }`}
                         >
                             {tab.name}
                             {activeTab === tab.id && (
                                 <motion.div
                                     layoutId="activeTabUnderline"
-                                    className="absolute bottom-[-1px] left-0 right-0 h-[1.5px] bg-black"
+                                    className="absolute bottom-[-1px] left-0 right-0 h-[1.5px] bg-gold"
                                     initial={false}
                                 />
                             )}
@@ -65,11 +66,11 @@ const CategoryShowcase = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.6 }}
-                        className="flex flex-wrap md:flex-nowrap justify-center gap-10 md:gap-14 lg:gap-20 pb-16"
+                        className="flex flex-nowrap justify-start gap-2.5 md:gap-5 pb-6 overflow-x-auto scrollbar-hide px-1 md:px-2"
                     >
                         {filteredCats.map((cat, index) => {
                             return (
-                                <div key={cat.id || cat._id} className="group flex flex-col items-center w-[100px] md:w-auto">
+                                <div key={cat.id || cat._id} className="group flex flex-col items-center w-[95px] md:w-[130px] shrink-0">
                                     <Link to={`/collection/${cat.id || cat._id}`} className="block">
                                         <motion.div
                                             initial={{ opacity: 0, y: 20 }}
@@ -78,8 +79,8 @@ const CategoryShowcase = () => {
                                             className="flex flex-col items-center"
                                         >
                                             {/* Minimalist Circle Image */}
-                                            <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border border-gray-100 p-0.5 transition-all duration-700 group-hover:border-black/10 group-hover:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] group-hover:scale-[1.05]">
-                                                <div className="w-full h-full rounded-full overflow-hidden bg-gray-50">
+                                            <div className="relative w-24 h-24 md:w-36 md:h-36 rounded-full overflow-hidden border border-white/10 p-0.5 transition-all duration-700 group-hover:border-gold/30 group-hover:shadow-[0_15px_35px_rgba(0,0,0,0.5)] group-hover:scale-[1.05]">
+                                                <div className="w-full h-full rounded-full overflow-hidden bg-white/5">
                                                     <img
                                                         src={cat.image || 'https://via.placeholder.com/400'}
                                                         alt={cat.name}
@@ -89,7 +90,7 @@ const CategoryShowcase = () => {
                                             </div>
 
                                             {/* Premium Label */}
-                                            <span className="mt-6 font-serif text-[9px] md:text-[10px] text-gray-500 font-bold tracking-[0.25em] uppercase text-center transition-all duration-500 group-hover:text-black group-hover:tracking-[0.35em]">
+                                            <span className="mt-4 md:mt-6 font-serif text-[8px] md:text-[10px] text-[#FAF5F6] font-bold tracking-[0.25em] uppercase text-center transition-all duration-500 group-hover:text-gold group-hover:tracking-[0.35em] whitespace-nowrap">
                                                 {cat.name}
                                             </span>
                                         </motion.div>
@@ -98,7 +99,7 @@ const CategoryShowcase = () => {
                             );
                         })}
                         {filteredCats.length === 0 && (
-                            <div className="w-full py-20 text-center text-gray-300 font-serif text-[10px] uppercase tracking-[0.4em] italic">
+                            <div className="w-full py-20 text-center text-white/30 font-serif text-[10px] uppercase tracking-[0.4em] italic">
                                 Segment Initialization Pending
                             </div>
                         )}

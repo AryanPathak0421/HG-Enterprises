@@ -34,7 +34,7 @@ const AllProducts = () => {
     const displayProducts = products.slice(0, 16);
 
     return (
-        <section className="pt-4 md:pt-4 pb-12 bg-white overflow-hidden">
+        <section className="pt-4 md:pt-4 pb-2 md:pb-4 bg-white overflow-hidden">
             <div className="container mx-auto px-2 md:px-4">
 
                 {/* Centered Header - Matched to Style It Your Way */}

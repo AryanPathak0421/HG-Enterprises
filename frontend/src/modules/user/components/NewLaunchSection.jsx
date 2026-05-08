@@ -14,7 +14,7 @@ const NewLaunchSection = () => {
     if (displayItems.length === 0) return null;
 
     return (
-        <section className="pt-8 pb-10 md:pt-12 md:pb-16 bg-bg-light relative overflow-hidden">
+        <section className="pt-2 pb-10 md:pt-4 md:pb-16 bg-bg-light relative overflow-hidden">
 
             <div className="container mx-auto px-2 md:px-4 relative z-10">
 
@@ -37,10 +37,15 @@ const NewLaunchSection = () => {
                         return (
                             <motion.div
                                 key={item.id}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
+                                initial={{ opacity: 0, rotateY: 0, y: 30 }}
+                                whileInView={{ opacity: 1, rotateY: 360, y: 0 }}
+                                viewport={{ once: false, amount: 0.15 }}
+                                transition={{ 
+                                    opacity: { duration: 0.4, delay: index * 0.08 },
+                                    y: { duration: 0.5, delay: index * 0.08 },
+                                    rotateY: { duration: 1.2, ease: [0.25, 1, 0.5, 1], delay: index * 0.08 }
+                                }}
+                                style={{ perspective: 1000, transformStyle: "preserve-3d" }}
                                 className="w-[45%] md:w-48 lg:w-56"
                             >
                                 <Link to={item.path} className="group block relative">

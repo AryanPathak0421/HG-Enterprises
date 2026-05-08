@@ -25,10 +25,10 @@
 }
 
 
-/* Disable Zooming on Mobile & Horizontal Scroll */
+/* Disable Zooming on Mobile & Support Horizontal Swipes */
 html,
 body {
-    touch-action: pan-y;
+    touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
     width: 100%;
@@ -136,3 +136,111 @@ body {
 .animate-slow-zoom {
     animation: slowZoom 8s linear infinite alternate;
 }
+
+@keyframes spin3dRtl {
+    from {
+        transform: rotateY(0deg);
+    }
+    to {
+        transform: rotateY(-360deg);
+    }
+}
+
+.animate-spin-3d-rtl {
+    animation: spin3dRtl 25s linear infinite;
+}
+
+/* Infinite Smooth Scrolling Marquee Carousel */
+.marquee-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    padding: 16px 0;
+}
+
+/* Luxury fading edges for seamless slider experience */
+.marquee-wrapper::before,
+.marquee-wrapper::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 15%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.marquee-wrapper::before {
+    left: 0;
+    background: linear-gradient(to right, #1a0507 0%, transparent 100%);
+}
+
+.marquee-wrapper::after {
+    right: 0;
+    background: linear-gradient(to left, #150405 0%, transparent 100%);
+}
+
+.marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marqueeSlide 22s linear infinite;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .marquee-track {
+        animation-duration: 26s;
+        gap: 24px;
+    }
+}
+
+.marquee-track:hover {
+    animation-play-state: paused;
+}
+
+@keyframes marqueeSlide {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Premium Custom Sidebar Scrollbar */
+.custom-sidebar-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-track {
+    background: rgba(139, 67, 86, 0.02);
+    border-radius: 9999px;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(139, 67, 86, 0.25);
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.3s ease;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 67, 86, 0.5);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+}
+
+/* Support Firefox */
+.custom-sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 67, 86, 0.25) transparent;
+}
+
+/* Elite Touch Gestures & Inertial Physics for Horizontal Carousels */
+.overflow-x-auto,
+[class*="overflow-x-auto"] {
+    touch-action: pan-x pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+}

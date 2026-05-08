@@ -28,6 +28,7 @@ const productSchema = new mongoose.Schema({
     rating: { type: Number, default: 0 },
     tag: { type: String },
     image: { type: String }, // Cloudinary URL
+    hoverImage: { type: String }, // Cloudinary URL for hover state
     unit: { type: String, default: 'pcs' },
     description: { type: String },
     benefits: [{ type: String }],

@@ -7,12 +7,17 @@ const StyleItYourWay = () => {
     const { homepageSections } = useShop();
     const sectionData = homepageSections?.['style-it-your-way'];
 
+    const [isHovered, setIsHovered] = React.useState(false);
     const scrollRef = useRef(null);
 
     const scroll = (direction) => {
         if (scrollRef.current) {
             const { current } = scrollRef;
-            const scrollAmount = 350; // Card width + gap
+            const isMobile = window.innerWidth < 768;
+            const cardWidth = isMobile ? window.innerWidth * 0.85 : 700;
+            const gap = isMobile ? 16 : 24;
+            const scrollAmount = cardWidth + gap;
+            
             if (direction === 'left') {
                 current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
             } else {
@@ -33,27 +38,32 @@ const StyleItYourWay = () => {
         : [];
 
     React.useEffect(() => {
-        if (displayCollections.length === 0) return;
-
-        const isMobile = window.innerWidth < 768;
-        if (!isMobile) return;
+        if (displayCollections.length === 0 || isHovered) return;
 
         const interval = setInterval(() => {
             if (scrollRef.current) {
                 const { current } = scrollRef;
+                
+                // Calculate exact single card step width
+                const isMobile = window.innerWidth < 768;
+                const cardWidth = isMobile ? window.innerWidth * 0.85 : 700;
+                const gap = isMobile ? 16 : 24; // gap-4 is 16px, md:gap-6 is 24px
+                const scrollStep = cardWidth + gap;
+
                 const maxScroll = current.scrollWidth - current.clientWidth;
-                const isAtEnd = current.scrollLeft >= maxScroll - 10;
+                // Loop back to beginning smoothly if we reached or exceeded the end bounds
+                const isAtEnd = current.scrollLeft >= maxScroll - 25;
 
                 if (isAtEnd) {
                     current.scrollTo({ left: 0, behavior: 'smooth' });
                 } else {
-                    current.scrollBy({ left: current.clientWidth * 0.9 + 24, behavior: 'smooth' });
+                    current.scrollBy({ left: scrollStep, behavior: 'smooth' });
                 }
             }
-        }, 3000);
+        }, 2200); // Snappy luxury auto-scroll speed
 
         return () => clearInterval(interval);
-    }, [displayCollections.length]);
+    }, [displayCollections.length, isHovered]);
 
     if (displayCollections.length === 0) return null;
 
@@ -75,6 +85,8 @@ const StyleItYourWay = () => {
                 {/* Carousel Container */}
                 <div
                     ref={scrollRef}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
                     className="flex gap-4 md:gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >

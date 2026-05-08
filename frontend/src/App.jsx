@@ -15,7 +15,6 @@ import Wishlist from './modules/user/pages/Wishlist';
 import Profile from './modules/user/pages/Profile';
 import AdminDashboard from './modules/admin/pages/Dashboard';
 import AboutUs from './modules/user/pages/AboutUs';
-import CategoryNav from './modules/user/components/CategoryNav';
 import Checkout from './modules/user/pages/Checkout';
 import OrderSuccess from './modules/user/pages/OrderSuccess';
 import OrderTracking from './modules/user/pages/OrderTracking';
@@ -109,8 +108,7 @@ const AppContent = () => {
               <AnnouncementBar />
               <Navbar />
             </div>
-            <div className="h-[84px] md:h-[110px] w-full"></div>
-            <CategoryNav />
+            <div className="h-[40px] md:h-[115px] w-full"></div>
           </>
         )}
         <main className={`flex-grow ${!isAdminPath ? 'pb-16 md:pb-0' : ''}`}>

@@ -70,6 +70,7 @@ const ItemEditor = () => {
         variantStock: {},
         categories: [{ id: Date.now(), category: '', subcategory: '' }],
         targetGroup: 'Unisex',
+        hoverImage: '',
         tags: {
             isNewArrival: false,
             isMostGifted: false,
@@ -105,6 +106,7 @@ const ItemEditor = () => {
                 const normalizedData = {
                     ...data,
                     parentId: data.parentId || '',
+                    hoverImage: data.hoverImage || '',
                     images: data.images?.length > 0 ? data.images : (data.image ? [data.image] : []),
                     categories: data.categories?.length > 0 ? data.categories : [{
                         id: Date.now(),
@@ -156,6 +158,28 @@ const ItemEditor = () => {
         }
     };
 
+    const handleHoverImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        toast.loading('Uploading hover asset...', { id: 'hover-upload' });
+        try {
+            const formDataUpload = new FormData();
+            formDataUpload.append('image', file);
+            const res = await api.post('/banners/upload', formDataUpload, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setFormData(prev => ({
+                ...prev,
+                hoverImage: res.data.imageUrl
+            }));
+            toast.success('Hover asset uploaded successfully', { id: 'hover-upload' });
+        } catch (error) {
+            console.error("Hover upload error:", error);
+            toast.error('Failed to upload hover asset', { id: 'hover-upload' });
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -173,6 +197,7 @@ const ItemEditor = () => {
                     sold: formData.variants?.[0]?.sold || 0
                 }];
                 data.image = formData.images[0] || '';
+                data.hoverImage = formData.hoverImage || '';
                 data.unit = formData.unit || 'pcs';
 
                 // CRITICAL: Map selected category/subcategory for backend validation
@@ -285,6 +310,32 @@ const ItemEditor = () => {
                                 )}
                             </div>
                         </FormSection>
+
+                        {isProduct && (
+                            <FormSection title="Hover State Image (Secondary)">
+                                <div className="grid grid-cols-1 gap-2">
+                                    {formData.hoverImage ? (
+                                        <div className="relative aspect-square rounded-none overflow-hidden group border border-black/5 shadow-sm w-full">
+                                            <img src={formData.hoverImage} alt="Hover asset" className="w-full h-full object-cover" />
+                                            {!isViewMode && (
+                                                <button
+                                                    onClick={() => setFormData(prev => ({ ...prev, hoverImage: '' }))}
+                                                    className="absolute top-1 right-1 p-1 bg-black text-white rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <label className="aspect-square rounded-none bg-white border border-dashed border-black/10 flex flex-col items-center justify-center cursor-pointer hover:border-gold/50 hover:bg-gold/5 transition-all group w-full">
+                                            <Upload className="w-5 h-5 text-gray-300 group-hover:text-gold transition-colors" />
+                                            <span className="text-[8px] font-black text-gray-400 mt-2 uppercase tracking-widest font-serif italic">Upload Hover Image</span>
+                                            <input type="file" className="hidden" onChange={handleHoverImageUpload} accept="image/*" disabled={isViewMode} />
+                                        </label>
+                                    )}
+                                </div>
+                            </FormSection>
+                        )}
 
                         {isProduct && (
                             <FormSection title="Specifications & Pricing" className="space-y-6">

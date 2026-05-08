@@ -1,65 +1,96 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useShop } from '../../../context/ShopContext';
-import { MoveRight } from 'lucide-react';
+import herImage from '../../../assets/download__18_-removebg-preview.png';
+import himImage from '../../../assets/man_model.png';
 
 const ProposalRings = () => {
-    const { homepageSections } = useShop();
-    const sectionData = homepageSections?.['proposal-rings'];
-    const banner = sectionData?.items?.[0]; // Proposal rings is usually a single big highlight
-
-    if (!banner) return null;
-
     return (
-        <section className="py-8 md:py-12 bg-white">
-            <div className="container mx-auto px-4 md:px-8">
-                <Link to={banner.path || '/category/rings'} className="group block relative w-full h-[250px] md:h-[500px] overflow-hidden rounded-[2rem] shadow-2xl isolate">
-                    {/* Background Image */}
-                    <img
-                        src={banner.image}
-                        alt={banner.name}
-                        className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105"
-                    />
+        <section className="pt-0 pb-4 md:pb-12 bg-white overflow-visible">
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+                
+                {/* Header Section */}
+                <div className="text-center mb-4 md:mb-8">
+                    <span className="text-[#c1a05b] font-bold tracking-[0.25em] uppercase text-[10px] md:text-xs mb-2.5 block">
+                        GIFT THE EXCELLENCE
+                    </span>
+                    <h2 className="text-3xl md:text-5xl font-serif text-dark mb-3 tracking-wide">
+                        Shop by <span className="italic text-[#8c2a3e] font-normal">Recipient</span>
+                    </h2>
+                    <div className="h-[1px] w-12 bg-[#c1a05b] mx-auto mt-3"></div>
+                </div>
 
-                    {/* Premium Overlays */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent z-10" />
+                {/* Cards Container with perfect mobile vertical gap spacing */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 lg:gap-x-12 gap-y-22 md:gap-y-28 max-w-6xl mx-auto mt-28 md:mt-36 pb-0">
+                    
+                    {/* For Him Card (Rounded Left, Sharp Right Corner) */}
+                    <Link to="/category/men" className="block w-full h-[100px] md:h-[110px] relative">
+                        <motion.div 
+                            whileTap={{ scale: 0.96 }}
+                            whileHover={{ scale: 1.01 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="absolute inset-0 bg-white rounded-l-3xl rounded-r-none shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-1.5 cursor-pointer"
+                        >
+                            {/* Inner Maroon Pill with Rounded-l and Sharp-r */}
+                            <div className="w-full h-full bg-gradient-to-r from-[#6b1e2e] to-[#4a1015] rounded-l-2xl rounded-r-none flex items-center relative overflow-visible">
+                                
+                                {/* Text & Button Content (Tightened gap-2 to remove space before arrow) */}
+                                <div className="z-20 pl-5 md:pl-10 lg:pl-12 flex items-center gap-2 md:gap-3">
+                                    <h3 className="text-white text-xl md:text-2xl font-serif tracking-wide whitespace-nowrap">For Him</h3>
+                                    <div className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-full flex items-center justify-center text-[#6b1e2e] shadow-lg group shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-5.5 md:w-5.5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </div>
+                                </div>
 
-                    {/* Content */}
-                    <div className="absolute inset-0 flex flex-col justify-center items-start p-6 md:p-20 z-20">
-                        <motion.span
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            className="text-gold text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] mb-2 md:mb-6"
-                        >
-                            The Forever Collection
-                        </motion.span>
-                        <motion.h2
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="font-serif text-3xl md:text-7xl text-white mb-4 md:mb-8 leading-tight tracking-tight"
-                        >
-                            {banner.name || "Proposal Rings"}
-                        </motion.h2>
-
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            whileInView={{ opacity: 1 }}
-                            transition={{ delay: 0.4 }}
-                            className="flex items-center gap-3 text-white group-hover:text-gold transition-colors"
-                        >
-                            <span className="text-xs md:text-lg font-serif italic tracking-widest">Find the One</span>
-                            <div className="w-8 h-[1px] bg-white group-hover:bg-gold transition-all group-hover:w-16" />
-                            <MoveRight className="w-4 h-4 md:w-6 md:h-6" />
+                                {/* Model Image */}
+                                <div className="absolute bottom-0 right-2 lg:right-6 w-[140px] md:w-[170px] h-[190px] md:h-[220px] pointer-events-none z-10">
+                                    <img 
+                                        src={himImage} 
+                                        alt="For Him" 
+                                        className="w-full h-full object-cover object-top drop-shadow-2xl"
+                                    />
+                                </div>
+                            </div>
                         </motion.div>
-                    </div>
+                    </Link>
 
-                    {/* Floating Accent Decoration */}
-                    <div className="absolute top-8 right-8 border border-white/20 p-4 rounded-full hidden md:block opacity-30 group-hover:opacity-100 transition-opacity duration-1000">
-                        <div className="w-12 h-12 border border-white/10 rounded-full animate-ping" />
-                    </div>
-                </Link>
+                    {/* For Her Card (Rounded Right, Sharp Left Corner) */}
+                    <Link to="/category/women" className="block w-full h-[100px] md:h-[110px] relative">
+                        <motion.div 
+                            whileTap={{ scale: 0.96 }}
+                            whileHover={{ scale: 1.01 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="absolute inset-0 bg-white rounded-r-3xl rounded-l-none shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-1.5 cursor-pointer"
+                        >
+                            {/* Inner Maroon Pill with Rounded-r and Sharp-l */}
+                            <div className="w-full h-full bg-gradient-to-r from-[#4a1015] to-[#6b1e2e] rounded-r-2xl rounded-l-none flex items-center justify-end relative overflow-visible">
+                                
+                                {/* Model Image */}
+                                <div className="absolute bottom-0 left-2 lg:left-6 w-[140px] md:w-[170px] h-[190px] md:h-[220px] pointer-events-none z-10">
+                                    <img 
+                                        src={herImage} 
+                                        alt="For Her" 
+                                        className="w-full h-full object-cover object-top drop-shadow-2xl"
+                                        style={{ transform: 'scaleX(-1)' }}
+                                    />
+                                </div>
+
+                                {/* Text & Button Content (Tightened gap-2 to remove space after arrow) */}
+                                <div className="z-20 pr-5 md:pr-10 lg:pr-12 flex items-center gap-2 md:gap-3">
+                                    <h3 className="text-white text-xl md:text-2xl font-serif tracking-wide whitespace-nowrap">For Her</h3>
+                                    <div className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-full flex items-center justify-center text-[#6b1e2e] shadow-lg group shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-5.5 md:w-5.5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </Link>
+
+                </div>
             </div>
         </section>
     );

@@ -1,5 +1,4 @@
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 require('dotenv').config();
 
@@ -9,14 +8,41 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'HGEnterprises/products',
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-    },
+// Use memory storage so we can manipulate the image buffer using Sharp before uploading
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
 });
 
-const upload = multer({ storage: storage });
+/**
+ * Uploads an image buffer directly to Cloudinary using a stream.
+ * @param {Buffer} fileBuffer - The image buffer to upload.
+ * @param {string} folder - The destination folder on Cloudinary.
+ * @returns {Promise<object>} - The Cloudinary upload result object.
+ */
+const uploadToCloudinary = (fileBuffer, folder = 'HGEnterprises/products') => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: folder,
+                allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+                transformation: [
+                    { quality: 'auto:good', fetch_format: 'auto' } // Auto-optimize image delivery quality/format
+                ]
+            },
+            (error, result) => {
+                if (error) {
+                    console.error("Cloudinary upload stream error:", error);
+                    return reject(error);
+                }
+                resolve(result);
+            }
+        );
+        uploadStream.end(fileBuffer);
+    });
+};
 
-module.exports = { cloudinary, upload };
+module.exports = { cloudinary, upload, uploadToCloudinary };

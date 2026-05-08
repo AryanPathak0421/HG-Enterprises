@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Star } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 
 const LatestDrop = () => {
@@ -13,89 +13,103 @@ const LatestDrop = () => {
 
     if (displayItems.length === 0) return null;
 
+    // Gather products to fill the carousel
+    const configuredProductIds = displayItems.map(item => item.productId);
+    const extraProducts = products.filter(p => !configuredProductIds.includes(p.id)).slice(0, 8);
+    
+    const carouselItems = [
+        ...displayItems.map(item => {
+            const p = products.find(prod => prod.id === item.productId);
+            return {
+                id: item.id || p?.id || Math.random().toString(),
+                name: p ? (p.name || item.name) : item.name,
+                image: p ? (p.image || item.image) : item.image,
+                price: p ? `₹${p.price?.toLocaleString() || ''}` : item.price,
+                path: p ? `/product/${p.id}` : item.path
+            };
+        }),
+        ...extraProducts.map(p => ({
+            id: p.id,
+            name: p.name,
+            image: p.image,
+            price: `₹${p.price?.toLocaleString()}`,
+            path: `/product/${p.id}`
+        }))
+    ];
+
+    // Ensure unique items
+    const uniqueItems = Array.from(new Map(carouselItems.map(item => [item.id, item])).values());
+    
+    // Slicing up to 8 items for optimal sliding rhythm
+    const finalItems = uniqueItems.slice(0, 8);
+
+    if (finalItems.length === 0) return null;
+
     return (
-        <section className="pt-4 pb-8 md:pt-8 md:pb-16 bg-white">
-            <div className="container mx-auto px-2 md:px-4">
-                {/* Header - Matched to Style It Your Way */}
+        <section className="pt-6 pb-12 md:pt-10 md:pb-20 bg-gradient-to-b from-[#1a0507] via-[#0d0203] to-[#150405] overflow-hidden">
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header Section */}
                 <div className="text-center mb-6 md:mb-10">
-                    <span className="text-primary font-serif tracking-[0.2em] font-normal italic text-[10px] md:text-sm mb-1 block">
-                        {sectionData?.subtitle || "Fresh Arrivals"}
-                    </span>
-                    <h2 className="font-serif text-3xl md:text-4xl font-normal text-dark tracking-tight">
+                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-normal italic text-white mb-3 tracking-wide">
                         {sectionData?.label || "Latest Drops"}
                     </h2>
-                    <div className="h-[1px] w-12 bg-primary mx-auto opacity-30 mt-2"></div>
+                    <div className="h-[1px] w-12 bg-white/40 mx-auto mt-2"></div>
                 </div>
 
-                {/* Grid (Desktop) / Horizontal Scroll (Mobile) */}
-                <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pb-4 md:pb-0 px-4 md:px-0 scrollbar-hide snap-x snap-mandatory -mx-4 md:mx-0">
-                    {displayItems.map((item, index) => {
-                        // Dynamic Product Lookup
-                        const product = products.find(p => p.id === item.productId);
-                        // If it's a real product, use its data, otherwise fallback to item (legacy/manual)
-                        const name = product ? (product.name || item.name) : item.name;
-                        const image = product ? (product.image || item.image) : item.image;
-                        const price = product ? `₹${product.price?.toLocaleString() || ''}` : (item.price || '');
-                        const path = product ? `/product/${product.id}` : item.path;
-
-                        return (
-                            <motion.div
-                                key={item.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className="group cursor-pointer flex-shrink-0 w-[200px] md:w-auto snap-center first:ml-4 md:first:ml-0 last:mr-4 md:last:mr-0"
+                {/* Unified Premium Infinite Marquee Track (Cards side-by-side, no overlaps, fully visible) */}
+                <div className="marquee-wrapper my-4 md:my-8">
+                    <div className="marquee-track">
+                        {/* Render twice for seamless, continuous infinite rotation loop */}
+                        {[...finalItems, ...finalItems].map((item, index) => (
+                            <div
+                                key={`${item.id}-marquee-${index}`}
+                                className="w-[195px] md:w-[280px] h-[290px] md:h-[400px] shrink-0"
                             >
-                                <Link to={path}>
-                                    {/* Card Styled Container - Dark Wine Theme (Unified #4A1015) */}
-                                    <div className="bg-primary rounded-[1.5rem] shadow-[0_5px_15px_rgba(0,0,0,0.15)] hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 group overflow-hidden h-full">
+                                <Link to={item.path} className="block w-full h-full">
+                                    <div className="relative w-full h-full rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-2xl group border border-white/10 bg-black/50 backdrop-blur-sm hover:border-gold/40 hover:scale-[1.03] transition-all duration-500">
+                                        
+                                        {/* Background Image */}
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
+                                            className="absolute inset-0 w-full h-full object-cover transform duration-1000 group-hover:scale-110"
+                                        />
 
-                                        {/* Image Container - Full Width */}
-                                        <div className="relative overflow-hidden aspect-[4/3] bg-white">
-                                            <img
-                                                src={image}
-                                                alt={name}
-                                                className="w-full h-full object-contain transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100 mix-blend-multiply"
-                                            />
+                                        {/* Luxury Dark Gradient Overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/25 transition-opacity duration-300 group-hover:from-black/100"></div>
 
-                                            {/* Overlay on Hover */}
-                                            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all duration-300"></div>
+                                        {/* Content Centered at Bottom */}
+                                        <div className="absolute inset-x-0 bottom-0 p-4 md:p-6 pb-6 md:pb-8 flex flex-col items-center justify-end text-center z-10">
+                                            
+                                            {/* Product Title */}
+                                            <h3 className="font-serif text-white text-[11px] md:text-[14px] uppercase tracking-[0.12em] md:tracking-[0.15em] font-medium leading-relaxed line-clamp-2 px-1">
+                                                {item.name}
+                                            </h3>
 
+                                            {/* Price Tag */}
+                                            <span className="text-[10px] md:text-sm text-white/80 font-serif tracking-widest mt-1 block">
+                                                {item.price}
+                                            </span>
 
-                                        </div>
-
-                                        {/* Info - Ultra Compact */}
-                                        <div className="p-2.5 md:p-3">
-                                            <div className="flex justify-between items-start mb-0.5 gap-2">
-                                                <h3 className="font-serif font-normal text-sm md:text-base text-white group-hover:text-gold transition-colors line-clamp-1 tracking-wide">
-                                                    {name}
-                                                </h3>
-                                                <div className="flex text-gold shrink-0 pt-0.5">
-                                                    <Star className="w-2.5 h-2.5 fill-current" />
-                                                    <Star className="w-2.5 h-2.5 fill-current" />
-                                                    <Star className="w-2.5 h-2.5 fill-current" />
-                                                    <Star className="w-2.5 h-2.5 fill-current" />
-                                                    <Star className="w-2.5 h-2.5 fill-current" />
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <p className="font-serif text-base text-white font-bold leading-none tracking-wide">{price}</p>
-                                                <span className="text-[9px] text-white/50 font-bold uppercase tracking-widest hidden group-hover:block transition-all duration-300">View</span>
+                                            {/* Explore CTA with elegant side lines */}
+                                            <div className="flex items-center justify-center gap-2.5 mt-3.5 w-full">
+                                                <span className="w-5 md:w-8 h-[0.5px] bg-white/30"></span>
+                                                <span className="text-[8px] md:text-[10px] font-bold text-[#FDF1F2] tracking-[0.25em] uppercase font-serif">Explore</span>
+                                                <span className="w-5 md:w-8 h-[0.5px] bg-white/30"></span>
                                             </div>
                                         </div>
                                     </div>
                                 </Link>
-                            </motion.div>
-                        )
-                    })}
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Explore Button (Mobile Only - Bottom) */}
-                <div className="mt-6 flex justify-center md:hidden">
+                {/* Explore Button (Bottom) */}
+                <div className="mt-8 flex justify-center">
                     <Link
                         to="/shop?sort=newest"
-                        className="inline-flex items-center gap-2 text-primary font-serif italic tracking-wider border-b border-primary pb-0.5 text-sm md:text-base group"
+                        className="inline-flex items-center gap-2 text-white font-serif italic tracking-wider border-b border-white/50 pb-0.5 text-sm md:text-base group"
                     >
                         <span className="font-serif italic font-normal text-xs md:text-sm tracking-wider">Explore Collection</span>
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />

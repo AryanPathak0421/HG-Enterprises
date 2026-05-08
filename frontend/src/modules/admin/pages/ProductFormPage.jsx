@@ -543,43 +543,88 @@ const ProductFormPage = () => {
                     <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 text-left">
                         <h3 className="text-sm font-black text-footerBg uppercase tracking-widest flex items-center gap-2">
                             <ImageIcon size={18} className="text-gray-400" />
-                            Product Image
+                            Product Images
                         </h3>
 
-                        <div className="aspect-square bg-gray-50 rounded-3xl border border-dashed border-gray-200 flex flex-col items-center justify-center p-6 relative group overflow-hidden">
-                            {formData.image ? (
-                                <>
-                                    <img src={formData.image} alt="Preview" className="w-full h-full object-contain" />
-                                    <div className="absolute inset-0 bg-footerBg/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
-                                            className="bg-white text-red-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest"
-                                        >
-                                            Remove
-                                        </button>
+                        {/* Primary Image */}
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Primary Image</label>
+                            <div className="aspect-square bg-gray-50 rounded-3xl border border-dashed border-gray-200 flex flex-col items-center justify-center p-6 relative group overflow-hidden">
+                                {formData.image ? (
+                                    <>
+                                        <img src={formData.image} alt="Preview" className="w-full h-full object-contain" />
+                                        <div className="absolute inset-0 bg-footerBg/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                                                className="bg-white text-red-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center space-y-2">
+                                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-300 mx-auto shadow-sm">
+                                            <ImageIcon size={24} />
+                                        </div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Preview Mode</p>
                                     </div>
-                                </>
-                            ) : (
-                                <div className="text-center space-y-2">
-                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-300 mx-auto shadow-sm">
-                                        <ImageIcon size={24} />
-                                    </div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Preview Mode</p>
-                                </div>
-                            )}
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 text-left">Primary Image URL</label>
+                                <input
+                                    type="text"
+                                    name="image"
+                                    value={formData.image}
+                                    onChange={handleChange}
+                                    placeholder="Paste image path or URL..."
+                                    className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-footerBg transition-all"
+                                />
+                            </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 text-left">Image URL</label>
-                            <input
-                                type="text"
-                                name="image"
-                                value={formData.image}
-                                onChange={handleChange}
-                                placeholder="Paste image path or URL..."
-                                className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-footerBg transition-all"
-                            />
+                        {/* Hover Image */}
+                        <div className="space-y-3 pt-4 border-t border-gray-100">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Hover Image (Optional)</label>
+                            <div className="aspect-square bg-gray-50 rounded-3xl border border-dashed border-gray-200 flex flex-col items-center justify-center p-6 relative group overflow-hidden">
+                                {formData.hoverImage ? (
+                                    <>
+                                        <img src={formData.hoverImage} alt="Hover Preview" className="w-full h-full object-contain" />
+                                        <div className="absolute inset-0 bg-footerBg/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, hoverImage: '' }))}
+                                                className="bg-white text-red-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center space-y-2">
+                                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-300 mx-auto shadow-sm">
+                                            <ImageIcon size={24} />
+                                        </div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hover Preview</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 text-left">Hover Image URL</label>
+                                <input
+                                    type="text"
+                                    name="hoverImage"
+                                    value={formData.hoverImage || ''}
+                                    onChange={handleChange}
+                                    placeholder="Paste hover image URL (shows on hover)..."
+                                    className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-footerBg transition-all"
+                                />
+                                <p className="text-[9px] text-gray-400 mt-1">Leave empty to use automatic fallback images</p>
+                            </div>
                         </div>
                     </div>
 

@@ -35,7 +35,7 @@ const AnnouncementBar = () => {
 
 
     return (
-        <div className="bg-[#1F1F1F] text-[#F7F2EF] overflow-hidden py-2 relative z-[60]">
+        <div className="bg-[#1F1F1F] text-[#F7F2EF] overflow-hidden py-1 relative z-[60]">
             <div className="flex animate-marquee whitespace-nowrap">
                 {[...Array(6)].map((_, i) => (
                     <div key={i} className="flex items-center mx-20 gap-32">
@@ -53,10 +53,10 @@ const AnnouncementBar = () => {
                                     ) : (
                                         (() => {
                                             const IconComponent = iconMap[item.icon] || Tag;
-                                            return <IconComponent className="w-4 h-4 text-[#C9A24D]" />;
+                                            return <IconComponent className="w-3.5 h-3.5 text-[#C9A24D]" />;
                                         })()
                                     )}
-                                    <span className="text-xs font-medium uppercase tracking-widest">{item.text}</span>
+                                    <span className="text-[10px] font-medium uppercase tracking-widest">{item.text}</span>
                                 </div>
                             );
                         })}

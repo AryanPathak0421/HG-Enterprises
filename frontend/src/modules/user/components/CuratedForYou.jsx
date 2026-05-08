@@ -11,7 +11,7 @@ const CuratedForYou = () => {
     if (displayItems.length === 0) return null;
 
     return (
-        <section className="py-8 md:py-12 bg-white overflow-hidden">
+        <section className="pt-8 md:pt-12 pb-2 md:pb-4 bg-white overflow-hidden">
             <div className="container mx-auto px-4 md:px-6">
 
                 {/* Section Header */}

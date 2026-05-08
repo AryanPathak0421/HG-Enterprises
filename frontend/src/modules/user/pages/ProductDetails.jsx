@@ -6,9 +6,10 @@ import {
     Heart, ShoppingBag, Star, Share2, Plus, Minus, Truck,
     ShieldCheck, Smile, Gift, ChevronDown, SlidersHorizontal,
     X, Camera, Check, ArrowLeft, ChevronRight, Info,
-    Clock, RefreshCw, Award, Zap, Search, UserCircle, Home
+    Clock, RefreshCw, Award, Zap, Search, UserCircle, Home, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import watermarkLogo from '../../../assets/WhatsApp_Image_2026-03-12_at_1.38.09_PM__1_-removebg-preview.png';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -57,6 +58,88 @@ const ProductDetails = () => {
     const handleWishlist = () => {
         if (isWishlisted) removeFromWishlist(product.id);
         else addToWishlist(product);
+    };
+
+    const handleDownloadImage = async () => {
+        try {
+            const imageUrl = productImages[selectedImgIdx] || product?.image;
+            if (!imageUrl) return;
+
+            showNotification('Preparing high-quality PNG download...');
+
+            // Fetch image as blob
+            const response = await fetch(imageUrl, { mode: 'cors' });
+            const blob = await response.blob();
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = URL.createObjectURL(blob);
+            
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                // Load and overlay the transparent brand logo at the bottom-left corner
+                const watermark = new Image();
+                watermark.src = watermarkLogo;
+                watermark.onload = () => {
+                    // Set watermark width to 10% of canvas width (beautifully compact)
+                    const wmWidth = canvas.width * 0.10;
+                    const wmHeight = watermark.naturalHeight * (wmWidth / watermark.naturalWidth);
+                    
+                    // Position at bottom-left corner with nice padding
+                    const padding = canvas.width * 0.04;
+                    const x = padding;
+                    // Leave space for the text below the logo
+                    const y = canvas.height - wmHeight - padding - (canvas.width * 0.02);
+                    
+                    // Set watermark transparency to 40% (subtle and high-end)
+                    ctx.globalAlpha = 0.40;
+                    ctx.drawImage(watermark, x, y, wmWidth, wmHeight);
+                    
+                    // Draw dark brown premium text below the logo
+                    ctx.globalAlpha = 0.70; // Highly readable
+                    ctx.fillStyle = '#4E3629'; // Premium Dark Earth Brown
+                    const fontSize = Math.round(canvas.width * 0.018); // Elegant sizing
+                    ctx.font = `bold ${fontSize}px "Cinzel", "Playfair Display", "Georgia", serif`;
+                    ctx.fillText('HG ENTERPRISES', x, y + wmHeight + (fontSize * 1.0));
+                    
+                    // Reset canvas alpha to default
+                    ctx.globalAlpha = 1.0;
+                    
+                    // Export to PNG data URL
+                    const pngUrl = canvas.toDataURL('image/png');
+                    
+                    const link = document.createElement('a');
+                    link.href = pngUrl;
+                    link.download = `${product.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showNotification('Downloaded successfully with brand watermark!');
+                };
+            };
+        } catch (error) {
+            console.error('Download error:', error);
+            // Fallback: direct download link if fetch fails
+            try {
+                const link = document.createElement('a');
+                link.href = productImages[selectedImgIdx] || product?.image;
+                link.target = '_blank';
+                link.download = `${product.name}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showNotification('Downloaded image file');
+            } catch (e) {
+                window.open(productImages[selectedImgIdx] || product?.image, '_blank');
+            }
+        }
     };
 
     const handleApplyCoupon = (coupon) => {
@@ -119,7 +202,14 @@ const ProductDetails = () => {
                                     className="w-full h-full object-cover"
                                 />
                                 <button onClick={handleWishlist} className="absolute top-4 right-4 w-10 h-10 bg-white border border-[#F5E6E8]/50 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all z-10">
-                                    <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-[#8B4356] text-[#8B4356]' : 'text-zinc-400'}`} strokeWidth={2.5} />
+                                    <Heart className={`w-5 h-5 transition-colors ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-zinc-400 hover:text-red-500'}`} strokeWidth={2.2} />
+                                </button>
+                                <button
+                                    onClick={handleDownloadImage}
+                                    title="Download Product Image as PNG"
+                                    className="absolute top-16 right-4 w-10 h-10 bg-white border border-[#F5E6E8]/50 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all z-10 text-zinc-400 hover:text-[#8B4356]"
+                                >
+                                    <Download className="w-5 h-5" strokeWidth={2.2} />
                                 </button>
                                 <div className="absolute top-4 left-4">
                                     <span className="bg-[#8B4356] text-white text-[6.5px] font-black uppercase tracking-[.3em] px-2.5 py-1 rounded-full">New Arrival</span>
@@ -274,7 +364,7 @@ const ProductDetails = () => {
                             <div className="hidden lg:grid grid-cols-2 gap-2">
                                 <button
                                     onClick={handleAddToCart}
-                                    className="bg-[#2a2a2a] text-white h-10 rounded-xl font-black uppercase tracking-[.2em] text-[9px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all hover:bg-black"
+                                    className="bg-[#2a2a2a] text-white h-10 rounded-xl font-black uppercase tracking-[.2em] text-[9px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all duration-300 hover:bg-[#5C3F30] hover:scale-[1.02] hover:shadow-md"
                                 >
                                     <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} /> Add to Bag
                                 </button>
@@ -310,7 +400,7 @@ const ProductDetails = () => {
             <div className="lg:hidden fixed bottom-6 left-4 right-4 h-16 bg-white/95 backdrop-blur-xl border border-[#F5E6E8] p-2.5 z-[110] flex gap-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-full items-center">
                 <button
                     onClick={handleAddToCart}
-                    className="flex-1 bg-[#2a2a2a] text-white h-full rounded-full font-black uppercase tracking-[.2em] text-[9.5px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                    className="flex-1 bg-[#2a2a2a] text-white h-full rounded-full font-black uppercase tracking-[.2em] text-[9.5px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all duration-300 hover:bg-[#5C3F30]"
                 >
                     <ShoppingBag className="w-3.5 h-3.5" /> Add to Bag
                 </button>

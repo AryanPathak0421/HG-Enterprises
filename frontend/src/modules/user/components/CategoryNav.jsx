@@ -84,9 +84,9 @@ const CategoryNav = () => {
 
 
     return (
-        <div className="bg-[#FDF5F6] border-b border-[#EBCDD0] hidden md:block sticky top-[65px] z-40 shadow-sm font-sans">
-            <div className="container mx-auto px-4">
-                <ul className="flex justify-center items-center h-12 space-x-12 relative">
+        <div className="bg-[#FDF5F6] border-b border-[#EBCDD0] hidden md:block sticky top-[125px] z-40 shadow-sm font-sans">
+            <div className="container mx-auto px-2">
+                <ul className="flex justify-center items-center h-8 space-x-8 relative">
                     {navItems.map((item) => (
                         <li
                             key={item.id}
@@ -97,7 +97,7 @@ const CategoryNav = () => {
                             <Link
                                 to={item.path}
                                 onClick={() => setHoveredCategory(null)}
-                                className={`font-display text-sm tracking-[0.15em] font-semibold flex items-center gap-1 transition-all duration-300 relative py-2
+                                className={`font-serif text-xs tracking-[0.25em] font-bold italic flex items-center gap-1 transition-all duration-300 relative py-2
                                     ${hoveredCategory === item.id ? 'text-[#D39A9F]' : 'text-black'}
                                 `}
                             >
