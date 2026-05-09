@@ -1,75 +1,89 @@
-import React from 'react';
-import { MapPin, Navigation, Phone, Clock, ArrowLeft } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Target, MapPin, Building2, Store, Map } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const StoreLocator = () => {
+    const [pincode, setPincode] = useState("");
     const navigate = useNavigate();
 
-    const stores = [
-        {
-            name: "HG Flagship - Mumbai",
-            address: "Gulberg Chawl, Akurli Road, Kandivali East, Mumbai, 400101",
-            phone: "+91 877 900 7979",
-            hours: "10:30 AM - 9:00 PM (Daily)",
-            type: "Flagship Boutique"
-        },
-        {
-            name: "HG Boutique - Delhi",
-            address: "Sands Ornaments, South Extension II, Ring Road, New Delhi, 110049",
-            phone: "+91 877 900 7980",
-            hours: "11:00 AM - 8:30 PM (Mon-Sat)",
-            type: "Experience Center"
-        }
+    const cities = [
+        { name: "Mumbai", count: 26, icon: Building2 },
+        { name: "Delhi", count: 37, icon: Building2 },
+        { name: "Bangalore", count: 18, icon: Building2 },
+        { name: "Hyderabad", count: 14, icon: Building2 },
+        { name: "Pune", count: 12, icon: MapPin },
+        { name: "Ahmedabad", count: 9, icon: Store },
+        { name: "Chennai", count: 11, icon: Building2 },
+        { name: "Kolkata", count: 7, icon: Map }
     ];
 
     return (
-        <div className="bg-white min-h-screen py-8 md:py-20 selection:bg-[#4A1015] selection:text-white">
-            <div className="container mx-auto px-4 max-w-4xl">
-                 <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-black hover:text-[#4A1015] transition-all group font-bold uppercase tracking-widest text-[10px] mb-8 md:mb-12">
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                    Back
-                </button>
-
-                <div className="text-center mb-12">
-                    <span className="text-[#4A1015] text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] mb-4 block">Store Locations</span>
-                    <h1 className="text-4xl md:text-6xl font-display text-black mb-6 tracking-tight">Visit Our Boutiques</h1>
-                    <p className="text-gray-400 text-xs md:text-base italic font-serif max-w-lg mx-auto leading-relaxed">
-                        Experience our handcrafted brilliance in person. Our boutiques provide a personalized luxury experience beyond just browsing.
+        <div className="min-h-screen bg-white">
+            {/* ULTRA COMPACT HERO */}
+            <section className="relative py-8 md:py-12 bg-[#FFF5F6] border-b border-pink-100/50">
+                <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#4A1015 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
+                
+                <div className="container mx-auto px-4 text-center relative z-10">
+                    <h1 className="font-serif text-xl md:text-3xl text-dark mb-1 tracking-tight">Find a store near you</h1>
+                    <p className="text-zinc-500 font-serif italic text-[10px] md:text-xs mb-6 max-w-md mx-auto opacity-70 leading-tight">
+                        Find a Harshad Gauri store in your locality
                     </p>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {stores.map((store, i) => (
-                        <div key={i} className="p-8 rounded-[2rem] border border-gray-100 bg-gray-50/50 hover:bg-white transition-all shadow-sm hover:shadow-xl group cursor-pointer border-b-4 border-b-transparent hover:border-b-[#4A1015]">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100 group-hover:border-[#4A1015]/20 group-hover:bg-[#4A1015] group-hover:text-white transition-all">
-                                    <MapPin className="w-6 h-6" />
-                                </div>
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#4A1015] bg-white px-3 py-1 rounded-full border border-gray-100">{store.type}</span>
-                            </div>
-                            <h3 className="font-display text-xl text-black mb-4">{store.name}</h3>
-                            <div className="space-y-3 mb-8">
-                                <p className="text-[11px] md:text-xs text-gray-500 font-serif leading-relaxed italic flex items-center gap-2">
-                                    <MapPin className="w-3.5 h-3.5" />
-                                    {store.address}
-                                </p>
-                                <p className="text-[11px] md:text-xs text-gray-400 font-serif italic flex items-center gap-2">
-                                    <Phone className="w-3.5 h-3.5" />
-                                    {store.phone}
-                                </p>
-                                <p className="text-[11px] md:text-xs text-gray-400 font-serif italic flex items-center gap-2">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    {store.hours}
-                                </p>
-                            </div>
-                            <button className="w-full py-4 border border-black/10 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-black hover:text-white transition-all flex items-center justify-center gap-2 group-hover:bg-black group-hover:text-white">
-                                <Navigation className="w-3.5 h-3.5" />
-                                Get Directions
+                    {/* Minimalist Search Bar */}
+                    <div className="max-w-sm mx-auto relative group">
+                        <div className="flex items-center bg-white border border-pink-100 rounded-lg shadow-sm px-3 h-10">
+                            <Target className="w-3.5 h-3.5 text-primary opacity-40" />
+                            <input 
+                                type="text" 
+                                placeholder="Enter Pincode or City"
+                                className="flex-1 bg-transparent border-none focus:ring-0 text-xs font-medium px-2 text-zinc-700 placeholder:text-zinc-300"
+                                value={pincode}
+                                onChange={(e) => setPincode(e.target.value)}
+                            />
+                            <button className="text-[9px] font-black tracking-widest text-primary uppercase border-l border-pink-50 pl-3 hover:text-dark transition-colors shrink-0">
+                                LOCATE ME
                             </button>
                         </div>
-                    ))}
+                    </div>
                 </div>
-            </div>
+            </section>
+
+            {/* ULTRA COMPACT CITY GRID */}
+            <section className="py-8 md:py-12">
+                <div className="container mx-auto px-4 max-w-4xl">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                        {cities.map((city, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: i * 0.03 }}
+                                viewport={{ once: true }}
+                                className="group cursor-default"
+                            >
+                                <div className="bg-[#FFF5F6] border border-pink-100/50 rounded-xl p-4 text-center shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden h-full">
+                                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/5 transition-colors border border-zinc-100/50">
+                                        <city.icon strokeWidth={1} className="w-5 h-5 md:w-6 md:h-6 text-dark/50 group-hover:text-primary transition-colors" />
+                                    </div>
+
+                                    <h3 className="text-xs md:text-sm font-serif text-dark mb-0.5">{city.name}</h3>
+                                    <p className="text-[8px] md:text-[9px] uppercase tracking-[0.15em] font-black text-zinc-400 group-hover:text-primary transition-colors">
+                                        {city.count} Stores
+                                    </p>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    {/* Coming Soon Message */}
+                    <div className="mt-8 text-center">
+                        <p className="text-[10px] md:text-xs font-serif italic text-zinc-400 tracking-wide">
+                            Many more cities coming soon to your locality...
+                        </p>
+                    </div>
+                </div>
+            </section>
         </div>
     );
 };

@@ -102,7 +102,12 @@ const Shop = () => {
         }
 
         if (selectedCategory && selectedCategory !== 'All') {
-            result = result.filter(p => p.category?.toLowerCase() === selectedCategory.toLowerCase());
+            result = result.filter(p => 
+                (p.category?.toLowerCase() === selectedCategory.toLowerCase()) || 
+                (p.department?.toLowerCase() === selectedCategory.toLowerCase()) ||
+                (selectedCategory.toLowerCase() === 'machine' && p.department?.toLowerCase() === 'machines')
+            );
+            
             if (selectedSubCategory) {
                 result = result.filter(p =>
                     ((p.subcategory || p.subCategory) && (p.subcategory || p.subCategory).toLowerCase() === selectedSubCategory.toLowerCase()) ||

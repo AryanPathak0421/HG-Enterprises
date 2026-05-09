@@ -16,6 +16,7 @@ import EditorialSection from '../components/EditorialSection';
 import StyleItYourWay from '../components/StyleItYourWay';
 import AllProducts from '../components/AllProducts';
 import BrandPromises from '../components/BrandPromises';
+import HGPromise from '../components/HGPromise';
 import FAQSection from '../components/FAQSection';
 import ChitChatSection from '../components/ChitChatSection';
 
@@ -240,6 +241,9 @@ const Home = () => {
 
             {/* BRAND PROMISES SECTION (Why Choose Us) */}
             <BrandPromises />
+
+            {/* HG PROMISE SECTION */}
+            <HGPromise />
 
             {/* CHIT CHAT SECTION */}
             <ChitChatSection />

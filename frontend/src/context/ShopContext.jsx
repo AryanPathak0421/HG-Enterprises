@@ -57,6 +57,11 @@ export const ShopProvider = ({ children }) => {
                 ]);
 
 
+                const normalizedCategories = catRes.data.map(c => ({
+                    ...c,
+                    id: c.id || c._id
+                }));
+
                 // Normalize Data (Ensure products have 'id' and top-level price/mrp)
                 const normalizedProducts = prodRes.data.map(p => {
                     const baseItem = { ...p, id: p._id || p.id };
@@ -66,13 +71,16 @@ export const ShopProvider = ({ children }) => {
                         baseItem.originalPrice = p.variants[0].mrp || p.variants[0].price || 0;
                         baseItem.stock = p.variants[0].stock || 0;
                     }
+                    
+                    // Attach Department for easier filtering
+                    const catInfo = normalizedCategories.find(c => 
+                        (c.name?.toLowerCase() === p.category?.toLowerCase()) || 
+                        (c.id?.toLowerCase() === p.category?.toLowerCase())
+                    );
+                    baseItem.department = catInfo?.department?.toLowerCase() || 'unknown';
+                    
                     return baseItem;
                 });
-
-                const normalizedCategories = catRes.data.map(c => ({
-                    ...c,
-                    id: c.id || c._id
-                }));
 
                 const normalizedPacks = packsRes.data.map(p => ({
                     ...p,
@@ -125,12 +133,23 @@ export const ShopProvider = ({ children }) => {
                     setOrders(ordRes.data);
                     setUsers(userRes.data);
                     setSupportTickets(tktRes.data);
-                    const normalizedAdminProducts = prodRes.data.map(p => ({
-                        ...p, id: p._id || p.id,
-                        price: p.variants?.[0]?.price || p.price || 0,
-                        originalPrice: p.variants?.[0]?.mrp || p.originalPrice || 0,
-                        stock: p.variants?.[0]?.stock || p.stock || 0
-                    }));
+                    const normalizedAdminProducts = prodRes.data.map(p => {
+                        const baseItem = {
+                            ...p, id: p._id || p.id,
+                            price: p.variants?.[0]?.price || p.price || 0,
+                            originalPrice: p.variants?.[0]?.mrp || p.originalPrice || 0,
+                            stock: p.variants?.[0]?.stock || p.stock || 0
+                        };
+
+                        // Attach Department for consistency
+                        const catInfo = categories.find(c => 
+                            (c.name?.toLowerCase() === p.category?.toLowerCase()) || 
+                            (c.id?.toLowerCase() === p.category?.toLowerCase())
+                        );
+                        baseItem.department = catInfo?.department?.toLowerCase() || 'unknown';
+
+                        return baseItem;
+                    });
                     setProducts(normalizedAdminProducts);
                 } catch (adminErr) {
                     console.warn("Admin fetch failed, falling back to user view:", adminErr);
@@ -476,11 +495,47 @@ export const ShopProvider = ({ children }) => {
         return returns.filter(r => r.userId === userId);
     };
 
+    // Notification State
+    const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+        const saved = localStorage.getItem('hg_notifications_enabled');
+        return saved === 'true';
+    });
+
+    const toggleNotificationSettings = async () => {
+        if (!notificationsEnabled) {
+            // If browser supports notifications, request permission
+            if ("Notification" in window) {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    setNotificationsEnabled(true);
+                    localStorage.setItem('hg_notifications_enabled', 'true');
+                    showNotification("Notifications Enabled");
+                } else {
+                    showNotification("Permission Denied");
+                }
+            } else {
+                setNotificationsEnabled(true);
+                localStorage.setItem('hg_notifications_enabled', 'true');
+                showNotification("Notifications Enabled");
+            }
+        } else {
+            setNotificationsEnabled(false);
+            localStorage.setItem('hg_notifications_enabled', 'false');
+            showNotification("Notifications Disabled");
+        }
+    };
+
+    const deleteUserNotification = (id) => {
+        // Since user object is read-only here, we mock it or handle via API in real app
+        showNotification("Notification removed");
+    };
+
     return (
         <ShopContext.Provider value={{
             products, categories, packs, coupons, banners, cart, wishlist, orders, addresses, supportTickets,
             users, returns,
             loading, notification, isMenuOpen, isSearchOpen, user, login, logout, signup, userNotifications,
+            notificationsEnabled, toggleNotificationSettings, deleteUserNotification,
             settings, setSettings,
             addToCart, removeFromCart, updateQuantity, clearCart,
             addToWishlist, removeFromWishlist,

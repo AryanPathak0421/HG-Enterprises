@@ -274,6 +274,10 @@ const Navbar = () => {
                                 <span className="absolute top-2 right-2 w-1.5 h-1.5 md:w-2 md:h-2 bg-primary rounded-full border-2 border-black"></span>
                             </Link>
 
+                            <Link to="/stores" aria-label="Find a store" className="flex w-9 h-9 md:w-10 md:h-10 items-center justify-center rounded-full hover:bg-white/10 group transition-colors">
+                                <Store className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
+                            </Link>
+
                             <Link to="/wishlist" aria-label="View wishlist" className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-white/10 relative group transition-colors">
                                 <Heart className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
                                 {wishlist?.length > 0 && (
@@ -590,7 +594,7 @@ const Navbar = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => toggleMenu(false)}
-                            className="fixed inset-0 bg-black/40 z-[110] backdrop-blur-[2px]"
+                            className="fixed inset-0 bg-[#4A1015]/30 z-[110] backdrop-blur-[4px]"
                         />
                         <motion.div
                             initial={{ x: '100%' }}
@@ -718,26 +722,50 @@ const Navbar = () => {
                 )}
             </AnimatePresence>
 
-            {/* Bottom Nav (Mobile) */}
-            <div className={`md:hidden fixed ${location.pathname.startsWith('/product/') ? 'bottom-20' : 'bottom-6'} left-6 right-6 h-16 bg-[#FFF5F6] border border-pink-100/50 rounded-2xl flex items-center justify-around z-[120] shadow-[0_10px_30px_rgba(0,0,0,0.1)] px-4`}>
-                <Link to="/" aria-label="Go to home" className="flex flex-col items-center gap-1 group">
-                    <Home className="w-5 h-5 text-gray-400 group-active:scale-90 transition-all group-[.active]:text-primary" />
-                    <span className="text-[8px] font-bold uppercase tracking-tighter text-gray-400">Home</span>
+            {/* Bottom Nav (Mobile) - Animated & Compact */}
+            {/* Bottom Nav (Mobile) - Animated & Compact */}
+            <motion.div 
+                initial={{ y: 100 }}
+                animate={{ y: 0 }}
+                className={`md:hidden fixed ${location.pathname.startsWith('/product/') ? 'bottom-20' : 'bottom-6'} left-6 right-6 h-16 bg-[#FFF5F6] border border-pink-100/80 rounded-2xl flex items-center justify-around z-[120] shadow-[0_10px_40px_rgba(255,245,246,0.5)] px-4 backdrop-blur-md`}
+            >
+                <Link to="/" aria-label="Go to home" onClick={() => toggleMenu(false)} className="flex flex-col items-center gap-1 group relative">
+                    <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.1 }}>
+                        <Home className={`w-5 h-5 ${location.pathname === '/' ? 'text-primary' : 'text-gray-400'} group-active:scale-90 transition-all`} />
+                    </motion.div>
+                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${location.pathname === '/' ? 'text-primary' : 'text-gray-400'}`}>Home</span>
+                    {location.pathname === '/' && (
+                        <motion.div layoutId="activeNav" className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full" />
+                    )}
                 </Link>
-                <button aria-label="Open mobile menu" onClick={() => toggleMenu(true)} className="flex flex-col items-center gap-1 group">
-                    <Menu className="w-5 h-5 text-gray-400 group-active:scale-90 transition-all" />
-                    <span className="text-[8px] font-bold uppercase tracking-tighter text-gray-400">Menu</span>
+
+                <button aria-label="Open mobile menu" onClick={() => toggleMenu(!isMenuOpen)} className="flex flex-col items-center gap-1 group relative">
+                    <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.1 }}>
+                        <Menu className={`w-5 h-5 ${isMenuOpen ? 'text-primary' : 'text-gray-400'} group-active:scale-90 transition-all`} />
+                    </motion.div>
+                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${isMenuOpen ? 'text-primary' : 'text-gray-400'}`}>Menu</span>
                 </button>
-                <Link to="/wishlist" aria-label="View wishlist" className="flex flex-col items-center gap-1 group relative">
-                    <Heart className="w-5 h-5 text-gray-400 group-active:scale-90 transition-all group-[.active]:text-primary" />
-                    {wishlist?.length > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white"></span>}
-                    <span className="text-[8px] font-bold uppercase tracking-tighter text-gray-400">Favs</span>
+
+                <Link to="/wishlist" aria-label="View favorites" onClick={() => toggleMenu(false)} className="flex flex-col items-center gap-1 group relative">
+                    <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.1 }}>
+                        <Heart className={`w-5 h-5 ${location.pathname === '/wishlist' ? 'text-primary' : 'text-gray-400'} group-active:scale-90 transition-all`} />
+                    </motion.div>
+                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${location.pathname === '/wishlist' ? 'text-primary' : 'text-gray-400'}`}>Favs</span>
+                    {location.pathname === '/wishlist' && (
+                        <motion.div layoutId="activeNav" className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full" />
+                    )}
                 </Link>
-                <Link to="/profile" aria-label="View profile" className="flex flex-col items-center gap-1 group">
-                    <User className="w-5 h-5 text-gray-400 group-active:scale-90 transition-all group-[.active]:text-primary" />
-                    <span className="text-[8px] font-bold uppercase tracking-tighter text-gray-400">Me</span>
+
+                <Link to="/profile" aria-label="View profile" onClick={() => toggleMenu(false)} className="flex flex-col items-center gap-1 group relative">
+                    <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.1 }}>
+                        <User className={`w-5 h-5 ${location.pathname === '/profile' ? 'text-primary' : 'text-gray-400'} group-active:scale-90 transition-all`} />
+                    </motion.div>
+                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${location.pathname === '/profile' ? 'text-primary' : 'text-gray-400'}`}>Me</span>
+                    {location.pathname === '/profile' && (
+                        <motion.div layoutId="activeNav" className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full" />
+                    )}
                 </Link>
-            </div>
+            </motion.div>
         </>
     );
 };

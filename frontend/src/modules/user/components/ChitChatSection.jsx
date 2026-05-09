@@ -46,11 +46,10 @@ const ChitChatSection = () => {
                     <div className="flex flex-col md:flex-row">
 
                         {/* Text Content Side */}
-                        <div className="w-full md:w-5/12 p-5 md:p-10 bg-[#4A1015]/50 relative flex flex-col justify-center">
+                        <div className="w-full md:w-5/12 p-5 md:p-10 bg-[#4A1015] relative flex flex-col justify-center">
                             <div className="mb-3 md:mb-5 text-left">
-                                <img src={sandsLogo} alt="Sands Jewels" className="w-10 md:w-12 h-auto mb-3 md:mb-5 opacity-90" />
                                 <h2 className="font-display text-2xl md:text-3xl text-white mb-2 md:mb-3 font-serif italic">Help Us Improve</h2>
-                                <p className="text-gray-300 font-serif text-xs md:text-base leading-relaxed">
+                                <p className="text-gray-200 font-serif text-xs md:text-base leading-relaxed opacity-90">
                                     Have a suggestion? A new idea?
                                     Tell us what you'd like to see next on HG Enterprises!
                                 </p>

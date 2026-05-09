@@ -6,12 +6,12 @@ const SmoothScroll = ({ children }) => {
 
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 1.2,
+      duration: 1.5, // Slightly longer for a more luxurious feel
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      direction: 'vertical',
-      gestureDirection: 'vertical',
-      smooth: true,
-      mouseMultiplier: 1,
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
       smoothTouch: false,
       touchMultiplier: 2,
       infinite: false,
@@ -19,17 +19,20 @@ const SmoothScroll = ({ children }) => {
 
     lenisRef.current = lenis;
 
-    let rafId;
     function raf(time) {
       lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
+      requestAnimationFrame(raf);
     }
 
-    rafId = requestAnimationFrame(raf);
+    requestAnimationFrame(raf);
+
+    // Update Lenis on window resize
+    const handleResize = () => lenis.resize();
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      cancelAnimationFrame(rafId);
-      lenisRef.current.destroy();
+      window.removeEventListener('resize', handleResize);
+      lenis.destroy();
     };
   }, []);
 
