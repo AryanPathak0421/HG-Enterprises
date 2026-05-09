@@ -597,9 +597,9 @@ const Navbar = () => {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-                            className="fixed top-0 right-0 h-full w-[320px] bg-white z-[120] shadow-2xl overflow-hidden flex flex-col"
+                            className="fixed top-0 right-0 h-full w-[320px] bg-[#FFF5F6] z-[120] shadow-2xl overflow-hidden flex flex-col"
                         >
-                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
+                            <div className="p-6 border-b border-pink-100/50 flex justify-between items-center bg-white/40">
                                 <span className="font-display text-sm font-black tracking-widest text-black uppercase">Main Menu</span>
                                 <button aria-label="Close menu" onClick={() => toggleMenu(false)} className="p-2 hover:bg-white rounded-full transition-all hover:rotate-90">
                                     <X className="w-5 h-5 text-black" />
@@ -703,7 +703,7 @@ const Navbar = () => {
                                 </div>
                             </div>
 
-                            <div className="p-6 bg-gray-50 border-t border-gray-100">
+                            <div className="p-6 bg-white/40 border-t border-pink-100/50">
                                 <Link
                                     to="/login"
                                     aria-label="Proceed to login"
@@ -719,7 +719,7 @@ const Navbar = () => {
             </AnimatePresence>
 
             {/* Bottom Nav (Mobile) */}
-            <div className={`md:hidden fixed ${location.pathname.startsWith('/product/') ? 'bottom-20' : 'bottom-6'} left-6 right-6 h-16 bg-white border border-gray-100 rounded-2xl flex items-center justify-around z-[120] shadow-[0_10px_30px_rgba(0,0,0,0.1)] px-4`}>
+            <div className={`md:hidden fixed ${location.pathname.startsWith('/product/') ? 'bottom-20' : 'bottom-6'} left-6 right-6 h-16 bg-[#FFF5F6] border border-pink-100/50 rounded-2xl flex items-center justify-around z-[120] shadow-[0_10px_30px_rgba(0,0,0,0.1)] px-4`}>
                 <Link to="/" aria-label="Go to home" className="flex flex-col items-center gap-1 group">
                     <Home className="w-5 h-5 text-gray-400 group-active:scale-90 transition-all group-[.active]:text-primary" />
                     <span className="text-[8px] font-bold uppercase tracking-tighter text-gray-400">Home</span>
