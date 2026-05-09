@@ -95,7 +95,7 @@ const ScrollToTop = () => {
 const AppContent = () => {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
-  const noFooterPaths = ['/about', '/blogs', '/help', '/order-tracking', '/profile', '/offers'];
+  const noFooterPaths = ['/about', '/blogs', '/help', '/order-tracking', '/profile', '/offers', '/product/'];
   const hideFooter = isAdminPath || noFooterPaths.some(path => location.pathname.startsWith(path));
 
   return (

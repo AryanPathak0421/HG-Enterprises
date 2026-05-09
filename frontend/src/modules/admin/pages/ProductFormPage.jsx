@@ -35,30 +35,32 @@ const ProductFormPage = () => {
 
     const [formData, setFormData] = useState({
         name: '',
-        brand: 'FARMLYF',
+        brand: 'HG JEWELS',
         categories: [
-            { id: Date.now(), category: 'nuts', subcategory: '' }
+            { id: Date.now(), category: 'necklaces', subcategory: '' }
         ],
         tag: '',
         image: '',
         description: '',
         rating: 4.5,
         variants: [
-            { id: Date.now(), weight: '250g', mrp: '', price: '', stock: 100, unitPrice: '' }
+            { id: Date.now(), weight: '3.50g', mrp: '', price: '', stock: 100, unitPrice: '' }
         ],
-        benefits: ['Heart-Healthy', 'Rich in Omega-3'],
+        benefits: [
+            'BIS Hallmarked Gold: 100% certified pure metal.',
+            'Hand-Set Settings: Exquisite craftsmanship.',
+            'Complimentary Resizing: Free forever on all rings.',
+            'Insured Shipping: Secure delivery to your doorstep.'
+        ],
         specifications: [
-            { label: 'Origin', value: 'India' },
-            { label: 'Shelf Life', value: '6 Months' }
+            { label: 'METAL PURITY', value: '18KT Gold' },
+            { label: 'METAL COLOR', value: 'Yellow Gold' },
+            { label: 'DIAMOND CARAT', value: '0.25 Carat' },
+            { label: 'DIAMOND CLARITY', value: 'VVS-VS' },
+            { label: 'DIAMOND COLOR', value: 'G-H' }
         ],
         faqs: [
-            { q: 'How to store?', a: 'Store in a cool, dry place.' }
-        ],
-        nutrition: [
-            { label: 'Energy', value: '576 Kcal' },
-            { label: 'Protein', value: '21g' },
-            { label: 'Fat', value: '49g' },
-            { label: 'Carbs', value: '22g' }
+            { q: 'Is the jewelry certified?', a: 'Yes, all our gold jewelry is BIS hallmarked, and our diamond jewelry is certified by third-party gemstone labs.' }
         ],
         contents: [] // For combo products
     });
@@ -67,15 +69,6 @@ const ProductFormPage = () => {
         if (isEdit) {
             const product = getProductById(id);
             if (product) {
-                // Normalize nutrition data if it's an object (legacy format)
-                let normalizedNutrition = product.nutrition;
-                if (product.nutrition && !Array.isArray(product.nutrition)) {
-                    normalizedNutrition = Object.entries(product.nutrition).map(([key, value]) => ({
-                        label: key.charAt(0).toUpperCase() + key.slice(1),
-                        value
-                    }));
-                }
-
                 // Normalize categories - migrate from old format if needed
                 let normalizedCategories = product.categories;
                 if (!normalizedCategories && product.category) {
@@ -90,9 +83,8 @@ const ProductFormPage = () => {
                 setFormData({
                     ...product,
                     variants: product.variants || [],
-                    nutrition: normalizedNutrition || [],
                     contents: product.contents || [],
-                    categories: normalizedCategories || [{ id: Date.now(), category: 'nuts', subcategory: '' }]
+                    categories: normalizedCategories || [{ id: Date.now(), category: 'necklaces', subcategory: '' }]
                 });
             }
         }
@@ -381,37 +373,7 @@ const ProductFormPage = () => {
                             </div>
                         </div>
 
-                        {/* Nutrition Section */}
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-[10px] font-black text-footerBg uppercase tracking-[0.2em]">Nutrition (Per 100g)</h3>
-                                <button type="button" onClick={() => addItem('nutrition', { label: '', value: '' })} className="text-[9px] font-black text-primary uppercase">+ Add Field</button>
-                            </div>
-                            <div className="space-y-3">
-                                {Array.isArray(formData.nutrition) && formData.nutrition.map((nut, idx) => (
-                                    <div key={idx} className="flex gap-2 items-center">
-                                        <input
-                                            placeholder="Label (e.g. Energy)"
-                                            value={nut.label}
-                                            onChange={(e) => updateItem('nutrition', idx, 'label', e.target.value)}
-                                            className="w-1/3 bg-gray-50 border border-transparent rounded-xl p-3 text-xs font-bold outline-none focus:bg-white focus:border-primary transition-all"
-                                        />
-                                        <input
-                                            placeholder="Value (e.g. 500 Kcal)"
-                                            value={nut.value}
-                                            onChange={(e) => updateItem('nutrition', idx, 'value', e.target.value)}
-                                            className="flex-1 bg-gray-50 border border-transparent rounded-xl p-3 text-xs font-bold outline-none focus:bg-white focus:border-primary transition-all"
-                                        />
-                                        <button type="button" onClick={() => removeItem('nutrition', idx)} className="text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
-                                    </div>
-                                ))}
-                                {(!Array.isArray(formData.nutrition) || formData.nutrition.length === 0) && (
-                                    <div className="text-center py-6 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No nutrition data added</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+
 
                         {/* Pack Contents Section (For Combo Products) */}
                         <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">

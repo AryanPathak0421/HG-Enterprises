@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../../../utils/api';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 
 const subcategoryFallbackImages = {
     'rings': {
@@ -34,6 +34,35 @@ const subcategoryFallbackImages = {
 const getSubcategoryImage = (sub, catName) => {
     const catKey = catName?.trim().toLowerCase() || '';
     const subKey = sub.name?.trim().toLowerCase() || '';
+
+    // Check if subcategory is related to tools, calibration, measurement, polishing, optics, cutting
+    const isToolsRelated = catKey.includes('tool') || 
+                          subKey.includes('tool') || 
+                          subKey.includes('measurement') || 
+                          subKey.includes('optics') || 
+                          subKey.includes('cutting') || 
+                          subKey.includes('polishing') ||
+                          subKey.includes('forging') ||
+                          subKey.includes('setting');
+
+    if (isToolsRelated) {
+        if (subKey.includes('measurement')) {
+            return 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=600&auto=format&fit=crop';
+        }
+        if (subKey.includes('optics') || subKey.includes('lens')) {
+            return 'https://images.unsplash.com/photo-1576086213369-97a306d36557?q=80&w=600&auto=format&fit=crop';
+        }
+        if (subKey.includes('polishing') || subKey.includes('refinement')) {
+            return 'https://images.unsplash.com/photo-1581092162384-8987c1d64718?q=80&w=600&auto=format&fit=crop';
+        }
+        if (subKey.includes('cutting') || subKey.includes('piercing')) {
+            return 'https://images.unsplash.com/photo-1534224039826-c7a0eda0e6b3?q=80&w=600&auto=format&fit=crop';
+        }
+        if (subKey.includes('forging') || subKey.includes('setting')) {
+            return 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?q=80&w=600&auto=format&fit=crop';
+        }
+        return 'https://images.unsplash.com/photo-1534224039826-c7a0eda0e6b3?q=80&w=600&auto=format&fit=crop';
+    }
 
     // For rings, ALWAYS prioritize our hand-curated, premium luxury ring images to ensure maximum context-appropriate visual elegance
     if (catKey === 'rings' || catKey === 'ring') {
@@ -80,6 +109,7 @@ const getSubcategoryImage = (sub, catName) => {
 
 const CollectionSubcategories = () => {
     const { categoryId } = useParams();
+    const navigate = useNavigate();
     const [category, setCategory] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -112,6 +142,17 @@ const CollectionSubcategories = () => {
 
     return (
         <div className="min-h-screen bg-white">
+            {/* Elegant minimalist Back Button */}
+            <div className="max-w-4xl mx-auto px-6 pt-6 flex justify-start">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-black text-zinc-400 hover:text-black uppercase tracking-widest transition-all group"
+                >
+                    <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+                    <span>Back</span>
+                </button>
+            </div>
+
             {/* Elegant Compact Header */}
             <header className="pt-3 pb-1 px-6 text-center border-b border-gray-100/80 max-w-4xl mx-auto">
                 <motion.p
@@ -138,56 +179,87 @@ const CollectionSubcategories = () => {
             </header>
 
             {/* Subcategory Grid - Compact & Elegant */}
-            <section className="container mx-auto px-4 sm:px-6 lg:px-12 py-4 md:py-5">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
-                    {category.subcategories && category.subcategories.length > 0 ? (
-                        category.subcategories.filter(sub => sub.status !== 'Hidden').map((sub, idx) => {
-                            const imageUrl = getSubcategoryImage(sub, categoryId);
-                            return (
-                                <motion.div
-                                    key={idx}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: idx * 0.05 }}
-                                    className="group"
-                                >
-                                    <Link to={`/shop?category=${category.name.toLowerCase()}&subcategory=${sub.name.toLowerCase()}`} className="block relative">
-                                        {/* Premium Asymmetric Corner Image Container (Sharp on one side, rounded on the other) */}
-                                        <div className="aspect-[4/5] overflow-hidden bg-gray-50 relative border border-gray-100/80 shadow-md rounded-tl-2xl rounded-br-2xl md:rounded-tl-[2.5rem] md:rounded-br-[2.5rem] rounded-tr-none rounded-bl-none transition-all duration-700 group-hover:shadow-2xl group-hover:scale-[1.01]">
-                                            <img
-                                                src={imageUrl}
-                                                alt={sub.name}
-                                                className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
-                                                crossOrigin="anonymous"
-                                            />
-                                            <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+            {(() => {
+                let subcategoriesToRender = category.subcategories || [];
+                const isToolsCategory = category.name?.toLowerCase().includes('tool') || category.id?.toLowerCase().includes('tool');
+                if (subcategoriesToRender.length === 0 && isToolsCategory) {
+                    subcategoriesToRender = [
+                        {
+                            name: "Measurement & Calibration",
+                            image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=600&auto=format&fit=crop",
+                            path: "measurement"
+                        },
+                        {
+                            name: "Precision Cutting & Piercing",
+                            image: "https://images.unsplash.com/photo-1534224039826-c7a0eda0e6b3?q=80&w=600&auto=format&fit=crop",
+                            path: "cutting"
+                        },
+                        {
+                            name: "Polishing & Refinement",
+                            image: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?q=80&w=600&auto=format&fit=crop",
+                            path: "polishing"
+                        },
+                        {
+                            name: "Setting & Forging",
+                            image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?q=80&w=600&auto=format&fit=crop",
+                            path: "setting"
+                        }
+                    ];
+                }
 
-                                            {/* Hover Overlay Text */}
-                                            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-3 group-hover:translate-y-0">
-                                                <span className="text-white text-[8px] font-black tracking-[0.3em] uppercase">Show Collection</span>
-                                                <ChevronRight className="text-white w-3 h-3" />
-                                            </div>
-                                        </div>
+                return (
+                    <section className="container mx-auto px-4 sm:px-6 lg:px-12 py-4 md:py-5">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+                            {subcategoriesToRender && subcategoriesToRender.length > 0 ? (
+                                subcategoriesToRender.filter(sub => sub.status !== 'Hidden').map((sub, idx) => {
+                                    const imageUrl = getSubcategoryImage(sub, categoryId);
+                                    return (
+                                        <motion.div
+                                            key={idx}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            whileInView={{ opacity: 1, y: 0 }}
+                                            viewport={{ once: true }}
+                                            transition={{ delay: idx * 0.05 }}
+                                            className="group"
+                                        >
+                                            <Link to={`/shop?category=${category.name.toLowerCase()}&subcategory=${sub.name.toLowerCase()}`} className="block relative">
+                                                {/* Premium Asymmetric Corner Image Container (Sharp on one side, rounded on the other) */}
+                                                <div className="aspect-[4/5] overflow-hidden bg-gray-50 relative border border-gray-100/80 shadow-md rounded-tl-2xl rounded-br-2xl md:rounded-tl-[2.5rem] md:rounded-br-[2.5rem] rounded-tr-none rounded-bl-none transition-all duration-700 group-hover:shadow-2xl group-hover:scale-[1.01]">
+                                                    <img
+                                                        src={imageUrl}
+                                                        alt={sub.name}
+                                                        className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
+                                                        crossOrigin="anonymous"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
 
-                                        {/* Minimalist Label */}
-                                        <div className="mt-3 text-center">
-                                            <h3 className="font-serif text-base md:text-lg lg:text-xl text-black italic group-hover:text-gold transition-colors duration-500 lowercase underline-offset-8 decoration-gold/0 group-hover:decoration-gold/100 leading-tight">
-                                                {sub.name}
-                                            </h3>
-                                            <p className="mt-1 text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-[0.4em]">Essential Curation</p>
-                                        </div>
-                                    </Link>
-                                </motion.div>
-                            );
-                        })
-                    ) : (
-                        <div className="col-span-full py-16 text-center text-gray-300 font-serif italic text-xs tracking-widest uppercase">
-                            Architecture Pending Finalization
+                                                    {/* Hover Overlay Text */}
+                                                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-3 group-hover:translate-y-0">
+                                                        <span className="text-white text-[8px] font-black tracking-[0.3em] uppercase">Show Collection</span>
+                                                        <ChevronRight className="text-white w-3 h-3" />
+                                                    </div>
+                                                </div>
+
+                                                {/* Minimalist Label */}
+                                                <div className="mt-3 text-center">
+                                                    <h3 className="font-serif text-base md:text-lg lg:text-xl text-black italic group-hover:text-gold transition-colors duration-500 lowercase underline-offset-8 decoration-gold/0 group-hover:decoration-gold/100 leading-tight">
+                                                        {sub.name}
+                                                    </h3>
+                                                    <p className="mt-1 text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-[0.4em]">Essential Curation</p>
+                                                </div>
+                                            </Link>
+                                        </motion.div>
+                                    );
+                                })
+                            ) : (
+                                <div className="col-span-full py-16 text-center text-gray-300 font-serif italic text-xs tracking-widest uppercase">
+                                    Architecture Pending Finalization
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
-            </section>
+                    </section>
+                );
+            })()}
 
             {/* Bottom Accent */}
             <div className="py-10 flex justify-center">

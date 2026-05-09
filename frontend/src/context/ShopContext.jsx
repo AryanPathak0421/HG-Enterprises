@@ -391,6 +391,48 @@ export const ShopProvider = ({ children }) => {
         }
     };
 
+    const getProductById = useCallback((id) => {
+        return products.find(p => p.id === id || p._id === id);
+    }, [products]);
+
+    const addProduct = async (productData) => {
+        try {
+            const res = await api.post('/products', productData);
+            const newProduct = { ...res.data, id: res.data._id || res.data.id };
+            if (newProduct.variants && newProduct.variants.length > 0) {
+                newProduct.price = newProduct.variants[0].price || 0;
+                newProduct.originalPrice = newProduct.variants[0].mrp || newProduct.variants[0].price || 0;
+                newProduct.stock = newProduct.variants[0].stock || 0;
+            }
+            setProducts(prev => [newProduct, ...prev]);
+            showNotification('Product added successfully!');
+            return newProduct;
+        } catch (error) {
+            console.error('Error adding product:', error);
+            showNotification('Failed to add product');
+            return null;
+        }
+    };
+
+    const updateProduct = async (id, productData) => {
+        try {
+            const res = await api.put(`/products/${id}`, productData);
+            const updatedProduct = { ...res.data, id: res.data._id || res.data.id };
+            if (updatedProduct.variants && updatedProduct.variants.length > 0) {
+                updatedProduct.price = updatedProduct.variants[0].price || 0;
+                updatedProduct.originalPrice = updatedProduct.variants[0].mrp || updatedProduct.variants[0].price || 0;
+                updatedProduct.stock = updatedProduct.variants[0].stock || 0;
+            }
+            setProducts(prev => prev.map(p => (p.id === id || p._id === id) ? updatedProduct : p));
+            showNotification('Product updated successfully!');
+            return updatedProduct;
+        } catch (error) {
+            console.error('Error updating product:', error);
+            showNotification('Failed to update product');
+            return null;
+        }
+    };
+
     const deleteProduct = async (id) => {
         try {
             await api.delete(`/products/${id}`);
@@ -446,6 +488,7 @@ export const ShopProvider = ({ children }) => {
             createTicket, toggleMenu, toggleSearch, getActiveCoupons, showNotification,
             homepageSections, updateSection, toggleUserStatus, updateCategory, deleteCategory,
             createCoupon, updateCoupon, deleteCoupon, deleteProduct, toggleProductStatus,
+            getProductById, addProduct, updateProduct,
             getOrderById, updateOrderStatus, getReturns, userReviews,
             refreshOrders: fetchPrivateData
         }}>

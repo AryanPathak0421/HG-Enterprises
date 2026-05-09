@@ -157,6 +157,34 @@ const settingsSchema = new mongoose.Schema({
                 { id: 3, url: 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584' }
             ]
         }
+    },
+
+    // PDF Brochure Settings (for Machines & Tools product datasheets)
+    pdfBrochure: {
+        type: {
+            companyName: { type: String, default: 'HARSHAD GAURI ENTERPRISES' },
+            companyTagline: { type: String, default: 'PRECISION MACHINERY & TOOLING SOLUTIONS' },
+            address: { type: String, default: '45/2, Golden Plaza, Business District, Mumbai - 400 001' },
+            phone: { type: String, default: '+91 022 4028 3883 / 022 4028 3885' },
+            email: { type: String, default: 'sales@hgenterprises.com' },
+            website: { type: String, default: 'www.hgenterprises.com' },
+            footerBgColor: { type: String, default: '#8B4356' },
+            featuresHeading: { type: String, default: 'KEY FEATURES' },
+            certificationText: { type: String, default: 'ISO 9001:2015 Certified' },
+            footerDisclaimer: { type: String, default: 'This is an authentic technical brochure of Harshad Gauri Enterprises.' }
+        },
+        default: {
+            companyName: 'HARSHAD GAURI ENTERPRISES',
+            companyTagline: 'PRECISION MACHINERY & TOOLING SOLUTIONS',
+            address: '45/2, Golden Plaza, Business District, Mumbai - 400 001',
+            phone: '+91 022 4028 3883 / 022 4028 3885',
+            email: 'sales@hgenterprises.com',
+            website: 'www.hgenterprises.com',
+            footerBgColor: '#8B4356',
+            featuresHeading: 'KEY FEATURES',
+            certificationText: 'ISO 9001:2015 Certified',
+            footerDisclaimer: 'This is an authentic technical brochure of Harshad Gauri Enterprises.'
+        }
     }
 }, { timestamps: true });
 
