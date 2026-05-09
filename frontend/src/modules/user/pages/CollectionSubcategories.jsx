@@ -64,6 +64,30 @@ const getSubcategoryImage = (sub, catName) => {
         return 'https://images.unsplash.com/photo-1534224039826-c7a0eda0e6b3?q=80&w=600&auto=format&fit=crop';
     }
 
+    const isMachineRelated = catKey.includes('machine') || 
+                            subKey.includes('machine') || 
+                            subKey.includes('laser') || 
+                            subKey.includes('welding') || 
+                            subKey.includes('casting') || 
+                            subKey.includes('printer') || 
+                            subKey.includes('refining');
+
+    if (isMachineRelated) {
+        if (subKey.includes('laser') || subKey.includes('welding')) {
+            return 'https://images.unsplash.com/photo-1581092162384-8987c1d64718?q=80&w=600&auto=format&fit=crop';
+        }
+        if (subKey.includes('casting') || subKey.includes('vacuum')) {
+            return 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=600&auto=format&fit=crop';
+        }
+        if (subKey.includes('printer') || subKey.includes('3d')) {
+            return 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?q=80&w=600&auto=format&fit=crop';
+        }
+        if (subKey.includes('refining') || subKey.includes('furnace')) {
+            return 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?q=80&w=600&auto=format&fit=crop';
+        }
+        return 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=600&auto=format&fit=crop';
+    }
+
     // For rings, ALWAYS prioritize our hand-curated, premium luxury ring images to ensure maximum context-appropriate visual elegance
     if (catKey === 'rings' || catKey === 'ring') {
         if (subcategoryFallbackImages['rings'][subKey]) {
@@ -182,6 +206,8 @@ const CollectionSubcategories = () => {
             {(() => {
                 let subcategoriesToRender = category.subcategories || [];
                 const isToolsCategory = category.name?.toLowerCase().includes('tool') || category.id?.toLowerCase().includes('tool');
+                const isMachinesCategory = category.name?.toLowerCase().includes('machine') || category.id?.toLowerCase().includes('machine');
+                
                 if (subcategoriesToRender.length === 0 && isToolsCategory) {
                     subcategoriesToRender = [
                         {
@@ -203,6 +229,29 @@ const CollectionSubcategories = () => {
                             name: "Setting & Forging",
                             image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?q=80&w=600&auto=format&fit=crop",
                             path: "setting"
+                        }
+                    ];
+                } else if (subcategoriesToRender.length === 0 && isMachinesCategory) {
+                    subcategoriesToRender = [
+                        {
+                            name: "Laser Welding Systems",
+                            image: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?q=80&w=600&auto=format&fit=crop",
+                            path: "laser-welding"
+                        },
+                        {
+                            name: "Fiber Laser Engravers",
+                            image: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?q=80&w=600&auto=format&fit=crop",
+                            path: "fiber-laser"
+                        },
+                        {
+                            name: "Induction Casting Units",
+                            image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=600&auto=format&fit=crop",
+                            path: "induction-casting"
+                        },
+                        {
+                            name: "3D Wax Printing",
+                            image: "https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?q=80&w=600&auto=format&fit=crop",
+                            path: "3d-printing"
                         }
                     ];
                 }

@@ -847,21 +847,27 @@ const ProductDetails = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-white p-3.5 rounded-none border border-[#F5E6E8] shadow-sm space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <FileText className="w-5.5 h-5.5 text-red-600 fill-red-50/30" strokeWidth={1.8} />
-                                    <h4 className="text-[11.5px] font-black uppercase tracking-[0.2em] text-zinc-800">TECHNICAL DATASHEET</h4>
+                            <div className="bg-gradient-to-br from-white to-[#FDF5F6] p-4 rounded-3xl border border-[#F5E6E8] shadow-sm group transition-all duration-300 hover:shadow-md">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 duration-500">
+                                            <FileText className="w-6 h-6 text-red-600" strokeWidth={1.5} />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-zinc-800">TECHNICAL DATASHEET</h4>
+                                            <p className="text-[9px] font-medium text-zinc-400 leading-tight max-w-[200px]">
+                                                Manual, specs, and blueprints (PDF).
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleDownloadPDF}
+                                        className="h-11 px-6 bg-[#8B4356] hover:bg-[#7a394b] text-white rounded-2xl font-black uppercase tracking-[.2em] text-[8.5px] transition-all duration-300 flex items-center justify-center gap-2 shadow-sm active:scale-95 group-hover:translate-y-[-2px]"
+                                    >
+                                        <Download className="w-3.5 h-3.5" />
+                                        Download PDF
+                                    </button>
                                 </div>
-                                <p className="text-[9.5px] font-medium text-zinc-500 leading-relaxed font-assistant normal-case">
-                                    Download the complete user manual, technical specifications, and mechanical blueprints of this product.
-                                </p>
-                                <button
-                                    onClick={handleDownloadPDF}
-                                    className="w-full h-10 bg-[#8B4356] hover:bg-[#7a394b] text-white rounded-none font-black uppercase tracking-[.25em] text-[8.5px] transition-all duration-300 flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-98"
-                                >
-                                    <FileText className="w-4 h-4 fill-white/10" />
-                                    Download Datasheet (PDF)
-                                </button>
                             </div>
                         )}
 

@@ -719,7 +719,7 @@ const Navbar = () => {
             </AnimatePresence>
 
             {/* Bottom Nav (Mobile) */}
-            <div className="md:hidden fixed bottom-6 left-6 right-6 h-16 bg-white border border-gray-100 rounded-2xl flex items-center justify-around z-[100] shadow-[0_10px_30px_rgba(0,0,0,0.1)] px-4">
+            <div className={`md:hidden fixed ${location.pathname.startsWith('/product/') ? 'bottom-20' : 'bottom-6'} left-6 right-6 h-16 bg-white border border-gray-100 rounded-2xl flex items-center justify-around z-[120] shadow-[0_10px_30px_rgba(0,0,0,0.1)] px-4`}>
                 <Link to="/" aria-label="Go to home" className="flex flex-col items-center gap-1 group">
                     <Home className="w-5 h-5 text-gray-400 group-active:scale-90 transition-all group-[.active]:text-primary" />
                     <span className="text-[8px] font-bold uppercase tracking-tighter text-gray-400">Home</span>

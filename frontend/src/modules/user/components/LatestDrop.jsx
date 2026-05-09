@@ -56,52 +56,60 @@ const LatestDrop = () => {
                     <div className="h-[1px] w-12 bg-white/40 mx-auto mt-2"></div>
                 </div>
 
-                {/* Unified Premium Infinite Marquee Track (Cards side-by-side, no overlaps, fully visible) */}
-                <div className="marquee-wrapper my-4 md:my-8">
-                    <div className="marquee-track">
-                        {/* Render twice for seamless, continuous infinite rotation loop */}
-                        {[...finalItems, ...finalItems].map((item, index) => (
-                            <div
-                                key={`${item.id}-marquee-${index}`}
-                                className="w-[195px] md:w-[280px] h-[290px] md:h-[400px] shrink-0"
-                            >
-                                <Link to={item.path} className="block w-full h-full">
-                                    <div className="relative w-full h-full rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-2xl group border border-white/10 bg-black/50 backdrop-blur-sm hover:border-gold/40 hover:scale-[1.03] transition-all duration-500">
-                                        
-                                        {/* Background Image */}
-                                        <img
-                                            src={item.image}
-                                            alt={item.name}
-                                            className="absolute inset-0 w-full h-full object-cover transform duration-1000 group-hover:scale-110"
-                                        />
-
-                                        {/* Luxury Dark Gradient Overlay */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/25 transition-opacity duration-300 group-hover:from-black/100"></div>
-
-                                        {/* Content Centered at Bottom */}
-                                        <div className="absolute inset-x-0 bottom-0 p-4 md:p-6 pb-6 md:pb-8 flex flex-col items-center justify-end text-center z-10">
+                {/* 3D Curved Carousel Track */}
+                <div className="carousel-3d-container">
+                    <div className="carousel-3d-track">
+                        {finalItems.map((item, index) => {
+                            const angle = index * (360 / finalItems.length);
+                            // Adjust radius based on screen size for optimal curvature
+                            const radius = window.innerWidth < 768 ? 260 : 480;
+                            
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="carousel-3d-item"
+                                    style={{ 
+                                        transform: `rotateY(${angle}deg) translateZ(${radius}px)` 
+                                    }}
+                                >
+                                    <Link to={item.path} className="block w-full h-full">
+                                        <div className="relative w-full h-full rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-2xl group border border-white/10 bg-black/50 backdrop-blur-sm hover:border-[#8B4356]/40 hover:scale-[1.05] transition-all duration-500">
                                             
-                                            {/* Product Title */}
-                                            <h3 className="font-serif text-white text-[11px] md:text-[14px] uppercase tracking-[0.12em] md:tracking-[0.15em] font-medium leading-relaxed line-clamp-2 px-1">
-                                                {item.name}
-                                            </h3>
+                                            {/* Background Image */}
+                                            <img
+                                                src={item.image}
+                                                alt={item.name}
+                                                className="absolute inset-0 w-full h-full object-cover transform duration-1000 group-hover:scale-110"
+                                            />
 
-                                            {/* Price Tag */}
-                                            <span className="text-[10px] md:text-sm text-white/80 font-serif tracking-widest mt-1 block">
-                                                {item.price}
-                                            </span>
+                                            {/* Luxury Dark Gradient Overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/25 transition-opacity duration-300 group-hover:from-black/100"></div>
 
-                                            {/* Explore CTA with elegant side lines */}
-                                            <div className="flex items-center justify-center gap-2.5 mt-3.5 w-full">
-                                                <span className="w-5 md:w-8 h-[0.5px] bg-white/30"></span>
-                                                <span className="text-[8px] md:text-[10px] font-bold text-[#FDF1F2] tracking-[0.25em] uppercase font-serif">Explore</span>
-                                                <span className="w-5 md:w-8 h-[0.5px] bg-white/30"></span>
+                                            {/* Content Centered at Bottom */}
+                                            <div className="absolute inset-x-0 bottom-0 p-4 md:p-6 pb-6 md:pb-8 flex flex-col items-center justify-end text-center z-10">
+                                                
+                                                {/* Product Title */}
+                                                <h3 className="font-serif text-white text-[11px] md:text-[14px] uppercase tracking-[0.12em] md:tracking-[0.15em] font-medium leading-relaxed line-clamp-2 px-1">
+                                                    {item.name}
+                                                </h3>
+
+                                                {/* Price Tag */}
+                                                <span className="text-[10px] md:text-sm text-white/80 font-serif tracking-widest mt-1 block">
+                                                    {item.price}
+                                                </span>
+
+                                                {/* Explore CTA with elegant side lines */}
+                                                <div className="flex items-center justify-center gap-2.5 mt-3.5 w-full">
+                                                    <span className="w-5 md:w-8 h-[0.5px] bg-white/30"></span>
+                                                    <span className="text-[8px] md:text-[10px] font-bold text-[#FDF1F2] tracking-[0.25em] uppercase font-serif">Explore</span>
+                                                    <span className="w-5 md:w-8 h-[0.5px] bg-white/30"></span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </Link>
-                            </div>
-                        ))}
+                                    </Link>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
