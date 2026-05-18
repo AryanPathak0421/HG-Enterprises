@@ -7,6 +7,7 @@
     --font-body: 'Inter', sans-serif;
     --font-lato: 'Lato', sans-serif;
     --font-assistant: 'Assistant', sans-serif;
+    --font-mulish: 'Mulish', sans-serif;
 
     --color-pure-white: #FFFFFF;
     --color-primary: #3E2723;
@@ -177,33 +178,33 @@ body {
 /* 3D Curved Carousel (Latest Drop) */
 .carousel-3d-container {
     perspective: 2000px;
-    height: 450px;
+    height: 350px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: visible;
-    margin: 40px 0;
+    margin: 20px 0;
 }
 
 @media (max-width: 768px) {
     .carousel-3d-container {
-        height: 320px;
-        perspective: 1200px;
+        height: 250px;
+        perspective: 1000px;
     }
 }
 
 .carousel-3d-track {
     position: relative;
-    width: 280px;
-    height: 400px;
+    width: 220px;
+    height: 300px;
     transform-style: preserve-3d;
     animation: rotateCarousel3D 32s linear infinite;
 }
 
 @media (max-width: 768px) {
     .carousel-3d-track {
-        width: 180px;
-        height: 280px;
+        width: 140px;
+        height: 200px;
         animation-duration: 24s;
     }
 }

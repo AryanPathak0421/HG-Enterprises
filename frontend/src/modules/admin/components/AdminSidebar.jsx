@@ -74,6 +74,7 @@ const AdminSidebar = () => {
     const mainMenuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
         { icon: Users, label: 'Users', path: '/admin/users' },
+        { icon: Clock, label: 'Subscriptions', path: '/admin/subscriptions' },
     ];
 
     const secondaryMenuItems = [

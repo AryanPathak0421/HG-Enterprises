@@ -10,6 +10,8 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
     'https://hg-enterprises.vercel.app',
     'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
     'http://localhost:5173', // Common Vite port
     process.env.FRONTEND_URL
 ].filter(Boolean);
@@ -55,6 +57,7 @@ const blogRoutes = require('./routes/blogRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const inventoryReportRoutes = require('./routes/inventoryReportRoutes');
 const suggestionRoutes = require('./routes/suggestionRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 
 const offerRoutes = require('./routes/offerRoutes');
@@ -78,6 +81,7 @@ app.use('/api/blogs', blogRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/inventory-reports', inventoryReportRoutes);
 app.use('/api/suggestions', suggestionRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
 
 

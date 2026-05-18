@@ -62,7 +62,7 @@ const LatestDrop = () => {
                         {finalItems.map((item, index) => {
                             const angle = index * (360 / finalItems.length);
                             // Adjust radius based on screen size for optimal curvature
-                            const radius = window.innerWidth < 768 ? 260 : 480;
+                            const radius = window.innerWidth < 768 ? 200 : 350;
                             
                             return (
                                 <div
@@ -73,7 +73,7 @@ const LatestDrop = () => {
                                     }}
                                 >
                                     <Link to={item.path} className="block w-full h-full">
-                                        <div className="relative w-full h-full rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-2xl group border border-white/10 bg-black/50 backdrop-blur-sm hover:border-[#8B4356]/40 hover:scale-[1.05] transition-all duration-500">
+                                        <div className="relative w-full h-full rounded-[1rem] md:rounded-[1.5rem] overflow-hidden shadow-2xl group border border-white/10 bg-black/50 backdrop-blur-sm hover:border-[#8B4356]/40 hover:scale-[1.05] transition-all duration-500">
                                             
                                             {/* Background Image */}
                                             <img
@@ -82,11 +82,11 @@ const LatestDrop = () => {
                                                 className="absolute inset-0 w-full h-full object-cover transform duration-1000 group-hover:scale-110"
                                             />
 
-                                            {/* Luxury Dark Gradient Overlay */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/25 transition-opacity duration-300 group-hover:from-black/100"></div>
+                                            {/* Luxury Dark Gradient Overlay - Lighter for visibility */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent transition-opacity duration-300 group-hover:from-black/80"></div>
 
                                             {/* Content Centered at Bottom */}
-                                            <div className="absolute inset-x-0 bottom-0 p-4 md:p-6 pb-6 md:pb-8 flex flex-col items-center justify-end text-center z-10">
+                                            <div className="absolute inset-x-0 bottom-0 p-3 md:p-4 pb-4 md:pb-6 flex flex-col items-center justify-end text-center z-10">
                                                 
                                                 {/* Product Title */}
                                                 <h3 className="font-serif text-white text-[11px] md:text-[14px] uppercase tracking-[0.12em] md:tracking-[0.15em] font-medium leading-relaxed line-clamp-2 px-1">

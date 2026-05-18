@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Heart, ShoppingBag, User, Store, Menu, X, Bell, ChevronDown, ChevronRight, Home } from 'lucide-react';
+import { Search, Heart, ShoppingBag, User, Store, Menu, X, Bell, ChevronDown, ChevronRight, Home, Gift, Coins } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 import hgLogo from '../assets/hg_logo_gold.png';
 import hgLogoPremium from '../assets/logo_final.jpg';
@@ -169,6 +169,8 @@ const Navbar = () => {
     const [activeMegaCategory, setActiveMegaCategory] = useState(categories[0]);
     const [hoveredSubCat, setHoveredSubCat] = useState('Rings');
     const [isMegaOpen, setIsMegaOpen] = useState(false);
+    const [isCoinsOpen, setIsCoinsOpen] = useState(false);
+    const [isGiftsOpen, setIsGiftsOpen] = useState(false);
     const [activeSidebarDept, setActiveSidebarDept] = useState(null);
 
     // Sync activeMegaCategory when categories load from the API
@@ -186,7 +188,7 @@ const Navbar = () => {
         <>
             <div className="w-full bg-white z-[100] relative">
                 {/* 1. Top Utility Header - Even more compact */}
-                <div className="hidden md:block bg-gray-50/50 border-b border-gray-100 py-1">
+                <div className="hidden md:block bg-gray-50/50 border-b border-gray-100 py-0.5">
                     <div className="container mx-auto px-6 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                         <div className="flex items-center gap-6">
                             <Link to="/help" className="flex items-center gap-1.5 hover:text-primary cursor-pointer transition-colors">
@@ -214,7 +216,7 @@ const Navbar = () => {
 
                 {/* 2. Main Navigation Bar - Balanced Compactness */}
                 <nav className="w-full bg-black border-b border-white/10 shadow-sm sticky top-0 md:relative z-50">
-                    <div className="w-full flex items-center justify-between h-10 md:h-12 px-4 md:px-8">
+                    <div className="w-full flex items-center justify-between h-8 md:h-10 px-4 md:px-8">
 
                         {/* Logo & Brand Heading - Refined Placement */}
                         <Link to="/" className="flex items-center group flex-shrink-0 gap-2 md:gap-4">
@@ -232,15 +234,15 @@ const Navbar = () => {
                                 <img
                                     src={hgLogoPremium}
                                     alt="HG"
-                                    className="h-[32px] md:h-[48px] w-auto object-contain"
+                                    className="h-[24px] md:h-[36px] w-auto object-contain"
                                 />
                             </motion.div>
 
-                            <div className="flex flex-col">
-                                <span className="text-white font-serif text-[12px] md:text-lg font-light tracking-wider leading-none group-hover:text-[#EBCDD0] transition-colors">
+                            <div className="flex flex-col font-serif">
+                                <span className="text-white text-[12px] md:text-[16px] font-medium tracking-wider leading-none group-hover:text-[#EBCDD0] transition-colors">
                                     Harshad Gauri
                                 </span>
-                                <span className="text-[#FDF5F6]/80 font-serif italic text-[7px] md:text-[9px] tracking-[0.25em] pb-1 transition-colors group-hover:text-white">
+                                <span className="text-[#FDF5F6]/80 italic text-[8px] md:text-[9px] tracking-normal pb-0.5 transition-colors group-hover:text-white lowercase">
                                     enterprises
                                 </span>
                             </div>
@@ -337,9 +339,9 @@ const Navbar = () => {
                     </AnimatePresence>
 
                     {/* 3. Secondary Navigation Links Row - Ultra Compact & Clean */}
-                    <div className="hidden md:block bg-white border-t border-gray-100 py-1 shadow-sm relative">
-                        <div className="container mx-auto px-6 flex justify-center items-center gap-10">
-                            <Link to="/" className="text-[10px] font-serif font-bold text-black hover:text-primary transition-all tracking-[0.3em] uppercase border-b-2 border-transparent hover:border-primary pb-0.5">
+                    <div className="hidden md:block bg-white border-t border-gray-100 py-0.5 shadow-sm relative">
+                        <div className="container mx-auto px-6 flex justify-center items-center gap-8 font-['Poppins',_sans-serif]">
+                            <Link to="/" className="text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-primary transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-primary pb-0.5">
                                 Home
                             </Link>
 
@@ -351,17 +353,17 @@ const Navbar = () => {
                                 <button
                                     aria-label="Open categories menu"
                                     onClick={() => setIsMegaOpen(!isMegaOpen)}
-                                    className="flex items-center gap-1 text-[11px] font-serif font-bold text-black hover:text-primary transition-all tracking-[0.3em] uppercase border-b-2 border-transparent hover:border-primary pb-0.5 cursor-pointer"
+                                    className="flex items-center gap-1 text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-primary transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-primary pb-0.5 cursor-pointer"
                                 >
                                     Categories
                                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isMegaOpen ? 'rotate-180' : ''}`} />
                                 </button>
 
-                                <div className={`absolute left-0 w-full top-full transition-all duration-500 z-[100] bg-gradient-to-r from-[#FFF5F6] via-[#FFF9FA] to-[#FFF0F3] border-b border-pink-100 shadow-2xl ${isMegaOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+                                <div className={`absolute left-0 w-full top-full transition-all duration-500 z-[100] bg-gradient-to-r from-[#FFF5F6] via-[#FFF9FA] to-[#FFF0F3] border-b border-pink-100 shadow-2xl ${isMegaOpen ? 'opacity-100 visible' : 'opacity-0 invisible'} font-mulish`}>
                                     <div className="flex flex-col min-h-[260px] w-full">
 
                                         {/* Step 1: Main Category Selection Bar - Grouped by Department */}
-                                        <div className="bg-pink-100/20 border-b border-pink-100/40 px-10 py-2.5 flex justify-center gap-16">
+                                        <div className="bg-pink-100/20 border-b border-pink-100/40 px-10 py-2.5 flex justify-center gap-16 font-mulish">
                                             {['Jewellery', 'Tools', 'Machines'].map((dept) => (
                                                 <button
                                                     key={dept}
@@ -373,7 +375,7 @@ const Navbar = () => {
                                                         }
                                                     }}
                                                     aria-label={`View ${dept} department`}
-                                                    className={`text-[11px] font-serif font-bold tracking-[0.25em] uppercase transition-all pb-1 border-b-2 ${(activeMegaCategory?.department || 'Jewellery').toLowerCase() === dept.toLowerCase() ? 'text-primary border-primary' : 'text-gray-400 border-transparent hover:text-black'}`}
+                                                    className={`text-[11px] font-mulish font-bold tracking-[0.25em] uppercase transition-all pb-1 border-b-2 ${(activeMegaCategory?.department || 'Jewellery').toLowerCase() === dept.toLowerCase() ? 'text-primary border-primary' : 'text-gray-400 border-transparent hover:text-black'}`}
                                                 >
                                                     {dept}
                                                 </button>
@@ -390,7 +392,7 @@ const Navbar = () => {
                                                     transition={{ duration: 0.3 }}
                                                     className="w-full"
                                                 >
-                                                     <div className="flex w-full bg-transparent min-h-[350px] p-6 text-black font-sans">
+                                                     <div className="flex w-full bg-transparent min-h-[350px] p-6 text-black font-mulish">
                                                          {/* Left Sub-Sidebar: main categories with micro-indicators */}
                                                          <div className="w-[20%] border-r border-pink-100/60 pr-6 flex flex-col gap-2">
                                                              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Category Selection</h3>
@@ -404,7 +406,7 @@ const Navbar = () => {
                                                                              setIsMegaOpen(false);
                                                                              navigate(`/collection/${cat.id || cat.name.toLowerCase()}`);
                                                                          }}
-                                                                         className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-300 flex items-center justify-between text-xs font-serif font-semibold tracking-wider ${hoveredSubCat?.toLowerCase() === cat.name?.toLowerCase() ? 'bg-pink-100/50 text-primary pl-4' : 'text-gray-700 hover:bg-pink-50/30'}`}
+                                                                         className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-300 flex items-center justify-between text-xs font-mulish font-bold tracking-wider ${hoveredSubCat?.toLowerCase() === cat.name?.toLowerCase() ? 'bg-pink-100/50 text-primary pl-4' : 'text-gray-700 hover:bg-pink-50/30'}`}
                                                                      >
                                                                          <span className="uppercase">{cat.name}</span>
                                                                          <ChevronRight className={`w-3.5 h-3.5 transition-transform ${hoveredSubCat?.toLowerCase() === cat.name?.toLowerCase() ? 'translate-x-0.5 text-primary' : 'text-gray-300'}`} />
@@ -426,7 +428,7 @@ const Navbar = () => {
                                                                  >
                                                                      {/* Column 1: Popular Types */}
                                                                      <div>
-                                                                         <h4 className="text-[11px] font-serif font-black uppercase tracking-[0.2em] text-primary mb-4 pb-2 border-b border-pink-100">
+                                                                         <h4 className="text-[11px] font-mulish font-black uppercase tracking-[0.2em] text-primary mb-4 pb-2 border-b border-pink-100">
                                                                              Popular {hoveredSubCat} Types
                                                                          </h4>
                                                                          <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
@@ -446,7 +448,7 @@ const Navbar = () => {
                                                                                  <Link
                                                                                      to="/shop?category=RINGS"
                                                                                      onClick={() => setIsMegaOpen(false)}
-                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-4 py-2 font-serif text-[10px] font-bold uppercase tracking-wider transition-all"
+                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-4 py-2 font-mulish text-[10px] font-bold uppercase tracking-wider transition-all"
                                                                                  >
                                                                                      VIEW ALL {products?.filter(p => p.category?.toLowerCase() === 'rings').length || '2303'} RING DESIGNS
                                                                                  </Link>
@@ -457,7 +459,7 @@ const Navbar = () => {
                                                                                  <Link
                                                                                      to="/shop?category=Tools"
                                                                                      onClick={() => setIsMegaOpen(false)}
-                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-4 py-2 font-serif text-[10px] font-bold uppercase tracking-wider transition-all"
+                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-4 py-2 font-mulish text-[10px] font-bold uppercase tracking-wider transition-all"
                                                                                  >
                                                                                      VIEW ALL PRECISION TOOLS
                                                                                  </Link>
@@ -468,7 +470,7 @@ const Navbar = () => {
                                                                                  <Link
                                                                                      to="/shop?category=Machines"
                                                                                      onClick={() => setIsMegaOpen(false)}
-                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-4 py-2 font-serif text-[10px] font-bold uppercase tracking-wider transition-all"
+                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-4 py-2 font-mulish text-[10px] font-bold uppercase tracking-wider transition-all"
                                                                                  >
                                                                                      VIEW ALL SMART MACHINES
                                                                                  </Link>
@@ -478,7 +480,7 @@ const Navbar = () => {
 
                                                                      {/* Column 2: Price Range */}
                                                                      <div>
-                                                                         <h4 className="text-[11px] font-serif font-black uppercase tracking-[0.2em] text-primary mb-4 pb-2 border-b border-pink-100">
+                                                                         <h4 className="text-[11px] font-mulish font-black uppercase tracking-[0.2em] text-primary mb-4 pb-2 border-b border-pink-100">
                                                                              By Price Range
                                                                          </h4>
                                                                          <div className="flex flex-col gap-2.5">
@@ -497,7 +499,7 @@ const Navbar = () => {
 
                                                                      {/* Column 3: Metals & Stones / Materials & Tech */}
                                                                      <div>
-                                                                         <h4 className="text-[11px] font-serif font-black uppercase tracking-[0.2em] text-primary mb-4 pb-2 border-b border-pink-100">
+                                                                         <h4 className="text-[11px] font-mulish font-black uppercase tracking-[0.2em] text-primary mb-4 pb-2 border-b border-pink-100">
                                                                              By Build & Tech
                                                                          </h4>
                                                                          <div className="flex flex-col gap-3">
@@ -508,7 +510,7 @@ const Navbar = () => {
                                                                                      onClick={() => setIsMegaOpen(false)}
                                                                                      className="group flex flex-col gap-0.5"
                                                                                  >
-                                                                                     <span className="text-[11px] font-semibold text-gray-800 group-hover:text-primary transition-colors">
+                                                                                     <span className="text-[11px] font-semibold text-gray-800 group-hover:text-primary transition-colors font-bold">
                                                                                          {item.label}
                                                                                      </span>
                                                                                      {item.starting && (
@@ -525,7 +527,7 @@ const Navbar = () => {
                                                                      <div className="flex flex-col justify-between">
                                                                          <div>
                                                                              <div className="flex justify-between items-center mb-4 pb-2 border-b border-pink-100">
-                                                                                 <h4 className="text-[11px] font-serif font-black uppercase tracking-[0.2em] text-primary">
+                                                                                 <h4 className="text-[11px] font-mulish font-black uppercase tracking-[0.2em] text-primary">
                                                                                      Browse Collections
                                                                                  </h4>
                                                                                  <Link
@@ -545,7 +547,7 @@ const Navbar = () => {
                                                                                  />
                                                                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
                                                                                      <span className="text-[9px] font-bold text-primary tracking-widest uppercase mb-0.5">Featured Edit</span>
-                                                                                     <h5 className="text-white font-serif italic text-base leading-tight">
+                                                                                     <h5 className="text-white font-mulish italic text-base leading-tight font-medium">
                                                                                          {getCollectionTitle(hoveredSubCat)}
                                                                                      </h5>
                                                                                  </div>
@@ -563,6 +565,197 @@ const Navbar = () => {
                                 </div>
                             </div>
 
+                            {/* Gold Coins Link with Dropdown */}
+                            <div
+                                onMouseEnter={() => setIsCoinsOpen(true)}
+                                onMouseLeave={() => setIsCoinsOpen(false)}
+                                className="relative"
+                            >
+                                <Link
+                                    to="/shop?tag=coin"
+                                    className="text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-[#C5A059] transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-[#C5A059] pb-0.5 flex items-center gap-1 cursor-pointer"
+                                >
+                                    Gold Coins
+                                    <ChevronDown className={`w-3 h-3 transition-transform ${isCoinsOpen ? 'rotate-180' : ''}`} />
+                                </Link>
+
+                                <AnimatePresence>
+                                    {isCoinsOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-[280px] bg-gradient-to-r from-[#FFF5F6] via-[#FFF9FA] to-[#FFF0F3] border border-pink-100 shadow-2xl rounded-xl overflow-hidden z-[110] p-5 grid grid-cols-2 gap-6 text-left"
+                                        >
+                                            {/* Column 1: 24 Kt */}
+                                            <div>
+                                                <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-[#C5A059] mb-3 pb-1 border-b border-pink-100">
+                                                    24 Kt (995)
+                                                </h4>
+                                                <div className="flex flex-col gap-2">
+                                                    {['0.5 gram', '1 gram', '2 gram', '5 gram', '10 gram', '20 gram', '50 gram'].map((weight) => (
+                                                        <Link
+                                                            key={weight}
+                                                            to={`/shop?tag=coin&weight=${weight.replace(' gram', 'g')}`}
+                                                            onClick={() => setIsCoinsOpen(false)}
+                                                            className="text-[10.5px] text-gray-600 hover:text-[#C5A059] transition-all font-medium font-mulish"
+                                                        >
+                                                            {weight}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Column 2: 22 Kt */}
+                                            <div>
+                                                <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-[#C5A059] mb-3 pb-1 border-b border-pink-100">
+                                                    22 Kt (916)
+                                                </h4>
+                                                <div className="flex flex-col gap-2">
+                                                    {['1 gram', '2 gram', '5 gram', '10 gram', '20 gram', '50 gram'].map((weight) => (
+                                                        <Link
+                                                            key={weight}
+                                                            to={`/shop?tag=coin&weight=${weight.replace(' gram', 'g')}`}
+                                                            onClick={() => setIsCoinsOpen(false)}
+                                                            className="text-[10.5px] text-gray-600 hover:text-[#C5A059] transition-all font-medium font-mulish"
+                                                        >
+                                                            {weight}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* Gifts Link with Dropdown */}
+                            <div
+                                onMouseEnter={() => setIsGiftsOpen(true)}
+                                onMouseLeave={() => setIsGiftsOpen(false)}
+                                className="relative"
+                            >
+                                <Link
+                                    to="/shop?tag=gift"
+                                    className="text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-[#3E2723] transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-[#3E2723] pb-0.5 flex items-center gap-1 cursor-pointer"
+                                >
+                                    Gifts
+                                    <ChevronDown className={`w-3 h-3 transition-transform ${isGiftsOpen ? 'rotate-180' : ''}`} />
+                                </Link>
+
+                                <AnimatePresence>
+                                    {isGiftsOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute left-1/2 -translate-x-[40%] top-full mt-1 w-[800px] bg-gradient-to-r from-[#FFF5F6] via-[#FFF9FA] to-[#FFF0F3] border border-pink-100 shadow-2xl rounded-2xl p-6 z-[110] grid grid-cols-4 gap-6 text-left"
+                                        >
+                                            {/* Column 1: Gifts By Occasion */}
+                                            <div>
+                                                <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-[#3E2723] mb-4 pb-1.5 border-b border-pink-100 font-bold">
+                                                    Gifts By Occasion
+                                                </h4>
+                                                <div className="flex flex-col gap-2.5">
+                                                    {['Anniversary', 'Birthday', 'Engagement', 'Wedding'].map((occ) => (
+                                                        <Link
+                                                            key={occ}
+                                                            to={`/shop?tag=gift&subcategory=${occ}`}
+                                                            onClick={() => setIsGiftsOpen(false)}
+                                                            className="text-[10.5px] text-gray-600 hover:text-[#3E2723] transition-all font-medium font-mulish"
+                                                        >
+                                                            {occ}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Column 2: By Price Range */}
+                                            <div>
+                                                <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-[#3E2723] mb-4 pb-1.5 border-b border-pink-100 font-bold">
+                                                    By Price Range
+                                                </h4>
+                                                <div className="flex flex-col gap-2.5">
+                                                    {[
+                                                        { label: 'Below 10,000', min: 0, max: 10000 },
+                                                        { label: 'Between 10k-20k', min: 10000, max: 20000 },
+                                                        { label: 'Between 20k-30k', min: 20000, max: 30000 },
+                                                        { label: 'Between 30k-40k', min: 30000, max: 40000 },
+                                                        { label: 'Between 40k-50k', min: 40000, max: 50000 },
+                                                        { label: '50,000 and above', min: 50000, max: 500000 }
+                                                    ].map((range) => (
+                                                        <Link
+                                                            key={range.label}
+                                                            to={`/shop?tag=gift&minPrice=${range.min}&maxPrice=${range.max}`}
+                                                            onClick={() => setIsGiftsOpen(false)}
+                                                            className="text-[10.5px] text-gray-600 hover:text-[#3E2723] transition-all font-medium font-mulish"
+                                                        >
+                                                            {range.label}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Column 3: Gifts For Special Someone */}
+                                            <div>
+                                                <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-[#3E2723] mb-4 pb-1.5 border-b border-pink-100 font-bold">
+                                                    Gifts For Someone
+                                                </h4>
+                                                <div className="flex flex-col gap-2.5">
+                                                    {[
+                                                        { label: 'For HER', price: 'Rs. 2,861/-', tag: 'women' },
+                                                        { label: 'For HIM', price: 'Rs. 5,820/-', tag: 'men' },
+                                                        { label: 'For SISTER', price: 'Rs. 5,746/-', tag: 'sister' },
+                                                        { label: 'For BROTHER', price: 'Rs. 5,820/-', tag: 'brother' },
+                                                        { label: 'For MOTHER', price: 'Rs. 5,805/-', tag: 'mother' },
+                                                        { label: 'For FATHER', price: 'Rs. 5,820/-', tag: 'father' },
+                                                        { label: 'For FRIENDS', price: 'Rs. 4,221/-', tag: 'friends' }
+                                                    ].map((someone) => (
+                                                        <Link
+                                                            key={someone.label}
+                                                            to={`/shop?tag=${someone.tag}`}
+                                                            onClick={() => setIsGiftsOpen(false)}
+                                                            className="group flex flex-col gap-0.5"
+                                                        >
+                                                            <span className="text-[10.5px] text-gray-800 font-bold font-mulish group-hover:text-[#3E2723] transition-all">
+                                                                {someone.label}
+                                                            </span>
+                                                            <span className="text-[9px] text-gray-400 group-hover:text-[#3E2723]/70 italic transition-all">
+                                                                Starting at {someone.price}
+                                                            </span>
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Column 4: Elegant Gift Card Promotion */}
+                                            <div className="flex flex-col justify-between">
+                                                <div>
+                                                    <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-[#3E2723] mb-4 pb-1.5 border-b border-pink-100 font-bold">
+                                                        Gift Cards
+                                                    </h4>
+                                                    <div className="relative aspect-[1.4] rounded-xl overflow-hidden shadow-lg border border-pink-100 bg-gradient-to-tr from-[#3E2723] via-[#5D4037] to-[#8D6E63] p-4 flex flex-col justify-between group/giftcard cursor-pointer">
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover/giftcard:scale-125 transition-transform duration-700" />
+                                                        <div className="flex justify-between items-start z-10">
+                                                            <span className="text-[10px] font-black tracking-widest text-white/90 font-mulish">HARSHAD GAURI</span>
+                                                            <span className="text-[8px] bg-white/20 text-white font-bold px-1.5 py-0.5 rounded uppercase tracking-wider font-mulish">E-Gift</span>
+                                                        </div>
+                                                        <div className="z-10 mt-6 text-left">
+                                                            <span className="text-[8px] text-white/60 tracking-wider uppercase block mb-1 font-mulish">Available range</span>
+                                                            <span className="text-white text-sm font-bold tracking-wide font-mulish">₹500 - ₹50,000</span>
+                                                        </div>
+                                                        <div className="z-10 flex justify-between items-end border-t border-white/10 pt-2 text-left">
+                                                            <span className="text-[8px] text-white/50 italic font-mulish">Spread Love & Joy</span>
+                                                            <span className="text-[8px] font-bold text-[#FFD54F] hover:underline uppercase tracking-wider font-mulish">Buy Now &gt;&gt;</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
                             {((settings?.navbarLinks && settings.navbarLinks.length > 0) ? settings.navbarLinks : [
                                 { name: "ABOUT", path: "/about" },
                                 { name: "BLOG", path: "/blogs" },
@@ -570,12 +763,14 @@ const Navbar = () => {
                                 { name: "SHOP", path: "/shop" },
                                 { name: "CONTACT US", path: "/help" },
                                 { name: "TRACK ORDER", path: "/profile/orders" }
-                            ]).map((nav, idx) => (
+                            ])
+                            .filter(nav => !["GIFTS", "GOLD COINS"].includes(nav.name.toUpperCase()))
+                            .map((nav, idx) => (
                                 <Link
                                     key={idx}
                                     to={nav.path}
                                     aria-label={`Go to ${nav.name}`}
-                                    className="text-[10px] font-serif font-bold text-black hover:text-primary transition-all tracking-[0.3em] uppercase border-b-2 border-transparent hover:border-primary pb-0.5"
+                                    className="text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-primary transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-primary pb-0.5"
                                 >
                                     {nav.name}
                                 </Link>
@@ -603,14 +798,14 @@ const Navbar = () => {
                             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
                             className="fixed top-0 right-0 h-full w-[320px] bg-[#FFF5F6] z-[120] shadow-2xl overflow-hidden flex flex-col"
                         >
-                            <div className="p-6 border-b border-pink-100/50 flex justify-between items-center bg-white/40">
-                                <span className="font-display text-sm font-black tracking-widest text-black uppercase">Main Menu</span>
+                            <div className="p-6 border-b border-pink-100/50 flex justify-between items-center bg-white/40 font-mulish">
+                                <span className="font-mulish text-sm font-black tracking-widest text-black uppercase">Main Menu</span>
                                 <button aria-label="Close menu" onClick={() => toggleMenu(false)} className="p-2 hover:bg-white rounded-full transition-all hover:rotate-90">
                                     <X className="w-5 h-5 text-black" />
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar font-mulish">
                                 <div className="space-y-1">
                                     {sidebarMenu.mainCategories.map((item, idx) => {
                                         const isDept = ['jewellery', 'machine', 'tools'].includes(item.name.toLowerCase());
@@ -629,7 +824,7 @@ const Navbar = () => {
                                                         onClick={() => setActiveSidebarDept(isOpen ? null : item.name)}
                                                         className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-pink-50/20 group transition-all"
                                                     >
-                                                        <span className={`font-serif text-sm uppercase tracking-widest transition-all ${isOpen ? 'text-primary font-bold' : 'text-gray-800 group-hover:text-primary'}`}>
+                                                        <span className={`font-mulish text-sm uppercase tracking-widest transition-all font-bold ${isOpen ? 'text-primary' : 'text-gray-800 group-hover:text-primary'}`}>
                                                             {item.name}
                                                         </span>
                                                         <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary' : 'text-gray-300 group-hover:text-primary'}`} />
@@ -647,12 +842,12 @@ const Navbar = () => {
                                                                 <div className="flex flex-col gap-1 py-1 border-l-2 border-pink-200/40 pl-4">
                                                                     {deptCats.map((cat) => (
                                                                         <button
-                                                                            key={cat.id || cat._id}
+                                                                             key={cat.id || cat._id}
                                                                             onClick={() => {
                                                                                 toggleMenu(false);
                                                                                 navigate(`/collection/${cat.id || cat.name.toLowerCase()}`);
                                                                             }}
-                                                                            className="w-full text-left py-2 px-3 rounded-lg hover:bg-pink-100/10 text-xs font-serif font-medium tracking-wider text-gray-700 hover:text-primary transition-all uppercase"
+                                                                            className="w-full text-left py-2 px-3 rounded-lg hover:bg-pink-100/10 text-xs font-mulish font-bold tracking-wider text-gray-700 hover:text-primary transition-all uppercase"
                                                                         >
                                                                             {cat.name}
                                                                         </button>
@@ -662,7 +857,7 @@ const Navbar = () => {
                                                                             toggleMenu(false);
                                                                             navigate(item.path);
                                                                         }}
-                                                                        className="w-full text-left py-2 px-3 rounded-lg hover:bg-pink-100/20 text-[9px] font-sans font-bold tracking-widest text-primary transition-all uppercase mt-2 border border-dashed border-pink-200/40 text-center"
+                                                                        className="w-full text-left py-2 px-3 rounded-lg hover:bg-pink-100/20 text-[9px] font-mulish font-black tracking-widest text-primary transition-all uppercase mt-2 border border-dashed border-pink-200/40 text-center"
                                                                     >
                                                                         View All {item.name}
                                                                     </button>
@@ -674,7 +869,7 @@ const Navbar = () => {
                                             );
                                         }
 
-                                        // Fallback for non-department items (like Shop All)
+                                        // Fallback for non-department items (like Shop All, Gifts, Gold Coins)
                                         return (
                                             <Link
                                                 key={idx}
@@ -683,7 +878,7 @@ const Navbar = () => {
                                                 onClick={() => toggleMenu(false)}
                                                 className="flex items-center justify-between p-4 rounded-xl hover:bg-pink-50/20 group transition-all"
                                             >
-                                                <span className="font-serif text-sm uppercase tracking-widest text-gray-800 group-hover:text-primary transition-all">
+                                                <span className="font-mulish text-sm uppercase tracking-widest text-gray-800 group-hover:text-primary transition-all font-bold">
                                                     {item.name}
                                                 </span>
                                                 <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -692,14 +887,14 @@ const Navbar = () => {
                                     })}
                                 </div>
 
-                                <div className="mt-8 pt-6 border-t border-gray-100 space-y-1.5 px-4">
+                                <div className="mt-8 pt-6 border-t border-gray-100 space-y-1.5 px-4 font-mulish">
                                     {sidebarMenu.support.map((item, idx) => (
                                         <Link
                                             key={idx}
                                             to={item.path}
                                             aria-label={`Go to ${item.name}`}
                                             onClick={() => toggleMenu(false)}
-                                            className="block text-[11px] font-serif font-bold uppercase tracking-widest text-gray-700 hover:text-primary hover:translate-x-1.5 transition-all duration-300 py-1.5"
+                                            className="block text-[11px] font-mulish font-bold uppercase tracking-widest text-gray-700 hover:text-primary hover:translate-x-1.5 transition-all duration-300 py-1.5"
                                         >
                                             {item.name}
                                         </Link>
@@ -707,12 +902,12 @@ const Navbar = () => {
                                 </div>
                             </div>
 
-                            <div className="p-6 bg-white/40 border-t border-pink-100/50">
+                            <div className="p-6 bg-white/40 border-t border-pink-100/50 font-mulish">
                                 <Link
                                     to="/login"
                                     aria-label="Proceed to login"
                                     onClick={() => toggleMenu(false)}
-                                    className="w-full bg-black text-white py-4 rounded-xl font-display font-black text-[10px] uppercase tracking-[0.3em] text-center block hover:bg-primary transition-all shadow-lg"
+                                    className="w-full bg-black text-white py-4 rounded-xl font-mulish font-black text-[10px] uppercase tracking-[0.3em] text-center block hover:bg-primary transition-all shadow-lg"
                                 >
                                     Login / Signup
                                 </Link>
@@ -721,7 +916,6 @@ const Navbar = () => {
                     </>
                 )}
             </AnimatePresence>
-
             {/* Bottom Nav (Mobile) - Animated & Compact */}
             {/* Bottom Nav (Mobile) - Animated & Compact */}
             <motion.div 

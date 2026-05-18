@@ -8,7 +8,8 @@ import {
     Heart, ShoppingBag, Star, Share2, Plus, Minus, Truck,
     ShieldCheck, Smile, Gift, ChevronDown, SlidersHorizontal,
     X, Camera, Check, ArrowLeft, ChevronRight, Info,
-    Clock, RefreshCw, Award, Zap, Search, UserCircle, Home, Download, FileText
+    Clock, RefreshCw, Award, Zap, Search, UserCircle, Home, Download, FileText, Sparkles,
+    Percent, Video, RotateCcw, CreditCard, Tag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
@@ -42,6 +43,109 @@ const ProductDetails = () => {
     const [reviewImage, setReviewImage] = useState('');
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [showReviewForm, setShowReviewForm] = useState(false);
+    const [activeReviewIdx, setActiveReviewIdx] = useState(0);
+
+    // 10+1 Monthly Plan states
+    const [showMonthlyPlanModal, setShowMonthlyPlanModal] = useState(false);
+    const [showInquiryForm, setShowInquiryForm] = useState(false);
+    const [monthlyInstallment, setMonthlyInstallment] = useState(5000);
+    const [isSubscribedPlan, setIsSubscribedPlan] = useState(false);
+    const [planForm, setPlanForm] = useState({ name: user?.name || '', email: user?.email || '', phone: '' });
+    const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
+
+    // Sizing state
+    const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
+
+    // Dynamic pincode checking states
+    const [pincodeVal, setPincodeVal] = useState('');
+    const [pincodeStatus, setPincodeStatus] = useState('');
+
+    // Interactive video call modal states
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+    const [videoForm, setVideoForm] = useState({ date: 'Today', time: '11:00 AM', phone: '', name: user?.name || '' });
+    const [isVideoSubmitting, setIsVideoSubmitting] = useState(false);
+
+    // Interactive customization states
+    const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+    const [customPurity, setCustomPurity] = useState('18Kt');
+    const [customDiamond, setCustomDiamond] = useState('SI-JK');
+
+    const handleCheckPincode = () => {
+        if (!pincodeVal) {
+            setPincodeStatus('✕ Please enter a pincode.');
+            return;
+        }
+        if (pincodeVal.length !== 6) {
+            setPincodeStatus('✕ Please enter a valid 6-digit pincode.');
+            return;
+        }
+        setPincodeStatus('✓ Delivery by Sunday, May 17. Cash on Delivery is available!');
+    };
+
+    const handleVideoCallSubmit = (e) => {
+        e.preventDefault();
+        if (!videoForm.phone || videoForm.phone.length < 10) {
+            showNotification({ message: 'Please enter a valid 10-digit mobile number.', type: 'error' });
+            return;
+        }
+        setIsVideoSubmitting(true);
+        setTimeout(() => {
+            setIsVideoSubmitting(false);
+            setIsVideoModalOpen(false);
+            showNotification({ message: `Video call booked successfully for ${videoForm.date} at ${videoForm.time}! We will contact you via WhatsApp.`, type: 'success' });
+        }, 1200);
+    };
+
+    const getCustomizedPrice = (price) => {
+        if (!isJewelleryProduct) return price;
+        let factor = 1.0;
+        if (customPurity === '14Kt') factor -= 0.15;
+        if (customPurity === '22Kt') factor += 0.15;
+        if (customDiamond === 'VS-GH') factor += 0.05;
+        if (customDiamond === 'VVS-EF') factor += 0.10;
+        return Math.round(price * factor);
+    };
+
+    const getProductSummaryLabel = () => {
+        if (!isJewelleryProduct) return '';
+        const subCat = product.subCategory || product.subcategory || product.category || 'Ring';
+        const capitalizedSubCat = subCat.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        
+        let metalWeight = '';
+        let diamondCt = '';
+
+        if (product.specifications && product.specifications.length > 0) {
+            product.specifications.forEach(spec => {
+                const lbl = spec.label.toUpperCase();
+                const val = spec.value;
+                if (lbl.includes('GOLD WEIGHT') || lbl.includes('METAL WEIGHT') || lbl.includes('PRODUCT WEIGHT')) {
+                    metalWeight = val;
+                }
+                if (lbl.includes('DIAMOND WEIGHT') || lbl.includes('TOTAL DIAMOND') || lbl.includes('TOTAL WEIGHT') || lbl.includes('CT')) {
+                    diamondCt = val;
+                }
+            });
+        }
+
+        if (!metalWeight) metalWeight = product.weight || '3.25 gram';
+        if (!diamondCt) diamondCt = '0.2650 Ct';
+
+        let label = `${capitalizedSubCat} In ${customPurity} Yellow Gold (${metalWeight})`;
+        if (product.name?.toLowerCase().includes('diamond') || product.description?.toLowerCase().includes('diamond')) {
+            label += ` With Diamonds (${diamondCt})`;
+        }
+        return label;
+    };
+
+    useEffect(() => {
+        if (user) {
+            setPlanForm(prev => ({
+                ...prev,
+                name: user.name || '',
+                email: user.email || ''
+            }));
+        }
+    }, [user]);
 
     const fetchReviews = async () => {
         try {
@@ -116,8 +220,8 @@ const ProductDetails = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [openSection, setOpenSection] = useState('about');
     const isWishlisted = wishlist.some(item => item.id === product?.id);
-    const originalPrice = product?.originalPrice || product?.price || 0;
-    const currentPrice = product?.price || 0;
+    const originalPrice = getCustomizedPrice(product?.originalPrice || product?.price || 0);
+    const currentPrice = getCustomizedPrice(product?.price || 0);
     const discount = originalPrice > currentPrice ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) : 0;
 
     // Accordion expand/collapse states matching the screenshot (Image 1 and 2)
@@ -210,6 +314,17 @@ const ProductDetails = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [id]);
+
+    useEffect(() => {
+        if (showMonthlyPlanModal || showSizeGuide || showSuccessSheet) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showMonthlyPlanModal, showSizeGuide, showSuccessSheet]);
 
     if (!product) return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDF5F6] p-10 text-center">
@@ -686,6 +801,12 @@ const ProductDetails = () => {
                             </div>
                             <h1 className="text-[22px] md:text-[24px] lg:text-[25px] font-assistant font-normal leading-snug text-zinc-600 tracking-wide">{product.name ? (product.name === product.name.toUpperCase() ? product.name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : product.name) : ''}</h1>
 
+                            {isJewelleryProduct && (
+                                <p className="text-[13px] text-zinc-500 font-medium font-assistant">
+                                    From <span className="text-[#2C6E9E] hover:underline cursor-pointer font-semibold">{product.collection || 'The Precious Promise Collection'}</span>
+                                </p>
+                            )}
+
                              <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1 bg-[#FFF9F6] border border-[#FDF2ED] px-2 py-0.5 rounded-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
                                     <span className="text-[11px] font-black text-zinc-800 leading-none">{product.rating || 4.5}</span>
@@ -760,91 +881,229 @@ const ProductDetails = () => {
                             <p className="text-[9.5px] md:text-[11px] font-black uppercase tracking-[0.18em] text-zinc-400 mt-1">MRP incl. of all taxes</p>
                         </div>
 
-                        {/* Offers Section - Dynamic Coupons - Compact & Sharp */}
-                        <div>
-                            <h4 className="text-[9px] font-black uppercase tracking-[.4em] text-zinc-300 mb-3 flex items-center gap-3">Available Offers <div className="h-[1px] flex-grow bg-zinc-100/30"></div></h4>
-                            <div className="flex overflow-x-auto gap-2 pb-1.5 scrollbar-hide">
-                                {coupons && coupons.filter(c => c.active).length > 0 ? (
-                                    coupons.filter(c => c.active).map((coupon, idx) => (
-                                        <div key={idx} className="shrink-0 w-[135px] bg-white p-2 rounded-none border border-[#F5E6E8] shadow-sm relative group">
-                                            <div className="absolute top-0 right-0 px-2 py-0.5 bg-[#FDF5F6] rounded-none text-[4.5px] font-black text-[#8B4356]">COUPON</div>
-                                            <h5 className="text-[9.5px] font-bold text-black mb-0.5 tracking-widest">{coupon.code}</h5>
-                                            <p className="text-[7px] text-zinc-400 mb-1 line-clamp-2 leading-tight">{coupon.description || coupon.desc || `${coupon.type === 'percent' ? coupon.value + '%' : '₹' + coupon.value} OFF`}</p>
-                                            <button
-                                                onClick={() => handleApplyCoupon(coupon)}
-                                                className={`text-[6.5px] font-black uppercase tracking-widest border-b ${appliedCoupon?.code === coupon.code ? 'text-emerald-500 border-emerald-500' : 'text-[#8B4356] border-[#8B4356]/30'}`}
+                        {/* Interactive dynamic segments from Reference Image 1 & 2 */}
+                        {isJewelleryProduct && (
+                            <div className="space-y-1.5 pt-2">
+                                {/* 30% off banner */}
+                                <div className="flex items-center gap-2.5 py-1 animate-fadeIn">
+                                    <div className="w-5 h-5 rounded-full bg-[#FFF0F2] border border-[#FFD6DB] flex items-center justify-center text-[#EF5F3F] shrink-0">
+                                        <Percent className="w-3 h-3 stroke-[2.5]" />
+                                    </div>
+                                    <p className="text-[12.5px] md:text-[13px] font-assistant font-medium text-zinc-600 tracking-wide">
+                                        30% off on Making Charges: Use <button onClick={() => {
+                                            const cCode = { code: 'SUMMER30', type: 'percent', value: 15, active: true };
+                                            handleApplyCoupon(cCode);
+                                        }} className="font-extrabold text-[#EF5F3F] uppercase tracking-wider hover:underline focus:outline-none">SUMMER30</button> <span className="text-[#2C6E9E] text-[10.5px] font-normal cursor-pointer hover:underline ml-1">^TCA</span>
+                                    </p>
+                                </div>
+
+                                {/* Video Call Row */}
+                                <div className="flex items-center gap-2.5 py-1 pb-2 border-b border-zinc-100/40">
+                                    <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 shrink-0">
+                                        <Video className="w-3 h-3 stroke-[2]" />
+                                    </div>
+                                    <p className="text-[12.5px] md:text-[13px] font-assistant font-medium text-zinc-600 tracking-wide">
+                                        Schedule video call <button onClick={() => setIsVideoModalOpen(true)} className="text-[#2C6E9E] font-bold hover:underline ml-1.5">Book Now</button>
+                                    </p>
+                                </div>
+
+                                {/* Functional Pincode Box */}
+                                <div className="bg-[#FAF9F9] border border-zinc-200/50 p-3.5 rounded-none max-w-lg my-2 space-y-2">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-[12px] md:text-[12.5px] font-assistant font-semibold text-zinc-600">Your pincode</span>
+                                        <div className="flex items-center border border-zinc-300 bg-white overflow-hidden max-w-[190px]">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Pincode" 
+                                                value={pincodeVal}
+                                                onChange={(e) => setPincodeVal(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                                className="px-2 py-1 text-[12px] font-assistant font-medium w-full focus:outline-none placeholder-zinc-400 text-zinc-800"
+                                            />
+                                            <button 
+                                                onClick={handleCheckPincode}
+                                                className="bg-[#EBEBEB] hover:bg-zinc-200 text-zinc-700 px-3 py-1 text-[11px] font-assistant font-bold border-l border-zinc-300 transition-colors"
                                             >
-                                                {appliedCoupon?.code === coupon.code ? 'Applied' : 'Apply'}
+                                                Update
                                             </button>
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="text-[8px] text-zinc-300 uppercase tracking-widest py-2 italic px-1">Check back later for exclusive offers</div>
-                                )}
-                            </div>
-                        </div>
+                                    </div>
+                                    {pincodeStatus && (
+                                        <p className={`text-[11px] font-assistant font-semibold ${pincodeStatus.includes('✓') ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                            {pincodeStatus}
+                                        </p>
+                                    )}
+                                    <p className="text-[10.5px] font-assistant font-medium text-zinc-400 leading-normal">
+                                        Provide pincode for delivery date & nearby stores!
+                                    </p>
+                                </div>
 
+                                {/* Product Specifications Label Bar */}
+                                <div className="text-[13px] font-assistant font-bold text-zinc-700 tracking-wide py-1.5 leading-snug">
+                                    {getProductSummaryLabel()}
+                                </div>
+
+                                {/* Customize design accordion */}
+                                <div className="border-t border-b border-zinc-200/50 py-2.5 my-1.5">
+                                    <button 
+                                        onClick={() => setIsCustomizeOpen(!isCustomizeOpen)}
+                                        className="w-full flex items-center justify-between text-left focus:outline-none group"
+                                    >
+                                        <span className="text-[13px] font-assistant font-bold text-zinc-700 tracking-wide">Customize this design</span>
+                                        {isCustomizeOpen ? (
+                                            <Minus className="w-4 h-4 text-zinc-500 group-hover:text-zinc-700 transition-colors" />
+                                        ) : (
+                                            <Plus className="w-4 h-4 text-zinc-500 group-hover:text-zinc-700 transition-colors" />
+                                        )}
+                                    </button>
+                                    <AnimatePresence>
+                                        {isCustomizeOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="grid grid-cols-2 gap-4 pt-3 pb-1">
+                                                    <div className="space-y-1">
+                                                        <span className="text-[10.5px] font-assistant font-bold text-zinc-400 uppercase tracking-wider">Metal Purity</span>
+                                                        <div className="flex gap-2">
+                                                            {['14Kt', '18Kt', '22Kt'].map((pur) => (
+                                                                <button
+                                                                    key={pur}
+                                                                    onClick={() => setCustomPurity(pur)}
+                                                                    className={`px-2.5 py-1 text-[11.5px] font-assistant font-bold border transition-all ${
+                                                                        customPurity === pur 
+                                                                            ? 'border-[#EF5F3F] text-[#EF5F3F] bg-[#EF5F3F]/[0.02]' 
+                                                                            : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                                                                    }`}
+                                                                >
+                                                                    {pur}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-[10.5px] font-assistant font-bold text-zinc-400 uppercase tracking-wider">Diamond Clarity</span>
+                                                        <div className="flex gap-2">
+                                                            {['SI-JK', 'VS-GH', 'VVS-EF'].map((dia) => (
+                                                                <button
+                                                                    key={dia}
+                                                                    onClick={() => setCustomDiamond(dia)}
+                                                                    className={`px-2.5 py-1 text-[11.5px] font-assistant font-bold border transition-all ${
+                                                                        customDiamond === dia 
+                                                                            ? 'border-[#EF5F3F] text-[#EF5F3F] bg-[#EF5F3F]/[0.02]' 
+                                                                            : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                                                                    }`}
+                                                                >
+                                                                    {dia}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Conditional Action Card: Sizes for Jewelry vs PDF Downloads for Machines/Tools */}
                         {isJewelleryProduct ? (
-                            <div className="bg-white p-3 lg:p-3.5 rounded-none border border-[#F5E6E8] shadow-sm space-y-2.5">
-                                <div className="flex items-center justify-between px-0.5">
-                                    <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-800">Select Size</h4>
-                                    <button
-                                        onClick={() => setShowSizeGuide(true)}
-                                        className="text-[10px] font-black text-[#8B4356] hover:text-[#7a394b] tracking-wider uppercase transition-colors"
-                                    >
-                                        Size Guide
-                                    </button>
+                            <div className="flex flex-row items-center justify-between gap-4 py-1.5 mt-1 relative border-b border-zinc-100/50 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest">Size</span>
+                                    
+                                    {/* Custom Dropdown Container */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
+                                            className="min-w-[110px] h-9 px-3 bg-white border border-zinc-200 hover:border-zinc-300 text-[12.5px] font-bold text-black flex items-center justify-between rounded-none shadow-sm transition-all focus:outline-none"
+                                        >
+                                            <span className="mr-3">{selectedSize}</span>
+                                            <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform duration-300 ${isSizeDropdownOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        {/* Dropdown Options List */}
+                                        <AnimatePresence>
+                                            {isSizeDropdownOpen && (
+                                                <>
+                                                    {/* Invisible Backdrop to close the dropdown when clicking outside */}
+                                                    <div 
+                                                        className="fixed inset-0 z-40 bg-transparent"
+                                                        onClick={() => setIsSizeDropdownOpen(false)}
+                                                    />
+                                                    
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: -5 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -5 }}
+                                                        className="absolute left-0 mt-1 bg-white border border-zinc-200 shadow-xl z-50 max-h-[260px] overflow-y-auto rounded-none divide-y divide-zinc-100 w-[220px] md:w-[240px]"
+                                                    >
+                                                        {[
+                                                            { size: 5, mm: '44.8 mm', status: 'Made to Order' },
+                                                            { size: 6, mm: '45.9 mm', status: 'Only 2 left!' },
+                                                            { size: 7, mm: '47.1 mm', status: 'Only 2 left!' },
+                                                            { size: 8, mm: '48.1 mm', status: 'Only 5 left!' },
+                                                            { size: 9, mm: '49.0 mm', status: 'in Stock!' },
+                                                            { size: 10, mm: '50.0 mm', status: 'in Stock!' },
+                                                            { size: 11, mm: '50.9 mm', status: 'Only 1 left!' },
+                                                            { size: 12, mm: '51.8 mm', status: 'in Stock!' },
+                                                            { size: 13, mm: '52.8 mm', status: 'in Stock!' },
+                                                            { size: 14, mm: '54.0 mm', status: 'in Stock!' }
+                                                        ].map((opt) => {
+                                                            const isSelected = selectedSize === opt.size;
+                                                            const isLowStock = opt.status.includes('left');
+                                                            const isMadeToOrder = opt.status.includes('Order');
+                                                            return (
+                                                                <button
+                                                                    key={opt.size}
+                                                                    onClick={() => {
+                                                                        setSelectedSize(opt.size);
+                                                                        setIsSizeDropdownOpen(false);
+                                                                    }}
+                                                                    className={`w-full py-2 px-3 text-left text-[12px] font-semibold flex items-center transition-colors focus:outline-none ${
+                                                                        isSelected 
+                                                                            ? 'bg-[#EAF5EC] text-[#2E7D32] font-black' 
+                                                                            : 'text-zinc-800 hover:bg-zinc-50'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-center gap-2">
+                                                                        {isSelected ? (
+                                                                            <Check className="w-3.5 h-3.5 text-[#2E7D32] stroke-[3.5px]" />
+                                                                        ) : (
+                                                                            <div className="w-3.5 h-3.5" />
+                                                                        )}
+                                                                        <span className={`text-[12.5px] ${isSelected ? 'text-[#2E7D32]' : 'text-black'}`}>{opt.size}</span>
+                                                                        <span className="text-[9.5px] text-zinc-400 font-medium font-sans">({opt.mm})</span>
+                                                                    </div>
+                                                                    <span className={`ml-auto text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-none ${
+                                                                        isSelected 
+                                                                            ? 'bg-[#2E7D32]/10 text-[#2E7D32]'
+                                                                            : isLowStock 
+                                                                                ? 'bg-rose-50 text-rose-500' 
+                                                                                : isMadeToOrder 
+                                                                                    ? 'bg-zinc-100 text-zinc-400'
+                                                                                    : 'bg-emerald-50 text-emerald-600'
+                                                                    }`}>
+                                                                        {opt.status}
+                                                                    </span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </motion.div>
+                                                </>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
                                 </div>
 
-                                <div className="grid grid-cols-5 gap-1.5 md:gap-2.5">
-                                    {[
-                                        { size: 5, mm: '44.8 mm', status: 'Made to Order' },
-                                        { size: 7, mm: '47.1 mm', status: 'Only 2 left!' },
-                                        { size: 9, mm: '49.0 mm', status: 'in Stock!' },
-                                        { size: 11, mm: '50.9 mm', status: 'Only 1 left!' },
-                                        { size: 13, mm: '52.8 mm', status: 'in Stock!' },
-                                        { size: 6, mm: '45.9 mm', status: 'Only 2 left!' },
-                                        { size: 8, mm: '48.1 mm', status: 'Only 5 left!' },
-                                        { size: 10, mm: '50.0 mm', status: 'in Stock!' },
-                                        { size: 12, mm: '51.8 mm', status: 'in Stock!' },
-                                        { size: 14, mm: '54.0 mm', status: 'in Stock!' }
-                                    ].map((sizeOpt) => {
-                                        const isSelected = selectedSize === sizeOpt.size;
-                                        const isLowStock = sizeOpt.status.includes('left');
-                                        const isMadeToOrder = sizeOpt.status.includes('Order');
-                                        
-                                        return (
-                                            <button
-                                                key={sizeOpt.size}
-                                                onClick={() => setSelectedSize(sizeOpt.size)}
-                                                className={`flex flex-col items-center justify-between py-2 px-1 rounded-none border transition-all duration-300 relative h-[72px] md:h-[78px] w-full ${
-                                                    isSelected 
-                                                        ? 'border-[#8B4356] bg-[#8B4356]/[0.03] ring-1 ring-[#8B4356] scale-102 shadow-sm' 
-                                                        : 'border-[#F5E6E8]/60 bg-zinc-50/20 hover:bg-zinc-50/65 hover:border-zinc-200'
-                                                }`}
-                                            >
-                                                <div className="flex flex-col items-center leading-none mb-1">
-                                                    <span className={`text-[15px] md:text-[17px] font-black tracking-tight leading-none transition-colors ${isSelected ? 'text-[#8B4356]' : 'text-zinc-800'}`}>{sizeOpt.size}</span>
-                                                    <span className="text-[9.5px] md:text-[10.5px] font-extrabold text-zinc-450 mt-1 whitespace-nowrap leading-none">{sizeOpt.mm}</span>
-                                                </div>
-                                                
-                                                <div className={`w-full py-0.5 px-0.5 rounded-none text-[6.5px] md:text-[7.5px] font-black text-center uppercase tracking-wider leading-none whitespace-nowrap transition-colors ${
-                                                    isSelected
-                                                        ? 'bg-[#8B4356] text-white'
-                                                        : isLowStock 
-                                                            ? 'bg-rose-50 text-rose-500 border border-rose-100/50' 
-                                                            : isMadeToOrder 
-                                                                ? 'bg-zinc-100 text-zinc-500 border border-zinc-200/50'
-                                                                : 'bg-emerald-50 text-emerald-600 border border-emerald-100/50'
-                                                }`}>
-                                                    {sizeOpt.status}
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                <button
+                                    onClick={() => setShowSizeGuide(true)}
+                                    className="text-[11px] font-semibold text-[#2C6E9E] hover:text-[#1d4f73] underline tracking-wide transition-colors focus:outline-none"
+                                >
+                                    Not sure about the size?
+                                </button>
                             </div>
                         ) : (
                             <div className="bg-gradient-to-br from-white to-[#FDF5F6] p-4 rounded-3xl border border-[#F5E6E8] shadow-sm group transition-all duration-300 hover:shadow-md">
@@ -871,362 +1130,90 @@ const ProductDetails = () => {
                             </div>
                         )}
 
-                        {/* Stock & Delivery - Ultra Compact Card with Desktop Actions */}
-                        <div className="bg-white p-2.5 lg:p-3 rounded-none border border-[#F5E6E8] shadow-sm space-y-2.5">
-                            <div className="flex items-center justify-between px-1">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                                    <span className="text-[9.5px] font-black text-emerald-600 uppercase tracking-widest">In Stock Now</span>
+                        {/* Stock & Delivery - Compact & Frameless */}
+                        {isJewelleryProduct ? (
+                            <div className="space-y-3.5 py-2 mt-1">
+                                <div className="flex flex-col gap-3">
+                                    {/* Side by side Buy Now and 10+1 Monthly Plan buttons matching Image 1 & 2 exactly */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={handleBuyNow}
+                                            className="bg-[#EF5F3F] hover:bg-[#e05435] text-white h-11 rounded-none font-bold uppercase tracking-[.15em] text-[11.5px] transition-all active:scale-95 shadow-sm focus:outline-none flex items-center justify-center"
+                                        >
+                                            Buy Now
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const recommended = Math.max(1000, Math.round((currentPrice / 11) / 500) * 500);
+                                                setMonthlyInstallment(recommended);
+                                                setShowInquiryForm(false);
+                                                setShowMonthlyPlanModal(true);
+                                            }}
+                                            className="border border-[#EF5F3F] text-[#EF5F3F] bg-white hover:bg-[#EF5F3F]/[0.04] h-11 rounded-none font-bold uppercase tracking-[.1em] text-[11.5px] transition-all active:scale-95 shadow-sm focus:outline-none flex items-center justify-center"
+                                        >
+                                            10+1 Monthly Plan
+                                        </button>
+                                    </div>
                                 </div>
-                                <span className="text-[12px] font-black text-black tracking-tighter">₹{currentPrice.toLocaleString()}</span>
-                            </div>
 
-                            <div className="hidden lg:grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={handleAddToCart}
-                                    className="bg-[#2a2a2a] text-white h-9 rounded-none font-black uppercase tracking-[.2em] text-[9px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all duration-300 hover:bg-[#5C3F30]"
-                                >
-                                    <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} /> Add to Bag
-                                </button>
-                                <button
-                                    onClick={handleBuyNow}
-                                    className="bg-[#8B4356] text-white h-9 rounded-none font-black uppercase tracking-[.2em] text-[9px] transition-all hover:bg-[#7a394b] active:scale-95 shadow-sm"
-                                >
-                                    Buy Now
-                                </button>
-                            </div>
+                                <div className="pt-2 border-t border-zinc-100">
+                                    <p className="text-[9px] font-semibold text-zinc-400 leading-snug tracking-wide uppercase">
+                                        FREE Delivery by <span className="text-[#8B4356] font-bold">Sunday</span>. Order in <span className="text-black font-black">2 hrs 56 mins</span>.
+                                    </p>
+                                </div>
 
-                            <div className="pt-2 border-t border-zinc-50">
-                                <p className="text-[8px] font-semibold text-zinc-400 leading-snug tracking-wide uppercase px-1">FREE Delivery by <span className="text-[#8B4356]">Sunday</span>. Order in <span className="text-black font-black">2 hrs 56 mins</span>.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Technical Specifications Section - Full Width & Clean Multi-Column Grid */}
-                <div className="mt-4 border-t border-[#F5E6E8]/40 pt-4 px-4 lg:px-0">
-                    <h4 className="text-[10px] font-black uppercase tracking-[.4em] text-zinc-400 mb-3 flex items-center gap-3">
-                        Product Specifications <div className="h-[1px] flex-grow bg-[#F5E6E8]/40"></div>
-                    </h4>
-                    
-                    {product.specifications && product.specifications.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-                            {(() => {
-                                const groupedSpecs = getGroupedSpecs();
-                                return Object.entries(groupedSpecs).map(([secName, items]) => {
-                                    const isExpanded = !!expandedSections[secName];
-                                    return (
-                                        <div key={secName} className="border border-[#F5E6E8] rounded-none overflow-hidden bg-white shadow-sm transition-all duration-300">
-                                            {/* Accordion Header - Compacted Padding */}
-                                            <button
-                                                onClick={() => toggleSection(secName)}
-                                                className="w-full flex items-center justify-between py-2.5 px-3 bg-zinc-50/45 hover:bg-zinc-50/80 active:bg-zinc-100/50 transition-colors border-b border-[#F5E6E8]"
-                                            >
-                                                {/* Larger Bold Header */}
-                                                <span className="text-[11px] md:text-[12px] font-bold text-black tracking-[0.15em] uppercase">{secName}</span>
-                                                <span className="text-zinc-500 font-bold">
-                                                    {isExpanded ? <Minus className="w-3.5 h-3.5 text-black" strokeWidth={2.5} /> : <Plus className="w-3.5 h-3.5 text-black" strokeWidth={2.5} />}
-                                                </span>
-                                            </button>
-
-                                            {/* Accordion Content */}
-                                            <AnimatePresence initial={false}>
-                                                {isExpanded && (
-                                                    <motion.div
-                                                        initial={{ height: 0, opacity: 0 }}
-                                                        animate={{ height: 'auto', opacity: 1 }}
-                                                        exit={{ height: 0, opacity: 0 }}
-                                                        transition={{ duration: 0.25 }}
-                                                        className="overflow-hidden"
-                                                    >
-                                                        {/* Compacted Padding p-3 */}
-                                                        <div className="p-3 space-y-0.5 divide-y divide-zinc-100 bg-[#FDF5F6]/10">
-                                                            {secName === 'TAGS' ? (
-                                                                <div className="p-1 text-[11px] md:text-[12px] leading-relaxed text-[#2C6E9E] font-medium tracking-wide">
-                                                                    {items[0].value}
-                                                                </div>
-                                                            ) : (
-                                                                items.map((item, idx) => {
-                                                                    const isTotal = item.label.toUpperCase() === 'TOTAL';
-                                                                    return (
-                                                                        <div
-                                                                            key={idx}
-                                                                            className={`flex items-center justify-between py-1.5 px-1 text-[11px] md:text-[12.5px] ${isTotal ? 'bg-[#8B4356]/5 rounded-none px-2.5 font-bold text-black border-t border-zinc-150' : ''}`}
-                                                                        >
-                                                                            {/* Larger, premium text */}
-                                                                            <span className={`${isTotal ? 'text-[#8B4356] font-bold' : 'text-[#2C6E9E] font-medium'}`}>
-                                                                                {item.label}
-                                                                            </span>
-                                                                            <span className={`${isTotal ? 'text-black font-bold text-xs md:text-sm' : 'text-[#1D5C8A] font-semibold'}`}>
-                                                                                {item.value}
-                                                                            </span>
-                                                                        </div>
-                                                                    );
-                                                                })
-                                                            )}
-                                                        </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    );
-                                });
-                            })()}
-                        </div>
-                    ) : (
-                        <div className="max-w-xl p-4 bg-white border border-[#F5E6E8] text-[11px] text-zinc-500 leading-relaxed font-assistant">
-                            No additional technical specifications listed for this collection.
-                        </div>
-                    )}
-                </div>
-
-                {/* Ratings & Reviews Section */}
-                <div className="mt-6 px-4 lg:px-0">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 border-b border-[#F5E6E8] pb-3">
-                        <div className="flex flex-col">
-                            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-[#8B4356] mb-1">Patron Opinion</span>
-                            <h3 className="font-serif text-2xl text-black leading-tight italic">Customer <span className="text-[#8B4356] not-italic">Reviews</span></h3>
-                        </div>
-                        <button
-                            onClick={() => setShowReviewForm(!showReviewForm)}
-                            className="self-start md:self-center bg-[#8B4356] text-white py-2 px-5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[#7a394b] active:scale-95 transition-all shadow-sm"
-                        >
-                            {showReviewForm ? 'Cancel Review' : 'Write a Review'}
-                        </button>
-                    </div>
-
-                    {/* Write a Review Form */}
-                    <AnimatePresence>
-                        {showReviewForm && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden bg-white border border-[#F5E6E8] p-4 sm:p-6 mb-4 rounded-xl sm:rounded-2xl shadow-sm"
-                            >
-                                <form onSubmit={handleAddReview} className="space-y-4">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#8B4356]">Submit Your Testimony</h4>
-                                    
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-2">Your Rating</label>
-                                        <div className="flex gap-1.5">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <button
-                                                    key={star}
-                                                    type="button"
-                                                    onClick={() => setUserRating(star)}
-                                                    className="p-1 hover:scale-110 transition-transform"
-                                                >
-                                                    <Star
-                                                        className={`w-6 h-6 ${star <= userRating ? 'fill-[#8B4356] text-[#8B4356]' : 'text-zinc-200'}`}
-                                                    />
-                                                </button>
-                                            ))}
-                                        </div>
+                                {/* Three-Column Trust Badges Row from Image 1 & 2 */}
+                                <div className="grid grid-cols-3 divide-x divide-zinc-200 border-t border-b border-zinc-200/50 py-3 my-3">
+                                    <div className="flex flex-col items-center justify-center text-center px-2">
+                                        <RotateCcw className="w-4.5 h-4.5 text-zinc-500 mb-1 stroke-[1.5]" />
+                                        <span className="text-[10px] md:text-[10.5px] font-assistant font-bold text-zinc-600 leading-tight uppercase tracking-wider">30 Day Returnable</span>
                                     </div>
-
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-1">Your Review</label>
-                                        <textarea
-                                            value={userComment}
-                                            onChange={(e) => setUserComment(e.target.value)}
-                                            placeholder="Tell us what you love about this item..."
-                                            rows={4}
-                                            className="w-full border border-zinc-100 p-3 text-[11px] font-medium outline-none focus:border-[#8B4356]/40 rounded-none bg-zinc-50/20"
-                                        />
+                                    <div className="flex flex-col items-center justify-center text-center px-2">
+                                        <RefreshCw className="w-4.5 h-4.5 text-zinc-500 mb-1 stroke-[1.5]" />
+                                        <span className="text-[10px] md:text-[10.5px] font-assistant font-bold text-zinc-600 leading-tight uppercase tracking-wider">Lifetime Exchange</span>
                                     </div>
-
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-1">Image URL (Optional)</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={reviewImage}
-                                                onChange={(e) => setReviewImage(e.target.value)}
-                                                placeholder="Paste a photo link of your unboxing box..."
-                                                className="flex-1 border border-zinc-100 p-3 text-[11px] font-medium outline-none focus:border-[#8B4356]/40 rounded-none bg-zinc-50/20"
-                                            />
-                                            <button
-                                                type="button"
-                                                className="px-4 border border-zinc-100 text-zinc-400 hover:text-[#8B4356] transition-colors flex items-center justify-center"
-                                                title="Mock camera upload"
-                                            >
-                                                <Camera className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                    <div className="flex flex-col items-center justify-center text-center px-2">
+                                        <Award className="w-4.5 h-4.5 text-zinc-500 mb-1 stroke-[1.5]" />
+                                        <span className="text-[10px] md:text-[10.5px] font-assistant font-bold text-zinc-600 leading-tight uppercase tracking-wider">Certified Jewellery</span>
                                     </div>
+                                </div>
 
+                            </div>
+                        ) : (
+                            <div className="bg-white p-2.5 lg:p-3 rounded-none border border-[#F5E6E8] shadow-sm space-y-2.5">
+                                <div className="flex items-center justify-between px-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                                        <span className="text-[9.5px] font-black text-emerald-600 uppercase tracking-widest">In Stock Now</span>
+                                    </div>
+                                    <span className="text-[12px] font-black text-black tracking-tighter">₹{currentPrice.toLocaleString()}</span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
                                     <button
-                                        type="submit"
-                                        disabled={isSubmittingReview}
-                                        className="bg-black text-white py-3 px-8 text-[9px] font-black uppercase tracking-widest hover:bg-zinc-800 disabled:opacity-50 transition-all shadow-md"
+                                        onClick={handleAddToCart}
+                                        className="bg-[#2a2a2a] text-white h-9 rounded-none font-black uppercase tracking-[.2em] text-[9px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all duration-300 hover:bg-[#5C3F30]"
                                     >
-                                        {isSubmittingReview ? 'Submitting...' : 'Post Testimonial'}
+                                        <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} /> Add to Bag
                                     </button>
-                                </form>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                    <button
+                                        onClick={handleBuyNow}
+                                        className="bg-[#8B4356] text-white h-9 rounded-none font-black uppercase tracking-[.2em] text-[9px] transition-all hover:bg-[#7a394b] active:scale-95 shadow-sm"
+                                    >
+                                        Buy Now
+                                    </button>
+                                </div>
 
-                    {/* Overall Summary Stats & Distribution Bar - Ultra Compact Landscape */}
-                    <div className="grid grid-cols-12 gap-3 bg-white border border-[#F5E6E8]/70 p-2.5 sm:p-4 mb-4 max-w-xl rounded-xl sm:rounded-2xl shadow-sm">
-                        {/* Summary Block */}
-                        <div className="col-span-5 flex flex-col items-center justify-center text-center border-r border-[#F5E6E8]/50 pr-2 sm:pr-4">
-                            <span className="text-2xl sm:text-3xl font-serif font-black text-black leading-none mb-0.5">4.9</span>
-                            <div className="flex gap-0.5 mb-1">
-                                {[...Array(5)].map((_, idx) => (
-                                    <Star key={idx} className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 fill-[#8B4356] text-[#8B4356]" />
-                                ))}
+                                <div className="pt-2 border-t border-zinc-50">
+                                    <p className="text-[8px] font-semibold text-zinc-400 leading-snug tracking-wide uppercase px-1">FREE Delivery by <span className="text-[#8B4356]">Sunday</span>. Order in <span className="text-black font-black">2 hrs 56 mins</span>.</p>
+                                </div>
                             </div>
-                            <span className="text-[6.5px] sm:text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-tight">124 Reviews</span>
-                        </div>
-
-                        {/* Progress Distribution */}
-                        <div className="col-span-7 flex flex-col justify-center space-y-1">
-                            {[
-                                { stars: 5, pct: 94 },
-                                { stars: 4, pct: 4 },
-                                { stars: 3, pct: 1 },
-                                { stars: 2, pct: 1 },
-                                { stars: 1, pct: 0 }
-                            ].map((row, idx) => (
-                                <div key={idx} className="flex items-center gap-1.5 sm:gap-2 text-[8px] sm:text-[9px] font-bold text-zinc-500">
-                                    <span className="w-2 text-right">{row.stars}</span>
-                                    <Star className="w-2 h-2 sm:w-2.5 sm:h-2.5 fill-[#8B4356]/20 text-[#8B4356]/20 shrink-0" />
-                                    <div className="flex-1 h-0.5 sm:h-1 bg-zinc-50 border border-zinc-100 overflow-hidden">
-                                        <div className="h-full bg-[#8B4356]" style={{ width: `${row.pct}%` }} />
-                                    </div>
-                                    <span className="w-6 text-right text-zinc-400 tabular-nums">{row.pct}%</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Testimonial List Grid - Unconditional 2-card per row grid */}
-                    <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                        {[...reviews, ...[
-                            {
-                                _id: 'default-1',
-                                userId: {
-                                    name: 'Anushka',
-                                    userImage: ''
-                                },
-                                rating: 5,
-                                comment: 'Love it. Extremely lightweight, feels absolutely majestic and shines beautifully.',
-                                createdAt: '2025-09-05T00:00:00.000Z',
-                                isVerifiedPurchase: true,
-                                itemType: 'Single'
-                            },
-                            {
-                                _id: 'default-2',
-                                userId: {
-                                    name: 'Rahul',
-                                    userImage: ''
-                                },
-                                rating: 5,
-                                comment: 'Good product. Elegant build, stellar packaging. Completely matches the collection guides.',
-                                createdAt: '2026-04-02T00:00:00.000Z',
-                                isVerifiedPurchase: true,
-                                itemType: 'Single'
-                            },
-                            {
-                                _id: 'default-3',
-                                userId: {
-                                    name: 'Aashim',
-                                    userImage: ''
-                                },
-                                rating: 5,
-                                comment: 'Hope you love this as much as I Do! Beautiful box package and breathtaking craftsmanship detail on this piece.',
-                                createdAt: '2026-03-10T00:00:00.000Z',
-                                isVerifiedPurchase: true,
-                                images: [
-                                    'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=600'
-                                ],
-                                itemType: 'Single'
-                            },
-                            {
-                                _id: 'default-4',
-                                userId: {
-                                    name: 'Divya',
-                                    userImage: ''
-                                },
-                                rating: 5,
-                                comment: 'Absolutely stunning craftsmanship. The shine under sunlight is breathtaking. Highly recommend Harshad Gauri!',
-                                createdAt: '2026-04-18T00:00:00.000Z',
-                                isVerifiedPurchase: true,
-                                images: [
-                                    'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=600'
-                                ],
-                                itemType: 'Single'
-                            }
-                        ]].map((rev) => {
-                            const isDummy = rev._id.startsWith('default');
-                            const reviewDate = new Date(rev.createdAt).toLocaleDateString('en-US', {
-                                month: 'numeric',
-                                day: 'numeric',
-                                year: 'numeric'
-                            });
-
-                            return (
-                                <div key={rev._id} className="bg-white border border-[#F5E6E8]/60 p-2.5 sm:p-4 shadow-sm rounded-xl sm:rounded-2xl flex flex-col justify-between hover:shadow-md transition-all">
-                                    <div className="space-y-1.5 sm:space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-1 sm:gap-1.5">
-                                                <span className="font-serif font-black text-[11px] sm:text-[15px] text-zinc-800 leading-none">{rev.userId?.name || 'Anonymous'}</span>
-                                                {rev.isVerifiedPurchase && (
-                                                    <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 bg-black rounded-full flex items-center justify-center" title="Verified Buyer">
-                                                        <Check className="w-1.5 sm:w-2 text-white stroke-[4px]" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <span className="text-[7.5px] sm:text-[9px] font-bold text-zinc-400 tabular-nums">{reviewDate}</span>
-                                        </div>
-
-                                        <div className="flex gap-0.5">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 ${i < rev.rating ? 'fill-[#8B4356] text-[#8B4356]' : 'text-zinc-200'}`}
-                                                />
-                                            ))}
-                                        </div>
-
-                                        <p className="text-[9.5px] sm:text-[11.5px] text-zinc-600 leading-relaxed font-assistant font-medium normal-case tracking-normal">
-                                            "{rev.comment}"
-                                        </p>
-
-                                        {rev.images && rev.images.length > 0 && (
-                                            <div className="mt-2 overflow-hidden rounded-lg sm:rounded-xl border border-zinc-100 shadow-sm max-h-[90px] sm:max-h-[180px]">
-                                                <img
-                                                    src={rev.images[0]}
-                                                    alt="Patron Testimony Preview"
-                                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                                                    onError={(e) => {
-                                                        // Gracefully hide the parent container if the image fails to load
-                                                        e.target.parentElement.style.display = 'none';
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-2 pt-1.5 sm:mt-4 sm:pt-3 border-t border-zinc-50 flex items-center justify-between text-[8px] sm:text-[10px] text-zinc-400">
-                                        <div className="flex items-center gap-1">
-                                            <span>Type:</span>
-                                            <span className="font-bold text-zinc-600">{rev.itemType || 'Single'}</span>
-                                        </div>
-                                        {isDummy && (
-                                            <span className="text-[6.5px] sm:text-[8px] bg-zinc-50 text-zinc-400 px-1 sm:px-1.5 py-0.5 font-bold uppercase tracking-wider rounded-md">Verified</span>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        )}
                     </div>
                 </div>
 
                 {/* Related Products Section - Compact Gallery */}
-                <div className="mt-8 px-4 lg:px-0 pb-10">
+                <div className="mt-8 px-4 lg:px-0 mb-8">
                     <h3 className="text-[10px] font-black uppercase tracking-[.6em] text-zinc-300 mb-5 flex items-center gap-3 px-1">Curated Seek <div className="h-[1px] flex-grow bg-zinc-100/20"></div></h3>
                     <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-1">
                         {products.filter(p => p.id !== product.id).slice(0, 6).map(rel => (
@@ -1234,6 +1221,338 @@ const ProductDetails = () => {
                                 <ProductCard product={rel} />
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* Technical Specifications & Brand Promises Section - Matching Premium Compact Layout */}
+                <div className="mt-6 border-t border-[#F5E6E8]/60 pt-8 px-4 lg:px-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+                        {/* Left Column: Specs Table & Accordions (lg:col-span-7) */}
+                        <div className="lg:col-span-7 space-y-4">
+                            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-black mb-4">
+                                Product Details
+                            </h4>
+                            
+                            {product.specifications && product.specifications.length > 0 ? (
+                                (() => {
+                                    const groupedSpecs = getGroupedSpecs();
+                                    const directSpecs = groupedSpecs['PRODUCT DETAILS'] || [];
+                                    const accordionSpecs = Object.entries(groupedSpecs).filter(([secName]) => secName !== 'PRODUCT DETAILS');
+
+                                    return (
+                                        <div className="space-y-4">
+                                            {/* Directly visible Product Details table rows */}
+                                            {directSpecs.length > 0 && (
+                                                <div className="divide-y divide-[#F5E6E8]/60 border-y border-[#F5E6E8]/60 py-1">
+                                                    {directSpecs.map((item, idx) => (
+                                                        <div key={idx} className="flex items-center justify-between py-2.5 px-1 text-xs">
+                                                            <div className="flex items-center gap-1.5 text-zinc-500">
+                                                                <span>{item.label}</span>
+                                                                <Info className="w-3 h-3 text-zinc-400" />
+                                                            </div>
+                                                            <span className="font-semibold text-[#1D5C8A]">
+                                                                {item.value}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* Accordion breakdown for Diamonds, Metals, Price Breakup, etc. */}
+                                            {accordionSpecs.length > 0 && (
+                                                <div className="space-y-1">
+                                                    {accordionSpecs.map(([secName, items]) => {
+                                                        const isExpanded = !!expandedSections[secName];
+                                                        return (
+                                                            <div key={secName} className="border-b border-zinc-200 bg-transparent rounded-none overflow-hidden transition-all duration-300">
+                                                                <button
+                                                                    onClick={() => toggleSection(secName)}
+                                                                    className="w-full flex items-center justify-between py-3.5 px-1 bg-transparent hover:text-[#8B4356] transition-colors outline-none"
+                                                                >
+                                                                    <span className="text-[11px] font-bold text-black tracking-[0.15em] uppercase">{secName}</span>
+                                                                    <span className="text-zinc-600 font-bold text-sm">
+                                                                        {isExpanded ? '-' : '+'}
+                                                                    </span>
+                                                                </button>
+
+                                                                <AnimatePresence initial={false}>
+                                                                    {isExpanded && (
+                                                                        <motion.div
+                                                                            initial={{ height: 0, opacity: 0 }}
+                                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                                            exit={{ height: 0, opacity: 0 }}
+                                                                            transition={{ duration: 0.2 }}
+                                                                            className="overflow-hidden"
+                                                                        >
+                                                                            <div className="p-2 space-y-1 divide-y divide-zinc-100 bg-transparent">
+                                                                                {secName === 'TAGS' ? (
+                                                                                    <div className="py-2 text-xs leading-relaxed text-[#2C6E9E] font-medium tracking-wide">
+                                                                                        {items[0].value}
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    items.map((item, idx) => {
+                                                                                        const isTotal = item.label.toUpperCase() === 'TOTAL';
+                                                                                        return (
+                                                                                            <div
+                                                                                                key={idx}
+                                                                                                className={`flex items-center justify-between py-2.5 px-1 text-xs ${isTotal ? 'font-bold text-black border-t border-zinc-200' : ''}`}
+                                                                                            >
+                                                                                                <div className="flex items-center gap-1.5">
+                                                                                                    <span className={`${isTotal ? 'text-[#8B4356] font-bold' : 'text-zinc-600 font-medium'}`}>
+                                                                                                        {item.label}
+                                                                                                    </span>
+                                                                                                    {!isTotal && <Info className="w-3 h-3 text-zinc-300" />}
+                                                                                                </div>
+                                                                                                <span className={`${isTotal ? 'text-black font-bold text-sm' : 'text-[#1D5C8A] font-semibold'}`}>
+                                                                                                    {item.value}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                        );
+                                                                                    })
+                                                                                )}
+                                                                            </div>
+                                                                        </motion.div>
+                                                                    )}
+                                                                </AnimatePresence>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()
+                            ) : (
+                                <div className="p-4 bg-white border border-[#F5E6E8] text-xs text-zinc-500 leading-relaxed font-assistant">
+                                    No additional technical specifications listed for this collection.
+                                </div>
+                            )}
+
+                            {/* Customer Speak / Ratings & Reviews Section - Compact & Aligned to Left Column */}
+                            {(() => {
+                                const allReviewsList = [...reviews, ...[
+                                    {
+                                        _id: 'default-1',
+                                        userId: { name: 'Manisha Lalwani', userImage: '' },
+                                        rating: 5,
+                                        comment: 'Thank you Harshad Gauri for such a lovely collection and delivering it on time. Just loved the stuff gifted by my darling hubby.',
+                                        createdAt: '2025-09-05T00:00:00.000Z',
+                                        images: [productImages[0] || product?.image]
+                                    },
+                                    {
+                                        _id: 'default-2',
+                                        userId: { name: 'Anushka Sharma', userImage: '' },
+                                        rating: 5,
+                                        comment: 'Absolutely stunning craftsmanship. The shine under sunlight is breathtaking. Highly recommend Harshad Gauri!',
+                                        createdAt: '2026-04-18T00:00:00.000Z',
+                                        images: [productImages[1] || product?.image]
+                                    },
+                                    {
+                                        _id: 'default-3',
+                                        userId: { name: 'Rahul Verma', userImage: '' },
+                                        rating: 5,
+                                        comment: 'Good product. Elegant build, stellar packaging. Completely matches the collection guides.',
+                                        createdAt: '2026-04-02T00:00:00.000Z',
+                                        images: [productImages[2] || product?.image]
+                                    }
+                                ]];
+
+                                const currReview = allReviewsList[activeReviewIdx % allReviewsList.length] || allReviewsList[0];
+
+                                return (
+                                    <div className="mt-8 pb-4 max-w-md mx-auto lg:mx-0 space-y-6">
+                                        <div className="bg-transparent p-1">
+                                            <div className="flex items-center justify-between border-b border-[#2C6E9E] pb-3 mb-6">
+                                                <h3 className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-black">Customer Speak</h3>
+                                                <button
+                                                    onClick={() => setShowReviewForm(!showReviewForm)}
+                                                    className="text-[10px] font-bold uppercase tracking-widest text-[#8B4356] hover:underline outline-none"
+                                                >
+                                                    {showReviewForm ? 'Cancel' : 'Write a Review'}
+                                                </button>
+                                            </div>
+
+                                            {/* Write a Review Form */}
+                                            <AnimatePresence>
+                                                {showReviewForm && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, height: 0 }}
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        exit={{ opacity: 0, height: 0 }}
+                                                        className="overflow-hidden bg-white border border-zinc-200 p-4 sm:p-6 mb-6 shadow-sm"
+                                                    >
+                                                        <form onSubmit={handleAddReview} className="space-y-4">
+                                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-[#8B4356]">Submit Your Testimony</h4>
+                                                            
+                                                            <div>
+                                                                <label className="block text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-2">Your Rating</label>
+                                                                <div className="flex gap-1.5">
+                                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                                        <button
+                                                                            key={star}
+                                                                            type="button"
+                                                                            onClick={() => setUserRating(star)}
+                                                                            className="p-1 hover:scale-110 transition-transform outline-none"
+                                                                        >
+                                                                            <Star
+                                                                                className={`w-6 h-6 ${star <= userRating ? 'fill-[#8B4356] text-[#8B4356]' : 'text-zinc-200'}`}
+                                                                            />
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-1">Your Review</label>
+                                                                <textarea
+                                                                    value={userComment}
+                                                                    onChange={(e) => setUserComment(e.target.value)}
+                                                                    placeholder="Tell us what you love about this item..."
+                                                                    rows={4}
+                                                                    className="w-full border border-zinc-200 p-3 text-[11px] font-medium outline-none focus:border-[#8B4356]/40 bg-white"
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-1">Image URL (Optional)</label>
+                                                                <div className="flex gap-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={reviewImage}
+                                                                        onChange={(e) => setReviewImage(e.target.value)}
+                                                                        placeholder="Paste a photo link of your unboxing box..."
+                                                                        className="flex-1 border border-zinc-200 p-3 text-[11px] font-medium outline-none focus:border-[#8B4356]/40 bg-white"
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        className="px-4 border border-zinc-200 text-zinc-400 hover:text-[#8B4356] transition-colors flex items-center justify-center bg-white outline-none"
+                                                                        title="Mock camera upload"
+                                                                    >
+                                                                        <Camera className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <button
+                                                                type="submit"
+                                                                disabled={isSubmittingReview}
+                                                                className="bg-black text-white py-3 px-8 text-[9px] font-black uppercase tracking-widest hover:bg-zinc-800 disabled:opacity-50 transition-all shadow-md outline-none"
+                                                            >
+                                                                {isSubmittingReview ? 'Submitting...' : 'Post Testimonial'}
+                                                            </button>
+                                                        </form>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+
+                                            {/* Carousel View */}
+                                            <div className="flex items-center justify-between gap-1 md:gap-2">
+                                                <button
+                                                    onClick={() => setActiveReviewIdx(prev => prev === 0 ? allReviewsList.length - 1 : prev - 1)}
+                                                    className="p-1.5 text-[#1D5C8A] hover:scale-125 transition-transform outline-none shrink-0"
+                                                >
+                                                    <ArrowLeft className="w-6 h-6 md:w-7 md:h-7 stroke-[3px]" />
+                                                </button>
+
+                                                <div className="flex-1 text-center px-1 overflow-hidden">
+                                                    <AnimatePresence mode="wait">
+                                                        <motion.div
+                                                            key={activeReviewIdx}
+                                                            initial={{ opacity: 0, scale: 0.98 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            exit={{ opacity: 0, scale: 0.98 }}
+                                                            transition={{ duration: 0.2 }}
+                                                            className="flex flex-col items-center"
+                                                        >
+                                                            <div className="w-44 h-44 md:w-52 md:h-52 bg-white mb-5 mx-auto overflow-hidden border border-zinc-200 p-1 shadow-sm">
+                                                                <img
+                                                                    src={currReview.images?.[0] || productImages[0] || product?.image}
+                                                                    alt="Customer View"
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
+                                                            
+                                                            <p className="text-sm md:text-base font-medium font-assistant text-zinc-800 max-w-sm mx-auto leading-relaxed">
+                                                                "{currReview.comment}"
+                                                            </p>
+
+                                                            <div className="w-10 h-0.5 bg-[#2C6E9E] my-4 mx-auto"></div>
+
+                                                            <span className="font-serif text-sm md:text-base text-zinc-900 font-bold">
+                                                                {currReview.userId?.name || 'Anonymous'}
+                                                            </span>
+                                                        </motion.div>
+                                                    </AnimatePresence>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => setActiveReviewIdx(prev => prev === allReviewsList.length - 1 ? 0 : prev + 1)}
+                                                    className="p-1.5 text-[#1D5C8A] hover:scale-125 transition-transform outline-none shrink-0"
+                                                >
+                                                    <ChevronRight className="w-6 h-6 md:w-7 md:h-7 stroke-[3px]" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Manufacturer & Country Card directly underneath */}
+                                        <div className="bg-transparent border-t border-zinc-200 pt-5 space-y-3 text-xs font-assistant">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-3 gap-1">
+                                                <span className="text-zinc-500 font-medium">Manufacturer</span>
+                                                <span className="text-[#1D5C8A] font-semibold sm:text-right">Harshad Gauri Enterprises Limited<br/><span className="text-[10px] text-zinc-400 font-normal">302, Golden Plaza, Business District, Mumbai-400001</span></span>
+                                            </div>
+                                            <div className="flex items-center justify-between pt-0.5">
+                                                <span className="text-zinc-500 font-medium">Country of Origin</span>
+                                                <span className="text-[#1D5C8A] font-semibold">India</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                        {/* Right Column: Brand Promise & Certificate of Authenticity (lg:col-span-5) */}
+                        <div className="lg:col-span-5 space-y-4">
+                            {/* Box 1: Brand Promises */}
+                            <div className="bg-white border border-zinc-200 p-4.5 md:p-5 shadow-sm">
+                                <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#2A2A2A] mb-4 text-center sm:text-left">
+                                    Harshad Gauri Promise
+                                </h4>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-3">
+                                    <div className="flex items-center gap-2">
+                                        <RotateCcw className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">30 Day Returnable</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <RefreshCw className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Lifetime Exchange & Buy-Back</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Award className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Certified Jewellery</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <ShieldCheck className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">100% Refund</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Truck className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Free Shipping</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Heart className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Free Returns</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Box 2: Certificate of Authenticity */}
+                            <div className="bg-[#788896] text-white p-6 text-center shadow-sm">
+                                <h4 className="font-serif text-base tracking-wider mb-2">CERTIFICATE OF AUTHENTICITY</h4>
+                                <p className="text-[11px] leading-relaxed font-assistant opacity-90 max-w-sm mx-auto">
+                                    Every piece of jewellery that we make is certified for authenticity by third-party international laboratories like SGL, IGI, BIS, GIA, and GSI.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -1503,6 +1822,482 @@ const ProductDetails = () => {
                             >
                                 Got it, Thank you
                             </button>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* 10+1 Monthly Plan Modal */}
+            <AnimatePresence>
+                {showMonthlyPlanModal && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => {
+                                setShowMonthlyPlanModal(false);
+                                setIsSubscribedPlan(false);
+                                setShowInquiryForm(false);
+                            }}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300]"
+                        />
+
+                        {/* Modal Panel */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="fixed inset-x-4 bottom-4 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-4xl bg-white rounded-none z-[301] shadow-2xl flex flex-col max-h-[95vh] md:max-h-[90vh] overflow-y-auto border border-zinc-200 w-[calc(100%-2rem)]"
+                        >
+                            {/* Header (Matching User's Mockup) */}
+                            <div className="bg-white px-6 py-6 border-b border-zinc-100 flex flex-col items-center relative text-center">
+                                {/* Close button */}
+                                <button
+                                    onClick={() => {
+                                        setShowMonthlyPlanModal(false);
+                                        setIsSubscribedPlan(false);
+                                        setShowInquiryForm(false);
+                                    }}
+                                    className="absolute right-5 top-5 p-2 hover:bg-zinc-50 rounded-full transition-all text-zinc-400"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+
+                                <h3 className="font-serif text-3xl font-normal text-[#0F2942] tracking-wide">
+                                    Gold Mine 10+1 Plan
+                                </h3>
+
+                                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1.5 mt-3 text-[11px] font-bold text-zinc-500 uppercase tracking-wider font-assistant">
+                                    <div>Selected Product: <span className="text-[#0F2942] font-black">{product?.name}</span></div>
+                                    <div className="hidden md:block w-px h-3 bg-zinc-200" />
+                                    <div>Product Value: <span className="text-[#0F2942] font-black">₹{currentPrice.toLocaleString()}</span></div>
+                                    <div className="hidden md:block w-px h-3 bg-zinc-200" />
+                                    <div>Recommended Monthly Amount: <span className="text-[#0F2942] font-black">₹{Math.max(1000, Math.round((currentPrice / 11) / 100) * 100).toLocaleString()}</span></div>
+                                </div>
+                            </div>
+
+                            {!isSubscribedPlan ? (
+                                !showInquiryForm ? (
+                                    /* MAIN CALCULATOR CARD (Matching User's Mockup) */
+                                    <>
+                                        {/* Gray Content Area */}
+                                        <div className="bg-[#F4F4F4] p-6 md:p-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
+                                            {/* Left side: Step-by-Step Timeline */}
+                                            <div className="md:col-span-6 space-y-7 relative pl-8 py-2">
+                                                {/* Timeline dotted connector line */}
+                                                <div className="absolute left-3.5 top-6 bottom-6 w-0.5 border-l border-dashed border-[#1B5299]/40" />
+
+                                                {/* Step 1 */}
+                                                <div className="flex items-start gap-4 relative text-left">
+                                                    <div className="absolute -left-[29px] top-1.5 w-[14px] h-[14px] rounded-full bg-[#1B5299] text-white flex items-center justify-center text-[8px] font-black border-2 border-[#F4F4F4] z-10 shadow-sm">1</div>
+                                                    <div className="w-11 h-11 rounded-full bg-[#1B5299] flex items-center justify-center shrink-0 shadow-md">
+                                                        <CreditCard className="w-5 h-5 text-white stroke-[2px]" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-[12.5px] font-extrabold text-[#0F2942] uppercase tracking-wide font-assistant">Pay Monthly</h4>
+                                                        <p className="text-[11px] text-zinc-500 font-medium leading-normal mt-0.5 font-assistant">10 month installments with easy payment options</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Step 2 */}
+                                                <div className="flex items-start gap-4 relative text-left">
+                                                    <div className="absolute -left-[29px] top-1.5 w-[14px] h-[14px] rounded-full bg-[#1B5299] text-white flex items-center justify-center text-[8px] font-black border-2 border-[#F4F4F4] z-10 shadow-sm">2</div>
+                                                    <div className="w-11 h-11 rounded-full bg-[#1B5299] flex items-center justify-center shrink-0 shadow-md">
+                                                        <Tag className="w-5 h-5 text-white stroke-[2px]" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-[12.5px] font-extrabold text-[#0F2942] uppercase tracking-wide font-assistant">Get Special Discount</h4>
+                                                        <p className="text-[11px] text-zinc-500 font-medium leading-normal mt-0.5 font-assistant">Get 1 monthly installment for FREE in the 11th month</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Step 3 */}
+                                                <div className="flex items-start gap-4 relative text-left">
+                                                    <div className="absolute -left-[29px] top-1.5 w-[14px] h-[14px] rounded-full bg-[#1B5299] text-white flex items-center justify-center text-[8px] font-black border-2 border-[#F4F4F4] z-10 shadow-sm">3</div>
+                                                    <div className="w-11 h-11 rounded-full bg-[#1B5299] flex items-center justify-center shrink-0 shadow-md">
+                                                        <ShoppingBag className="w-5 h-5 text-white stroke-[2px]" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-[12.5px] font-extrabold text-[#0F2942] uppercase tracking-wide font-assistant">Redeem & Purchase</h4>
+                                                        <p className="text-[11px] text-zinc-500 font-medium leading-normal mt-0.5 font-assistant">Redeem final amount after 11 months to purchase the jewellery of your choice</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Right side: White calculation Card */}
+                                            <div className="md:col-span-6 bg-white p-5 md:p-6 shadow-md border border-zinc-150 flex flex-col justify-between space-y-4 font-assistant text-left">
+                                                {/* Interactive Slider customizer inside calculation card */}
+                                                <div className="border-b border-zinc-100 pb-3">
+                                                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">
+                                                        <span>Customize Monthly Amount:</span>
+                                                        <span className="text-[#EF5F3F] bg-[#EF5F3F]/10 px-2 py-0.5 rounded-full font-bold">Interactive</span>
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        min={1000}
+                                                        max={50000}
+                                                        step={500}
+                                                        value={monthlyInstallment}
+                                                        onChange={(e) => setMonthlyInstallment(Number(e.target.value))}
+                                                        className="w-full h-1.5 bg-zinc-100 accent-[#EF5F3F] cursor-pointer rounded-lg mb-1"
+                                                    />
+                                                    <div className="flex justify-between text-[8px] font-black text-zinc-400 uppercase tracking-widest">
+                                                        <span>Min: ₹1,000</span>
+                                                        <span>Max: ₹50,000</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Calculation details layout */}
+                                                <div className="space-y-4 text-xs text-zinc-600">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="font-semibold text-zinc-500 text-[11px]">Recommended Monthly Amount</span>
+                                                        <span className="font-extrabold text-black text-xs md:text-sm">₹{monthlyInstallment.toLocaleString()}</span>
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-semibold text-zinc-500 text-[11px]">Your total payment</span>
+                                                            <span className="font-extrabold text-black text-xs md:text-sm">₹{(monthlyInstallment * 10).toLocaleString()}</span>
+                                                        </div>
+                                                        <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wide">Period of 10 months</span>
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="flex justify-between items-center text-[#EF5F3F]">
+                                                            <span className="font-extrabold text-[11px]">100% Discount on 11th installment</span>
+                                                            <span className="font-black text-xs md:text-sm">₹{monthlyInstallment.toLocaleString()}</span>
+                                                        </div>
+                                                        <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wide">100% of 1 month installment value</span>
+                                                    </div>
+
+                                                    <div className="border-t border-zinc-100 pt-4">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-extrabold text-[#0F2942] text-[11px]">Buy any jewellery worth</span>
+                                                            <span className="font-black text-sm text-black">₹{(monthlyInstallment * 11).toLocaleString()}</span>
+                                                        </div>
+                                                        <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wide">After 11th month</span>
+                                                    </div>
+
+                                                    <div className="flex justify-between items-center border-t border-zinc-100 pt-4">
+                                                        <div>
+                                                            <span className="font-semibold text-[#0F2942] text-[11px] block">You effectively pay</span>
+                                                            <span className="text-[8px] text-zinc-400 font-bold uppercase tracking-wide block mt-0.5">(for ₹{(monthlyInstallment * 11).toLocaleString()} value)</span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="font-black text-base text-[#0F2942] block">₹{(monthlyInstallment * 10).toLocaleString()}</span>
+                                                            <span className="inline-block bg-[#10853F] text-white text-[8px] font-black uppercase px-2 py-0.5 tracking-wider mt-1 rounded-sm">9.09% discount!</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Footer (Matching User's Mockup) */}
+                                        <div className="bg-white px-6 py-5 border-t border-zinc-150 flex flex-col sm:flex-row justify-between items-center gap-4">
+                                            <div className="text-left max-w-lg">
+                                                <span className="text-[10px] font-black text-[#EF5F3F] uppercase tracking-wider block mb-0.5 font-assistant">Please Note:</span>
+                                                <p className="text-[10px] text-zinc-500 font-medium leading-relaxed font-assistant">
+                                                    You can purchase any jewellery using the accumulated amount after 11 months* <span className="text-[#EF5F3F] font-black cursor-pointer underline hover:text-[#d0492a]">T&C</span>
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowInquiryForm(true)}
+                                                className="w-full sm:w-auto px-10 h-11 bg-[#EF5F3F] text-white uppercase font-black tracking-widest text-[10px] hover:bg-[#d84d2f] active:scale-95 transition-all shadow-md font-assistant"
+                                            >
+                                                SUBSCRIBE NOW
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    /* SAVINGS ENROLLMENT INQUIRY FORM (Toggled after clicking SUBSCRIBE NOW) */
+                                    <form
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
+                                            if (!planForm.phone.trim()) {
+                                                showNotification({ message: 'Please enter a phone number', type: 'error' });
+                                                return;
+                                            }
+                                            setIsSubmittingPlan(true);
+                                            api.post('/subscriptions/create', {
+                                                name: planForm.name,
+                                                email: planForm.email,
+                                                phone: planForm.phone,
+                                                productId: product.id || product._id,
+                                                productName: product.name,
+                                                productPrice: currentPrice,
+                                                monthlyInstallment: monthlyInstallment,
+                                                maturityValue: monthlyInstallment * 11
+                                            })
+                                            .then((res) => {
+                                                setIsSubmittingPlan(false);
+                                                setIsSubscribedPlan(true);
+                                                showNotification({ message: 'Inquiry submitted successfully!', type: 'success' });
+                                            })
+                                            .catch((err) => {
+                                                setIsSubmittingPlan(false);
+                                                console.error('[SUBMIT SUBSCRIPTION PLAN ERROR]', err);
+                                                showNotification({ 
+                                                    message: err.response?.data?.message || 'Failed to submit inquiry. Please try again.', 
+                                                    type: 'error' 
+                                                });
+                                            });
+                                        }}
+                                        className="p-6 md:p-8 bg-[#F4F4F4] text-left space-y-5"
+                                    >
+                                        <div className="flex items-center justify-between border-b border-zinc-200 pb-2.5">
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-[#0F2942] font-assistant">Provide Enrollment Details</h4>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowInquiryForm(false)}
+                                                className="text-xs text-[#EF5F3F] font-bold uppercase tracking-wider hover:underline"
+                                            >
+                                                ← Back to Calculator
+                                            </button>
+                                        </div>
+
+                                        <div className="bg-white p-4.5 border border-zinc-150 space-y-3 shadow-sm">
+                                            <div>
+                                                <label className="block text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1 font-assistant">Your Name</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={planForm.name}
+                                                    onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
+                                                    placeholder="Enter your full name"
+                                                    className="w-full border border-zinc-200 p-2.5 text-[10.5px] font-medium outline-none focus:border-[#EF5F3F] bg-zinc-50/20 font-assistant"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1 font-assistant">Email Address</label>
+                                                <input
+                                                    type="email"
+                                                    required
+                                                    value={planForm.email}
+                                                    onChange={(e) => setPlanForm({ ...planForm, email: e.target.value })}
+                                                    placeholder="Enter your email"
+                                                    className="w-full border border-zinc-200 p-2.5 text-[10.5px] font-medium outline-none focus:border-[#EF5F3F] bg-zinc-50/20 font-assistant"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1 font-assistant">Mobile Number</label>
+                                                <input
+                                                    type="tel"
+                                                    required
+                                                    value={planForm.phone}
+                                                    onChange={(e) => setPlanForm({ ...planForm, phone: e.target.value })}
+                                                    placeholder="Enter 10-digit mobile number"
+                                                    className="w-full border border-zinc-200 p-2.5 text-[10.5px] font-medium outline-none focus:border-[#EF5F3F] bg-zinc-50/20 font-assistant"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-[#FFFDF3] border border-[#F3EBBA] p-3 text-center">
+                                            <p className="text-[10px] text-zinc-600 font-semibold font-assistant leading-normal">
+                                                By submitting, you enroll in a 10+1 scheme with a monthly amount of <span className="font-bold text-[#0F2942]">₹{monthlyInstallment.toLocaleString()}</span>. Target Maturity gold fund: <span className="font-extrabold text-[#EF5F3F]">₹{(monthlyInstallment * 11).toLocaleString()}</span>.
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmittingPlan}
+                                            className="w-full h-11 bg-[#EF5F3F] hover:bg-[#d84d2f] text-white rounded-none font-black uppercase tracking-widest text-[10px] shadow-md transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 font-assistant"
+                                        >
+                                            {isSubmittingPlan ? 'Processing Inquiry...' : 'Submit 10+1 Scheme Inquiry'}
+                                        </button>
+                                    </form>
+                                )
+                            ) : (
+                                /* CONGRATULATIONS / SUCCESS RECEIPT */
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="p-6 md:p-8 bg-[#F4F4F4] text-center space-y-6"
+                                >
+                                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto shadow-sm border border-emerald-100">
+                                        <Check className="w-8 h-8 text-emerald-500 stroke-[3px]" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="text-xl font-serif font-black text-black italic">Congratulations!</h4>
+                                        <p className="text-[11px] font-black text-[#EF5F3F] uppercase tracking-widest leading-none font-assistant">Your Savings Plan Staged Successfully</p>
+                                    </div>
+
+                                    {/* Plan Summary Receipt */}
+                                    <div className="max-w-sm mx-auto bg-white border border-dashed border-zinc-300 p-4.5 rounded-none text-left space-y-2 font-mono text-[10px] md:text-[11px] text-zinc-600 relative overflow-hidden shadow-sm">
+                                        <div className="absolute -top-3 -right-3 w-16 h-16 bg-[#EF5F3F]/5 rounded-full rotate-45"></div>
+                                        <div className="border-b border-zinc-200/60 pb-2 text-center font-bold text-black uppercase tracking-wider text-[9px] mb-1">
+                                            SAVINGS SCHEME RECEIPT
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Patron Name:</span>
+                                            <span className="font-bold text-black">{planForm.name}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Mobile Contact:</span>
+                                            <span className="font-bold text-black">{planForm.phone}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Target Jewelry:</span>
+                                            <span className="font-bold text-black truncate max-w-[180px]">{product.name}</span>
+                                        </div>
+                                        <div className="border-t border-zinc-200/60 my-2"></div>
+                                        <div className="flex justify-between font-bold text-zinc-800">
+                                            <span>Monthly Installment:</span>
+                                            <span>₹{monthlyInstallment.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-zinc-500">
+                                            <span>Installment Period:</span>
+                                            <span>10 Months</span>
+                                        </div>
+                                        <div className="flex justify-between text-emerald-600 font-bold">
+                                            <span>HG Bonus Gift (Month 11):</span>
+                                            <span>₹{monthlyInstallment.toLocaleString()}</span>
+                                        </div>
+                                        <div className="border-t border-zinc-200/60 my-2"></div>
+                                        <div className="flex justify-between text-black font-extrabold text-xs md:text-sm">
+                                            <span>Maturity Gold Fund:</span>
+                                            <span className="text-[#EF5F3F]">₹{(monthlyInstallment * 11).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-[10px] text-zinc-500 max-w-sm mx-auto leading-relaxed font-assistant">
+                                        We have sent a confirmation details brochure of terms and conditions to your email <span className="font-bold text-black">{planForm.email}</span>. Our expert gold concierge will reach out to you within 24 hours at your mobile number <span className="font-bold text-black">{planForm.phone}</span> to finalize your digital mandate and activate the account!
+                                    </p>
+
+                                    <button
+                                        onClick={() => {
+                                            setShowMonthlyPlanModal(false);
+                                            setIsSubscribedPlan(false);
+                                            setShowInquiryForm(false);
+                                        }}
+                                        className="w-full h-11 bg-[#0F2942] text-white rounded-none font-black uppercase tracking-widest text-[9px] shadow-md hover:bg-zinc-800 active:scale-95 transition-all max-w-sm mx-auto block font-assistant"
+                                    >
+                                        Done, Back to Product
+                                    </button>
+                                </motion.div>
+                            )}
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Interactive Video Call Booking Modal */}
+            <AnimatePresence>
+                {isVideoModalOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsVideoModalOpen(false)}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300]"
+                        />
+
+                        {/* Modal Panel */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="fixed inset-x-4 bottom-4 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-md bg-white rounded-none z-[301] shadow-2xl p-6 md:p-8 flex flex-col max-h-[90vh] overflow-y-auto border border-[#F5E6E8] w-[calc(100%-2rem)]"
+                        >
+                            <div className="flex items-center justify-between border-b border-zinc-100 pb-4 mb-5">
+                                <div className="flex flex-col">
+                                    <span className="text-[8px] font-black uppercase tracking-[0.4em] text-[#EF5F3F] mb-1">Live Consultation</span>
+                                    <h3 className="font-serif text-2xl text-black leading-tight italic">Schedule <span className="text-[#EF5F3F] not-italic">Video Call</span></h3>
+                                </div>
+                                <button
+                                    onClick={() => setIsVideoModalOpen(false)}
+                                    className="p-2 hover:bg-zinc-50 rounded-full transition-all"
+                                >
+                                    <X className="w-5 h-5 text-zinc-400" />
+                                </button>
+                            </div>
+
+                            {!isVideoSubmitting ? (
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        setIsVideoSubmitting(true);
+                                        setTimeout(() => {
+                                            setIsVideoSubmitting(false);
+                                            setIsVideoModalOpen(false);
+                                            showNotification("Video consultation booked successfully! Check email for the link.");
+                                        }, 1000);
+                                    }}
+                                    className="space-y-4"
+                                >
+                                    <p className="text-[11.5px] font-assistant font-medium text-zinc-500 leading-relaxed mb-2">
+                                        Speak directly with our premium jewelry consultants from the comfort of your home. View the <span className="font-bold text-black">{product.name}</span> in detail, ask questions, and explore sizing live.
+                                    </p>
+                                    
+                                    <div>
+                                        <label className="block text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1">Your Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={videoForm.name}
+                                            onChange={(e) => setVideoForm({ ...videoForm, name: e.target.value })}
+                                            placeholder="Enter your name"
+                                            className="w-full border border-zinc-150 p-2.5 text-[10.5px] font-medium outline-none focus:border-[#EF5F3F] rounded-none bg-zinc-50/20"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1">Email Address</label>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={videoForm.email}
+                                            onChange={(e) => setVideoForm({ ...videoForm, email: e.target.value })}
+                                            placeholder="Enter your email"
+                                            className="w-full border border-zinc-150 p-2.5 text-[10.5px] font-medium outline-none focus:border-[#EF5F3F] rounded-none bg-zinc-50/20"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1">Preferred Date</label>
+                                            <input
+                                                type="date"
+                                                required
+                                                value={videoForm.date}
+                                                onChange={(e) => setVideoForm({ ...videoForm, date: e.target.value })}
+                                                className="w-full border border-zinc-150 p-2.5 text-[10.5px] font-medium outline-none focus:border-[#EF5F3F] rounded-none bg-zinc-50/20 text-zinc-800"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1">Preferred Time</label>
+                                            <select
+                                                required
+                                                value={videoForm.time}
+                                                onChange={(e) => setVideoForm({ ...videoForm, time: e.target.value })}
+                                                className="w-full border border-zinc-150 p-2.5 text-[10.5px] font-medium outline-none focus:border-[#EF5F3F] rounded-none bg-zinc-50/20 text-zinc-800"
+                                            >
+                                                <option value="">Select slot</option>
+                                                <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
+                                                <option value="11:30 AM - 12:30 PM">11:30 AM - 12:30 PM</option>
+                                                <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
+                                                <option value="04:00 PM - 05:00 PM">04:00 PM - 05:00 PM</option>
+                                                <option value="06:00 PM - 07:00 PM">06:00 PM - 07:00 PM</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        className="w-full h-12 bg-black hover:bg-zinc-800 text-white rounded-none font-black uppercase tracking-[0.2em] text-[9.5px] shadow-md transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 mt-2"
+                                    >
+                                        Confirm Reservation
+                                    </button>
+                                </form>
+                            ) : (
+                                <div className="py-8 text-center space-y-4">
+                                    <div className="w-12 h-12 rounded-full border-2 border-t-[#EF5F3F] border-zinc-100 animate-spin mx-auto"></div>
+                                    <p className="text-[11px] font-black text-[#EF5F3F] uppercase tracking-widest">Reserving Your Slot...</p>
+                                </div>
+                            )}
                         </motion.div>
                     </>
                 )}

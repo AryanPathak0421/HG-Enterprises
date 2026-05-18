@@ -10,14 +10,14 @@ const ProposalRings = () => {
             <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
                 
                 {/* Header Section */}
-                <div className="text-center mb-4 md:mb-8">
-                    <span className="text-[#c1a05b] font-bold tracking-[0.25em] uppercase text-[10px] md:text-xs mb-2.5 block">
+                <div className="text-center mb-2 md:mb-4">
+                    <span className="text-[#c1a05b] font-bold tracking-[0.25em] uppercase text-[10px] md:text-xs mb-1 block">
                         GIFT THE EXCELLENCE
                     </span>
-                    <h2 className="text-3xl md:text-5xl font-serif text-dark mb-3 tracking-wide">
+                    <h2 className="text-2xl md:text-3xl font-serif text-dark mb-2 tracking-wide">
                         Shop by <span className="italic text-[#8c2a3e] font-normal">Recipient</span>
                     </h2>
-                    <div className="h-[1px] w-12 bg-[#c1a05b] mx-auto mt-3"></div>
+                    <div className="h-[1px] w-12 bg-[#c1a05b] mx-auto mt-2"></div>
                 </div>
 
                 {/* Cards Container with perfect mobile vertical gap spacing */}

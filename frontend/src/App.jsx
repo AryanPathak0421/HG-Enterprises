@@ -74,6 +74,7 @@ import DynamicPageEditor from './modules/admin/pages/DynamicPageEditor';
 import PlatformSettingsPage from './modules/admin/pages/PlatformSettingsPage';
 
 import SuggestionList from './modules/admin/pages/SuggestionList';
+import SubscriptionList from './modules/admin/pages/SubscriptionList';
 import CancellationPolicy from './modules/user/pages/CancellationPolicy';
 import ShippingPolicy from './modules/user/pages/ShippingPolicy';
 import ContactPage from './modules/user/pages/ContactPage';
@@ -95,7 +96,7 @@ const ScrollToTop = () => {
 const AppContent = () => {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
-  const noFooterPaths = ['/about', '/blogs', '/help', '/order-tracking', '/profile', '/offers', '/product/'];
+  const noFooterPaths = ['/about', '/blogs', '/help', '/order-tracking', '/profile', '/offers'];
   const hideFooter = isAdminPath || noFooterPaths.some(path => location.pathname.startsWith(path));
 
   return (
@@ -108,7 +109,7 @@ const AppContent = () => {
               <AnnouncementBar />
               <Navbar />
             </div>
-            <div className="h-[40px] md:h-[115px] w-full"></div>
+            <div className="h-[40px] md:h-[85px] w-full"></div>
           </>
         )}
         <main className={`flex-grow ${!isAdminPath ? 'pb-16 md:pb-0' : ''}`}>
@@ -184,6 +185,7 @@ const AppContent = () => {
                     <Route path="/users" element={<UserManagement />} />
                     <Route path="/users/view/:id" element={<UserView />} />
                     <Route path="/suggestions" element={<SuggestionList />} />
+                    <Route path="/subscriptions" element={<SubscriptionList />} />
                     <Route path="/reviews" element={<ReviewModeration />} />
                     <Route path="/support" element={<SupportManagement />} />
                     <Route path="/support/inquiries" element={<ContactInquiries />} />

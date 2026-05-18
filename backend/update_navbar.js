@@ -8,17 +8,19 @@ async function updateNavbar() {
     const result = await db.collection('settings').updateOne({}, {
         $set: {
             navbarLinks: [
-                { id: 1, name: 'ABOUT', path: '/about' },
-                { id: 2, name: 'BLOG', path: '/blogs' },
-                { id: 3, name: 'OFFERS', path: '/offers' },
-                { id: 4, name: 'SHOP', path: '/shop' },
-                { id: 5, name: 'CONTACT US', path: '/help' },
-                { id: 6, name: 'TRACK ORDER', path: '/profile/orders' }
+                { id: 1, name: 'GIFTS', path: '/shop?tag=gift' },
+                { id: 2, name: 'GOLD COINS', path: '/shop?tag=coin' },
+                { id: 3, name: 'ABOUT', path: '/about' },
+                { id: 4, name: 'BLOG', path: '/blogs' },
+                { id: 5, name: 'OFFERS', path: '/offers' },
+                { id: 6, name: 'SHOP', path: '/shop' },
+                { id: 7, name: 'CONTACT US', path: '/help' },
+                { id: 8, name: 'TRACK ORDER', path: '/profile/orders' }
             ]
         }
-    });
+    }, { upsert: true });
 
-    console.log('Navbar links updated:', result.modifiedCount, 'document(s) modified');
+    console.log('Navbar links updated:', result.modifiedCount, 'document(s) modified or inserted via upsert');
     process.exit(0);
 }
 

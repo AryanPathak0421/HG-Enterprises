@@ -11,18 +11,18 @@ const CuratedForYou = () => {
     if (displayItems.length === 0) return null;
 
     return (
-        <section className="pt-8 md:pt-12 pb-2 md:pb-4 bg-white overflow-hidden">
+        <section className="pt-4 md:pt-6 pb-2 md:pb-4 bg-white overflow-hidden">
             <div className="container mx-auto px-4 md:px-6">
 
                 {/* Section Header */}
-                <div className="text-center mb-8 md:mb-12">
-                    <span className="text-primary font-serif tracking-[0.2em] font-normal italic text-[10px] md:text-sm mb-1 block">
+                <div className="text-center mb-4 md:mb-6">
+                    <span className="text-primary font-serif tracking-[0.2em] font-normal italic text-[10px] md:text-xs mb-0.5 block">
                         Shop By Occasion
                     </span>
-                    <h2 className="font-serif text-3xl md:text-4xl font-normal text-dark tracking-tight">
+                    <h2 className="font-serif text-2xl md:text-3xl font-normal text-dark tracking-tight">
                         {sectionData?.label || "Curated For You"}
                     </h2>
-                    <div className="h-[1px] w-12 bg-primary mx-auto opacity-30 mt-3"></div>
+                    <div className="h-[1px] w-12 bg-primary mx-auto opacity-30 mt-2"></div>
                 </div>
 
                 {/* Horizontal Scroll / Grid Container */}
