@@ -149,18 +149,18 @@ const FlipCard = ({ frontImage, backContent, className, delay = 0, slideDirectio
 
 const EditorialSection = () => {
     return (
-        <section className="pt-4 md:pt-8 pb-16 bg-white overflow-hidden">
+        <section className="pt-0 md:pt-2 pb-4 bg-white overflow-hidden">
             <div className="max-w-[1400px] mx-auto px-4 md:px-8">
                 
-                {/* Section Header */}
+                {/* Section Header - Matched to Shop by Recipient Style */}
                 <div className="text-center mb-10 md:mb-16">
-                    <span className="text-primary font-serif tracking-[0.2em] font-normal italic text-[10px] md:text-sm mb-1 block">
-                        Our Vision
+                    <span className="text-[#c1a05b] font-bold tracking-[0.25em] uppercase text-[10px] md:text-xs mb-1 block">
+                        OUR VISION
                     </span>
-                    <h2 className="font-serif text-3xl md:text-4xl font-normal text-dark tracking-tight">
-                        Editorial
+                    <h2 className="text-2xl md:text-3xl font-serif font-semibold text-dark mb-2 tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                        Our <span className="italic text-[#8c2a3e] font-normal">Editorial</span>
                     </h2>
-                    <div className="h-[1px] w-12 bg-primary mx-auto opacity-30 mt-3"></div>
+                    <div className="h-[1px] w-12 bg-[#c1a05b] mx-auto mt-2"></div>
                 </div>
                 
                 {/* --- Block 1: Bluestone Grid Pattern (Mobile: 3cols) --- */}

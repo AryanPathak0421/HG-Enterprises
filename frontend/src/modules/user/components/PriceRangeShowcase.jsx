@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 
 const PriceRangeShowcase = () => {
     const { homepageSections } = useShop();
+    const navigate = useNavigate();
     const [activeIndex, setActiveIndex] = useState(1); // Set second card active initially for a gorgeous balanced look
 
     // Use admin-configured items retrieved from the DB strictly
@@ -26,12 +27,15 @@ const PriceRangeShowcase = () => {
     return (
         <section className="pt-2 md:pt-4 pb-4 bg-gradient-to-b from-[#FAF5F6] via-[#F1E1E4] to-[#FAF5F6] overflow-hidden relative">
             <div className="container mx-auto px-4">
-                {/* Header Section - Inspired by Pick Your Glam */}
+                {/* Header Section - Matched to Shop by Recipient Style */}
                 <div className="text-center mb-4 md:mb-6">
-                    <h2 className="font-serif text-3xl md:text-4xl italic font-normal text-[#3d1418] tracking-tight mb-2">
-                        Pick Your Glam
+                    <span className="text-[#c1a05b] font-bold tracking-[0.25em] uppercase text-[10px] md:text-xs mb-1 block">
+                        SHOP BY BUDGET
+                    </span>
+                    <h2 className="text-2xl md:text-3xl font-serif font-semibold text-dark mb-2 tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                        Pick Your <span className="italic text-[#8c2a3e] font-normal">Glam</span>
                     </h2>
-                    <div className="h-[1px] w-12 bg-[#6b252c]/30 mx-auto mt-3"></div>
+                    <div className="h-[1px] w-12 bg-[#c1a05b] mx-auto mt-2"></div>
                 </div>
             </div>
 
@@ -56,7 +60,13 @@ const PriceRangeShowcase = () => {
                         return (
                             <div
                                 key={item.id}
-                                onClick={() => setActiveIndex(index)}
+                                onClick={() => {
+                                    if (isActive && item.path) {
+                                        navigate(item.path);
+                                    } else {
+                                        setActiveIndex(index);
+                                    }
+                                }}
                                 className={`relative cursor-pointer overflow-hidden transition-all duration-700 ease-in-out shrink-0 ${
                                     isActive 
                                         ? "w-[190px] sm:w-[240px] md:w-[360px] lg:w-[440px] h-[280px] md:h-[460px] grayscale-0 opacity-100 shadow-[0_25px_60px_rgba(107,37,44,0.15)] ring-1 ring-[#6b252c]/10 rounded-tl-[2.5rem] rounded-br-[2.5rem] md:rounded-tl-[3.5rem] md:rounded-br-[3.5rem] rounded-tr-none rounded-bl-none"

@@ -21,7 +21,7 @@ const ProposalRings = () => {
                 </div>
 
                 {/* Cards Container with perfect mobile vertical gap spacing */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 lg:gap-x-12 gap-y-22 md:gap-y-28 max-w-6xl mx-auto mt-28 md:mt-36 pb-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 lg:gap-x-12 gap-y-12 md:gap-y-28 max-w-6xl mx-auto mt-12 md:mt-36 pb-0">
                     
                     {/* For Him Card (Rounded Left, Sharp Right Corner) */}
                     <Link to="/category/men" className="block w-full h-[100px] md:h-[110px] relative">
@@ -45,7 +45,7 @@ const ProposalRings = () => {
                                 </div>
 
                                 {/* Model Image */}
-                                <div className="absolute bottom-0 right-2 lg:right-6 w-[140px] md:w-[170px] h-[190px] md:h-[220px] pointer-events-none z-10">
+                                <div className="absolute bottom-0 right-2 lg:right-6 w-[110px] md:w-[170px] h-[150px] md:h-[220px] pointer-events-none z-10">
                                     <img 
                                         src={himImage} 
                                         alt="For Him" 
@@ -68,7 +68,7 @@ const ProposalRings = () => {
                             <div className="w-full h-full bg-gradient-to-r from-[#4a1015] to-[#6b1e2e] rounded-r-2xl rounded-l-none flex items-center justify-end relative overflow-visible">
                                 
                                 {/* Model Image */}
-                                <div className="absolute bottom-0 left-2 lg:left-6 w-[140px] md:w-[170px] h-[190px] md:h-[220px] pointer-events-none z-10">
+                                <div className="absolute bottom-0 left-2 lg:left-6 w-[110px] md:w-[170px] h-[150px] md:h-[220px] pointer-events-none z-10">
                                     <img 
                                         src={herImage} 
                                         alt="For Her" 

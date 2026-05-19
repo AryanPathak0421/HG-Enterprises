@@ -25,15 +25,15 @@ const ProductDetails = () => {
     const [appliedCoupon, setAppliedCoupon] = useState(null);
 
     const categoryName = (product?.category?.name || product?.category || '').toString().toLowerCase();
-    const isJewelleryProduct = !categoryName.includes('tool') && 
-                                !categoryName.includes('machine') && 
-                                !categoryName.includes('measurement') && 
-                                !categoryName.includes('optics') && 
-                                !categoryName.includes('cutting') && 
-                                !categoryName.includes('polishing') && 
-                                !categoryName.includes('forging') && 
-                                !categoryName.includes('setting') && 
-                                !categoryName.includes('machinery');
+    const isJewelleryProduct = !categoryName.includes('tool') &&
+        !categoryName.includes('machine') &&
+        !categoryName.includes('measurement') &&
+        !categoryName.includes('optics') &&
+        !categoryName.includes('cutting') &&
+        !categoryName.includes('polishing') &&
+        !categoryName.includes('forging') &&
+        !categoryName.includes('setting') &&
+        !categoryName.includes('machinery');
 
     // Reviews states & handlers
     const [reviews, setReviews] = useState([]);
@@ -110,7 +110,7 @@ const ProductDetails = () => {
         if (!isJewelleryProduct) return '';
         const subCat = product.subCategory || product.subcategory || product.category || 'Ring';
         const capitalizedSubCat = subCat.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-        
+
         let metalWeight = '';
         let diamondCt = '';
 
@@ -255,7 +255,7 @@ const ProductDetails = () => {
         if (product?.specifications && product.specifications.length > 0) {
             product.specifications.forEach(spec => {
                 const labelUpper = spec.label.toUpperCase();
-                
+
                 if (labelUpper.includes('PRODUCT CODE') || labelUpper.includes('HEIGHT') || labelUpper.includes('WIDTH') || labelUpper.includes('PRODUCT WEIGHT')) {
                     let cleanLabel = spec.label;
                     if (labelUpper.includes('PRODUCT CODE')) cleanLabel = 'Product Code';
@@ -263,19 +263,19 @@ const ProductDetails = () => {
                     if (labelUpper.includes('WIDTH')) cleanLabel = 'Width';
                     if (labelUpper.includes('PRODUCT WEIGHT')) cleanLabel = 'Product Weight';
                     grouped['PRODUCT DETAILS'].push({ label: cleanLabel, value: spec.value });
-                } 
+                }
                 else if (labelUpper.includes('DIAMOND') || labelUpper.includes('TOTAL WEIGHT') || labelUpper.includes('TOTAL NO. OF DIAMONDS')) {
                     let cleanLabel = spec.label;
                     if (labelUpper.includes('TOTAL WEIGHT') || labelUpper.includes('DIAMOND WEIGHT')) cleanLabel = 'Total Weight';
                     if (labelUpper.includes('TOTAL NO.') || labelUpper.includes('DIAMOND COUNT') || labelUpper.includes('TOTAL DIAMONDS') || labelUpper.includes('DIAMONDS')) cleanLabel = 'Total No. Of Diamonds';
                     grouped['DIAMOND DETAILS'].push({ label: cleanLabel, value: spec.value });
-                } 
+                }
                 else if (labelUpper.includes('METAL') || labelUpper.includes('TYPE') || labelUpper.includes('GOLD WEIGHT')) {
                     let cleanLabel = spec.label;
                     if (labelUpper.includes('TYPE')) cleanLabel = 'Type';
                     if (labelUpper.includes('WEIGHT')) cleanLabel = 'Weight';
                     grouped['METAL DETAILS'].push({ label: cleanLabel, value: spec.value });
-                } 
+                }
                 else if (labelUpper.includes('PRICE') || labelUpper.includes('GOLD') || labelUpper.includes('MAKING') || labelUpper.includes('GST') || labelUpper.includes('TOTAL')) {
                     let cleanLabel = spec.label;
                     if (labelUpper.includes('GOLD')) cleanLabel = 'Gold';
@@ -284,10 +284,10 @@ const ProductDetails = () => {
                     if (labelUpper.includes('GST')) cleanLabel = 'GST';
                     if (labelUpper.includes('TOTAL')) cleanLabel = 'Total';
                     grouped['PRICE BREAKUP'].push({ label: cleanLabel, value: spec.value });
-                } 
+                }
                 else if (labelUpper.includes('TAGS') || labelUpper.includes('TAG')) {
                     grouped['TAGS'].push({ label: 'Tags', value: spec.value });
-                } 
+                }
                 else {
                     const parts = spec.label.split(' ');
                     const group = parts.length > 1 ? parts.slice(0, -1).join(' ').toUpperCase() : 'GENERAL';
@@ -301,6 +301,25 @@ const ProductDetails = () => {
         Object.entries(other).forEach(([cat, items]) => {
             grouped[cat] = items;
         });
+
+        // Generate realistic price breakup if empty (critical to show dynamic pricing values)
+        if (grouped['PRICE BREAKUP'].length === 0) {
+            const hasDiamonds = (product?.specifications || []).some(s => s.label.toUpperCase().includes('DIAMOND')) || 
+                                (product?.name || '').toUpperCase().includes('DIAMOND');
+            
+            const gst = Math.round(currentPrice * 0.03);
+            const making = Math.round(currentPrice * 0.12);
+            const diamondValue = hasDiamonds ? Math.round(currentPrice * 0.25) : 0;
+            const metalValue = currentPrice - gst - making - diamondValue;
+
+            grouped['PRICE BREAKUP'] = [
+                { label: 'Gold Price', value: `₹${metalValue.toLocaleString()}` },
+                ...(hasDiamonds ? [{ label: 'Diamond Price', value: `₹${diamondValue.toLocaleString()}` }] : []),
+                { label: 'Making Charges', value: `₹${making.toLocaleString()}` },
+                { label: 'GST (3%)', value: `₹${gst.toLocaleString()}` },
+                { label: 'Total', value: `₹${currentPrice.toLocaleString()}` }
+            ];
+        }
 
         // Filter out empty sections
         return Object.fromEntries(
@@ -359,57 +378,62 @@ const ProductDetails = () => {
             // Fetch image as blob
             const response = await fetch(imageUrl, { mode: 'cors' });
             const blob = await response.blob();
-            
+
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.src = URL.createObjectURL(blob);
-            
+
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
-                
+
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
-                
+
                 // Load and overlay the transparent brand logo at the bottom-left corner
                 const watermark = new Image();
                 watermark.src = watermarkLogo;
                 watermark.onload = () => {
-                    // Set watermark width to 10% of canvas width (beautifully compact)
-                    const wmWidth = canvas.width * 0.10;
+                    // Small watermark at bottom-right corner — no white background, image stays visible
+                    const wmWidth = canvas.width * 0.12;
                     const wmHeight = watermark.naturalHeight * (wmWidth / watermark.naturalWidth);
-                    
-                    // Position at bottom-left corner with nice padding
-                    const padding = canvas.width * 0.04;
-                    const x = padding;
-                    // Leave space for the text below the logo
-                    const y = canvas.height - wmHeight - padding - (canvas.width * 0.02);
-                    
-                    // Set watermark transparency to 40% (subtle and high-end)
-                    ctx.globalAlpha = 0.40;
+                    const margin = canvas.width * 0.02;
+
+                    // Bottom-right position
+                    const x = canvas.width - wmWidth - margin;
+                    const y = canvas.height - wmHeight - margin * 3;
+
+                    const fontSize = Math.round(canvas.width * 0.020);
+
+                    // Draw logo at low opacity — no white box
+                    ctx.globalAlpha = 0.30;
                     ctx.drawImage(watermark, x, y, wmWidth, wmHeight);
-                    
-                    // Draw dark brown premium text below the logo
-                    ctx.globalAlpha = 0.70; // Highly readable
-                    ctx.fillStyle = '#4E3629'; // Premium Dark Earth Brown
-                    const fontSize = Math.round(canvas.width * 0.018); // Elegant sizing
-                    ctx.font = `bold ${fontSize}px "Cinzel", "Playfair Display", "Georgia", serif`;
-                    ctx.fillText('HG ENTERPRISES', x, y + wmHeight + (fontSize * 1.0));
-                    
-                    // Reset canvas alpha to default
+
+                    // Draw brand text below the logo with white fill + dark shadow for readability on any bg
                     ctx.globalAlpha = 1.0;
-                    
+                    ctx.font = `bold ${fontSize}px "Georgia", serif`;
+                    ctx.textAlign = 'right';
+                    // Shadow pass
+                    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                    ctx.fillText('HG ENTERPRISES', x + wmWidth + 1, y + wmHeight + fontSize + 1);
+                    // Actual text in white
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillText('HG ENTERPRISES', x + wmWidth, y + wmHeight + fontSize);
+
+                    // Reset
+                    ctx.globalAlpha = 1.0;
+
                     // Export to PNG data URL
                     const pngUrl = canvas.toDataURL('image/png');
-                    
+
                     const link = document.createElement('a');
                     link.href = pngUrl;
                     link.download = `${product.name.toLowerCase().replace(/\s+/g, '-')}.png`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    
+
                     showNotification('Downloaded successfully with brand watermark!');
                 };
             };
@@ -439,21 +463,21 @@ const ProductDetails = () => {
             const settingsRes = await api.get('/settings').catch(() => ({ data: null }));
             const brochure = settingsRes?.data?.pdfBrochure || {};
 
-            const companyName   = brochure.companyName   || 'HARSHAD GAURI ENTERPRISES';
+            const companyName = brochure.companyName || 'HARSHAD GAURI ENTERPRISES';
             const companyTagline = brochure.companyTagline || 'PRECISION MACHINERY & TOOLING SOLUTIONS';
-            const address       = brochure.address        || '45/2, Golden Plaza, Business District, Mumbai - 400 001';
-            const phone         = brochure.phone          || '+91 022 4028 3883';
-            const email         = brochure.email          || 'sales@hgenterprises.com';
-            const website       = brochure.website        || 'www.hgenterprises.com';
-            const featuresHdr   = brochure.featuresHeading|| 'FEATURES :';
-            const certText      = brochure.certificationText || 'ISO 9001:2015 Certified';
-            const disclaimer    = brochure.footerDisclaimer || 'This is an authentic technical brochure of Harshad Gauri Enterprises.';
+            const address = brochure.address || '45/2, Golden Plaza, Business District, Mumbai - 400 001';
+            const phone = brochure.phone || '+91 022 4028 3883';
+            const email = brochure.email || 'sales@hgenterprises.com';
+            const website = brochure.website || 'www.hgenterprises.com';
+            const featuresHdr = brochure.featuresHeading || 'FEATURES :';
+            const certText = brochure.certificationText || 'ISO 9001:2015 Certified';
+            const disclaimer = brochure.footerDisclaimer || 'This is an authentic technical brochure of Harshad Gauri Enterprises.';
 
             // Parse hex footer color → RGB
-            const hex = (brochure.footerBgColor || '#8B4356').replace('#','');
-            const fR = parseInt(hex.substring(0,2),16);
-            const fG = parseInt(hex.substring(2,4),16);
-            const fB = parseInt(hex.substring(4,6),16);
+            const hex = (brochure.footerBgColor || '#8B4356').replace('#', '');
+            const fR = parseInt(hex.substring(0, 2), 16);
+            const fG = parseInt(hex.substring(2, 4), 16);
+            const fB = parseInt(hex.substring(4, 6), 16);
 
             const doc = new jsPDF({ unit: 'mm', format: 'a4' });
             const pageW = 210;
@@ -461,44 +485,63 @@ const ProductDetails = () => {
 
             // ── HEADER STRIP ──────────────────────────────────────────
             doc.setFillColor(fR, fG, fB);
-            doc.rect(0, 0, pageW, 28, 'F');
+            doc.rect(0, 0, pageW, 32, 'F');
+
+            // Try to embed logo in top-right of header (directly on maroon background)
+            const logoW = 24;
+            const logoH = 24;
+            const logoX = pageW - 14 - logoW;
+            const logoY = 4;
+            try {
+                const logoResp = await fetch(watermarkLogo, { mode: 'cors' });
+                const logoBlob = await logoResp.blob();
+                const logoDataUrl = await new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(logoBlob);
+                });
+                // No white box — logo sits directly on the header strip
+                doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoW, logoH);
+            } catch {
+                // Logo not available, skip it gracefully
+            }
 
             // Company name (left-aligned in header)
             doc.setTextColor(255, 255, 255);
             doc.setFont('Helvetica', 'bold');
             doc.setFontSize(16);
-            doc.text(companyName, 14, 12);
+            doc.text(companyName, 14, 13);
 
             doc.setFont('Helvetica', 'normal');
             doc.setFontSize(8);
             doc.setTextColor(240, 220, 225);
-            doc.text(companyTagline, 14, 19);
+            doc.text(companyTagline, 14, 20);
 
-            // Date (top-right)
+            // Date (below logo area, right-aligned)
             const dateStr = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
             doc.setFontSize(7.5);
             doc.setTextColor(255, 220, 230);
-            doc.text(dateStr, pageW - 14, 12, { align: 'right' });
+            doc.text(dateStr, pageW - 14, 27, { align: 'right' });
 
             // ── PRODUCT TITLE BAND ────────────────────────────────────
             doc.setFillColor(245, 230, 232);
-            doc.rect(0, 28, pageW, 14, 'F');
+            doc.rect(0, 32, pageW, 14, 'F');
 
             const catLabel = product?.category?.name || product?.category || 'Precision Tooling';
             doc.setTextColor(fR, fG, fB);
             doc.setFont('Helvetica', 'normal');
             doc.setFontSize(9);
-            doc.text(catLabel.toUpperCase(), pageW - 14, 34, { align: 'right' });
+            doc.text(catLabel.toUpperCase(), pageW - 14, 38, { align: 'right' });
 
             doc.setTextColor(30, 20, 25);
             doc.setFont('Helvetica', 'bold');
             doc.setFontSize(17);
-            doc.text(product?.name || 'Product Datasheet', 14, 38);
+            doc.text(product?.name || 'Product Datasheet', 14, 42);
 
             // ── TWO-COLUMN BODY ───────────────────────────────────────
             // Left col: product image (45mm wide)
             const imgColX = 14;
-            const imgColY = 46;
+            const imgColY = 50;
             const imgW = 62;
             const imgH = 62;
 
@@ -544,21 +587,76 @@ const ProductDetails = () => {
             doc.text(splitDesc.slice(0, descLinesToShow), rightColX, rightY + 4);
             rightY += 4 + descLinesToShow * 4.2 + 2;
 
+            // If jewelry product, fetch specs and price breakup details
+            const groupedSpecs = getGroupedSpecs();
+            const priceBreakupList = groupedSpecs['PRICE BREAKUP'] || [];
+
             // Specs table in right column (compact)
             const specsData = [];
             if (product?.specifications?.length > 0) {
-                product.specifications.slice(0, 8).forEach(spec => specsData.push([spec.label, spec.value]));
+                // Filter out tags & price breakup from normal specs table in right column to keep it clean!
+                product.specifications
+                    .filter(spec => {
+                        const lbl = spec.label.toUpperCase();
+                        return !lbl.includes('GOLD') && !lbl.includes('DIAMOND') && !lbl.includes('MAKING') && !lbl.includes('GST') && !lbl.includes('TOTAL') && !lbl.includes('PRICE') && !lbl.includes('TAG');
+                    })
+                    .slice(0, 8)
+                    .forEach(spec => specsData.push([spec.label, spec.value]));
             }
             if (specsData.length > 0) {
                 autoTable(doc, {
                     startY: rightY,
-                    head: [['Code', product?.sku || product?.name?.split(' ').slice(-1)[0] || 'HG-001']],
+                    head: [['Specification', 'Value']],
                     body: specsData,
                     theme: 'plain',
-                    headStyles: { fillColor: [fR, fG, fB], textColor: [255,255,255], fontStyle: 'bold', fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [fR, fG, fB], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, cellPadding: 2 },
                     bodyStyles: { fontSize: 8, cellPadding: 2 },
                     alternateRowStyles: { fillColor: [253, 245, 246] },
-                    columnStyles: { 0: { fontStyle: 'bold', textColor: [40,40,40] }, 1: { textColor: [80,80,80] } },
+                    columnStyles: { 0: { fontStyle: 'bold', textColor: [40, 40, 40] }, 1: { textColor: [80, 80, 80] } },
+                    margin: { left: rightColX, right: 14 },
+                    tableWidth: rightColW,
+                });
+                rightY = doc.lastAutoTable.finalY + 4;
+            }
+
+            // Price Breakup table right below specifications
+            if (isJewelleryProduct && priceBreakupList.length > 0) {
+                // jsPDF doesn't render ₹ — replace with Rs. for proper display
+                const pbData = priceBreakupList.map(item => [
+                    item.label,
+                    String(item.value).replace('₹', 'Rs. ').replace(/^Rs\.\s*/, 'Rs. ')
+                ]);
+                autoTable(doc, {
+                    startY: rightY,
+                    head: [['Price Component', 'Amount']],
+                    body: pbData,
+                    theme: 'plain',
+                    headStyles: {
+                        fillColor: [fR, fG, fB],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 8,
+                        cellPadding: 2
+                    },
+                    bodyStyles: { fontSize: 8, cellPadding: 2 },
+                    alternateRowStyles: { fillColor: [253, 245, 246] },
+                    columnStyles: {
+                        0: { fontStyle: 'bold', textColor: [40, 40, 40], halign: 'left' },
+                        1: { textColor: [fR, fG, fB], fontStyle: 'bold', halign: 'right' }
+                    },
+                    // Align Amount header to the right to match data cells
+                    headStyles: {
+                        fillColor: [fR, fG, fB],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 8,
+                        cellPadding: 2
+                    },
+                    didParseCell: (data) => {
+                        if (data.section === 'head' && data.column.index === 1) {
+                            data.cell.styles.halign = 'right';
+                        }
+                    },
                     margin: { left: rightColX, right: 14 },
                     tableWidth: rightColW,
                 });
@@ -589,10 +687,10 @@ const ProductDetails = () => {
                 const lineY = featY + row * 6;
                 doc.setDrawColor(fR, fG, fB);
                 doc.setFillColor(fR, fG, fB);
-                // Arrow bullet
-                doc.triangle(colX, lineY - 2, colX, lineY + 2, colX + 3, lineY, 'F');
+                // Square bullet (doc.triangle doesn't exist in modern jsPDF)
+                doc.rect(colX, lineY - 1.5, 2, 2, 'F');
                 const bText = doc.splitTextToSize(b, colW2 - 8);
-                doc.text(bText[0], colX + 5, lineY);
+                doc.text(bText[0], colX + 4, lineY);
             });
 
             const featBlockH = halfLen * 6 + 4;
@@ -612,7 +710,7 @@ const ProductDetails = () => {
                     head: [['Specification', 'Value']],
                     body: fullSpecsData,
                     theme: 'striped',
-                    headStyles: { fillColor: [fR, fG, fB], textColor: [255,255,255], fontStyle: 'bold', fontSize: 8 },
+                    headStyles: { fillColor: [fR, fG, fB], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
                     bodyStyles: { fontSize: 8 },
                     alternateRowStyles: { fillColor: [253, 245, 246] },
                     margin: { left: 14, right: 14 },
@@ -678,44 +776,40 @@ const ProductDetails = () => {
 
     return (
         <div className="min-h-screen bg-[#FDF5F6] font-body text-[#1A1A1A] pb-12 selection:bg-[#8B4356] selection:text-white overflow-x-hidden">
-             <main className="container mx-auto px-4 lg:px-12 pt-8 lg:pt-0">
-                {/* 1. Branded Discovery Header - Matched with Shop Layout */}
-                <div className="mb-2 lg:mb-3 px-1">
-                    <div className="flex items-center gap-2 text-[7px] md:text-[8px] uppercase tracking-[0.4em] font-medium text-zinc-300 mb-2 px-1">
+            <main className="container mx-auto px-4 lg:px-12 pt-10 lg:pt-8">
+                {/* Full-width Left-Aligned Heading & Breadcrumbs */}
+                <div className="w-full space-y-1 pb-2 mt-1 lg:mt-1.5 border-b border-[#F5E6E8]/40">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[9.5px] md:text-[10px] uppercase tracking-[0.18em] font-normal font-assistant text-[#709dbd]">
                         <Link to="/" className="hover:text-[#8B4356] transition-colors">Home</Link>
-                        <span className="opacity-20">/</span>
-                        <Link to="/shop" className="hover:text-[#8B4356] transition-colors">Catalog</Link>
-                        <span className="opacity-20">/</span>
-                        <span className="text-[#8B4356]/60 tracking-[0.2em] font-black">{product.name}</span>
+                        <span className="opacity-50">/</span>
+                        <Link to="/shop" className="hover:text-[#8B4356] transition-colors">Jewellery</Link>
+                        <span className="opacity-50">/</span>
+                        <span className="text-black/60 font-assistant">{product.subCategory || product.subcategory || product.category || 'Rings'}</span>
+                        <span className="opacity-50">/</span>
+                        <span className="text-black font-assistant">{product.name}</span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-1.5 relative px-1">
-                        <div className="flex flex-col gap-2 flex-1">
-                             <h1 className="text-2xl md:text-3xl lg:text-4xl font-assistant font-normal text-zinc-800 tracking-wide capitalize leading-none">{product.subCategory || product.subcategory || product.category || 'Collection'}</h1>
-                            <div className="flex items-center gap-2">
-                                <div className="h-[1px] w-8 bg-[#8B4356]/20"></div>
-                                <p className="text-[7.5px] md:text-[8px] font-bold uppercase tracking-[0.6em] text-[#8B4356]/40 leading-none">Heritage Particular Selection</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => setIsDrawerOpen(true)}
-                            className="w-11 h-11 flex items-center justify-center text-[#8B4356] active:scale-95 transition-all hover:text-[#7a394b] group"
-                        >
-                            <SlidersHorizontal className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-                        </button>
-                    </div>
+                    <h1 className="text-[20px] md:text-[24px] lg:text-[28px] font-assistant font-normal leading-tight text-zinc-800 tracking-wide">
+                        {product.name ? (product.name === product.name.toUpperCase() ? product.name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : product.name) : ''}
+                    </h1>
+
+                    {isJewelleryProduct && (
+                        <p className="text-[11px] md:text-[12px] text-zinc-500 font-medium font-assistant">
+                            From <span className="text-[#1D5C8A] hover:underline cursor-pointer">{product.collection || 'The Precious Promise Collection'}</span>
+                        </p>
+                    )}
                 </div>
 
-                <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+                <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-10 items-start pt-2 lg:pt-3.5">
 
                     {/* 2. Left Column: Image Gallery - Sticky & Sharp Corners */}
-                    <div className="lg:col-span-4 lg:sticky lg:top-24 w-full space-y-2">
+                    <div className="lg:col-span-5 lg:sticky lg:top-20 w-full space-y-1.5">
                         <div className="px-4 lg:px-0">
-                            <div 
+                            <div
                                 onClick={() => setIsZoomed(!isZoomed)}
                                 onMouseMove={handleMouseMove}
                                 onMouseLeave={() => setIsZoomed(false)}
-                                className={`aspect-[1/1] bg-white rounded-[36px_4px_36px_4px] overflow-hidden shadow-sm relative group border border-[#F5E6E8]/30 max-h-[380px] mx-auto ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                                className={`aspect-[1/1] bg-white rounded-[36px_4px_36px_4px] overflow-hidden shadow-sm relative group border border-[#F5E6E8]/30 max-h-[350px] mx-auto lg:ml-0 ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
                             >
                                 <motion.img
                                     key={selectedImgIdx}
@@ -727,29 +821,38 @@ const ProductDetails = () => {
                                     }}
                                     className={`w-full h-full object-cover transition-transform duration-250 ${isZoomed ? 'scale-[2.2]' : 'scale-100'} rounded-[36px_4px_36px_4px]`}
                                 />
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); handleWishlist(); }} 
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleWishlist(); }}
                                     className="absolute top-4 right-4 flex items-center justify-center p-1.5 active:scale-90 transition-all z-10 text-zinc-600 hover:text-red-500 hover:scale-115"
                                 >
                                     <Heart className={`w-5.5 h-5.5 transition-all drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.15)] ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2} />
                                 </button>
                                 {isJewelleryProduct ? (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDownloadImage(); }}
-                                        title="Download Product Image as PNG"
-                                        className="absolute top-12.5 right-4 flex items-center justify-center p-1.5 active:scale-90 transition-all z-10 text-zinc-600 hover:text-[#8B4356] hover:scale-115"
-                                    >
-                                        <Download className="w-5.5 h-5.5 transition-all drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.15)]" strokeWidth={2} />
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDownloadPDF(); }}
-                                        title="Download Technical PDF Brochure"
-                                        className="absolute top-12.5 right-4 flex items-center justify-center w-8 h-8 rounded-full bg-white/90 shadow-md border border-red-100 active:scale-90 transition-all z-10 hover:bg-red-50 hover:scale-110"
-                                    >
-                                        <FileText className="w-4 h-4 text-red-600 transition-all" strokeWidth={2} />
-                                    </button>
-                                )}
+                                     <>
+                                         <button
+                                             onClick={(e) => { e.stopPropagation(); handleDownloadImage(); }}
+                                             title="Download Product Image as PNG"
+                                             className="absolute top-13 right-4 flex items-center justify-center p-1.5 active:scale-90 transition-all z-10 text-zinc-600 hover:text-[#8B4356] hover:scale-115"
+                                         >
+                                             <Download className="w-5.5 h-5.5 transition-all drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.15)]" strokeWidth={2} />
+                                         </button>
+                                         <button
+                                             onClick={(e) => { e.stopPropagation(); handleDownloadPDF(); }}
+                                             title="Download Technical PDF Brochure"
+                                             className="absolute top-22 right-4 flex items-center justify-center p-1.5 active:scale-90 transition-all z-10 text-zinc-600 hover:text-[#8B4356] hover:scale-115"
+                                         >
+                                             <FileText className="w-5.5 h-5.5 transition-all drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.15)]" strokeWidth={2} />
+                                         </button>
+                                     </>
+                                 ) : (
+                                     <button
+                                         onClick={(e) => { e.stopPropagation(); handleDownloadPDF(); }}
+                                         title="Download Technical PDF Brochure"
+                                         className="absolute top-13 right-4 flex items-center justify-center w-8 h-8 rounded-full bg-white/90 shadow-md border border-red-100 active:scale-90 transition-all z-10 hover:bg-red-50 hover:scale-110"
+                                     >
+                                         <FileText className="w-4 h-4 text-red-600 transition-all" strokeWidth={2} />
+                                     </button>
+                                 )}
                                 <div className="absolute top-4 left-4">
                                     <span className="bg-[#8B4356] text-white text-[6px] font-black uppercase tracking-[.3em] px-2 py-0.5 rounded-[4px_1px_4px_1px]">New Arrival</span>
                                 </div>
@@ -757,7 +860,7 @@ const ProductDetails = () => {
                         </div>
 
                         {/* Thumbnail Selector - Sharp & Compact */}
-                        <div className="flex justify-center gap-2 py-1 px-4">
+                        <div className="flex justify-center lg:justify-start gap-2 py-1 px-4 lg:px-0">
                             {['FRONT', 'SIDE', 'DETAIL'].map((label, idx) => (
                                 <button
                                     key={idx}
@@ -794,20 +897,10 @@ const ProductDetails = () => {
                     </div>
 
                     {/* 3. Right Column: Product Detail Info - Sticky Details Flow */}
-                    <div className="px-5 lg:px-0 lg:pt-0 lg:col-span-8 space-y-3.5 w-full">
-                        <div className="space-y-2">
-                            <div className="flex items-center">
-                                <span className="text-[10px] font-assistant font-semibold uppercase tracking-[0.25em] text-[#8B4356]/60">Premium Selection</span>
-                            </div>
-                            <h1 className="text-[22px] md:text-[24px] lg:text-[25px] font-assistant font-normal leading-snug text-zinc-600 tracking-wide">{product.name ? (product.name === product.name.toUpperCase() ? product.name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : product.name) : ''}</h1>
+                    <div className="px-5 lg:px-0 lg:pt-0 lg:col-span-7 space-y-4 w-full">
+                        <div className="space-y-3">
 
-                            {isJewelleryProduct && (
-                                <p className="text-[13px] text-zinc-500 font-medium font-assistant">
-                                    From <span className="text-[#2C6E9E] hover:underline cursor-pointer font-semibold">{product.collection || 'The Precious Promise Collection'}</span>
-                                </p>
-                            )}
-
-                             <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1 bg-[#FFF9F6] border border-[#FDF2ED] px-2 py-0.5 rounded-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
                                     <span className="text-[11px] font-black text-zinc-800 leading-none">{product.rating || 4.5}</span>
                                     <Star className="w-3 h-3 fill-[#FFD700] text-[#FFD700]" />
@@ -824,31 +917,26 @@ const ProductDetails = () => {
                                         </div>
                                     </>
                                 )}
-                             </div>
+                            </div>
                         </div>
 
-                        {/* Pricing Section - Giva Style (No background card, horizontal layout, floating wish & share icons) */}
-                        <div className="bg-transparent p-0 border-none relative shadow-none space-y-2">
+                        {/* Pricing Section - Bluestone Style */}
+                        <div className="bg-transparent p-0 border-none relative shadow-none space-y-1">
                             <div className="flex items-center justify-between w-full">
                                 <div className="flex items-baseline leading-none">
-                                    <span className={`text-[28px] lg:text-[32px] font-assistant font-normal tracking-wide ${appliedCoupon ? 'text-emerald-600' : 'text-black'}`}>
+                                    <span className={`text-[22px] font-bold tracking-wide ${appliedCoupon ? 'text-emerald-600' : 'text-[#333333]'}`}>
                                         ₹{finalPrice.toLocaleString()}
                                     </span>
                                     {(originalPrice > currentPrice || appliedCoupon) && (
-                                        <span className="text-base lg:text-lg font-assistant font-normal text-zinc-400 line-through ml-3.5 leading-none">
+                                        <span className="text-sm font-medium text-zinc-400 line-through ml-2 leading-none">
                                             ₹{currentPrice.toLocaleString()}
-                                        </span>
-                                    )}
-                                    {discount > 0 && (
-                                        <span className="text-[#8B4356] font-assistant font-normal text-xs md:text-sm tracking-wider ml-3 leading-none">
-                                            ({discount}% OFF)
                                         </span>
                                     )}
                                 </div>
 
-                                {/* Right Side: Interactive Share Action directly in Price Row */}
-                                <div className="flex items-center gap-4 text-zinc-800">
-                                    <button 
+                                {/* Right Side: Interactive Share Action */}
+                                <div className="flex items-center text-[#709dbd]">
+                                    <button
                                         onClick={() => {
                                             if (navigator.share) {
                                                 navigator.share({
@@ -860,95 +948,73 @@ const ProductDetails = () => {
                                                 navigator.clipboard.writeText(window.location.href);
                                                 showNotification("Product link copied to clipboard!");
                                             }
-                                        }} 
-                                        className="hover:scale-115 active:scale-95 transition-all p-1.5 rounded-full hover:bg-[#8B4356]/5 text-zinc-800"
+                                        }}
+                                        className="hover:text-blue-800 transition-colors p-1"
                                         title="Share Product"
                                     >
-                                        <Share2 className="w-5.5 h-5.5" strokeWidth={1.8} />
+                                        <Share2 className="w-4 h-4" strokeWidth={2} />
                                     </button>
                                 </div>
                             </div>
 
+                            <p className="text-[11px] font-medium text-[#7a7a7a]">MRP incl. of all taxes</p>
+
                             {appliedCoupon && (
-                                <div className="flex">
-                                    <div className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-none border border-emerald-100/50 flex items-center gap-1.5 animate-in zoom-in-95 duration-300">
+                                <div className="flex mt-1">
+                                    <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 border border-emerald-100/50 flex items-center gap-1">
                                         <Check className="w-3 h-3" />
-                                        <span className="text-[9px] font-black uppercase tracking-wider">{appliedCoupon.code} Applied (Saved ₹{(currentPrice - finalPrice).toLocaleString()})</span>
+                                        <span className="text-[10px] font-semibold">{appliedCoupon.code} Applied (Saved ₹{(currentPrice - finalPrice).toLocaleString()})</span>
                                     </div>
                                 </div>
                             )}
-
-                            <p className="text-[9.5px] md:text-[11px] font-black uppercase tracking-[0.18em] text-zinc-400 mt-1">MRP incl. of all taxes</p>
                         </div>
 
-                        {/* Interactive dynamic segments from Reference Image 1 & 2 */}
+                        {/* Interactive dynamic segments */}
                         {isJewelleryProduct && (
-                            <div className="space-y-1.5 pt-2">
-                                {/* 30% off banner */}
-                                <div className="flex items-center gap-2.5 py-1 animate-fadeIn">
-                                    <div className="w-5 h-5 rounded-full bg-[#FFF0F2] border border-[#FFD6DB] flex items-center justify-center text-[#EF5F3F] shrink-0">
-                                        <Percent className="w-3 h-3 stroke-[2.5]" />
-                                    </div>
-                                    <p className="text-[12.5px] md:text-[13px] font-assistant font-medium text-zinc-600 tracking-wide">
-                                        30% off on Making Charges: Use <button onClick={() => {
-                                            const cCode = { code: 'SUMMER30', type: 'percent', value: 15, active: true };
-                                            handleApplyCoupon(cCode);
-                                        }} className="font-extrabold text-[#EF5F3F] uppercase tracking-wider hover:underline focus:outline-none">SUMMER30</button> <span className="text-[#2C6E9E] text-[10.5px] font-normal cursor-pointer hover:underline ml-1">^TCA</span>
-                                    </p>
-                                </div>
-
-                                {/* Video Call Row */}
-                                <div className="flex items-center gap-2.5 py-1 pb-2 border-b border-zinc-100/40">
-                                    <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 shrink-0">
-                                        <Video className="w-3 h-3 stroke-[2]" />
-                                    </div>
-                                    <p className="text-[12.5px] md:text-[13px] font-assistant font-medium text-zinc-600 tracking-wide">
-                                        Schedule video call <button onClick={() => setIsVideoModalOpen(true)} className="text-[#2C6E9E] font-bold hover:underline ml-1.5">Book Now</button>
-                                    </p>
-                                </div>
+                            <div className="space-y-2.5 pt-3.5 border-t border-zinc-100 mt-3">
 
                                 {/* Functional Pincode Box */}
-                                <div className="bg-[#FAF9F9] border border-zinc-200/50 p-3.5 rounded-none max-w-lg my-2 space-y-2">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="text-[12px] md:text-[12.5px] font-assistant font-semibold text-zinc-600">Your pincode</span>
-                                        <div className="flex items-center border border-zinc-300 bg-white overflow-hidden max-w-[190px]">
-                                            <input 
-                                                type="text" 
-                                                placeholder="Pincode" 
-                                                value={pincodeVal}
-                                                onChange={(e) => setPincodeVal(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                                className="px-2 py-1 text-[12px] font-assistant font-medium w-full focus:outline-none placeholder-zinc-400 text-zinc-800"
-                                            />
-                                            <button 
-                                                onClick={handleCheckPincode}
-                                                className="bg-[#EBEBEB] hover:bg-zinc-200 text-zinc-700 px-3 py-1 text-[11px] font-assistant font-bold border-l border-zinc-300 transition-colors"
-                                            >
-                                                Update
-                                            </button>
-                                        </div>
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between text-[11px] font-bold text-[#333333] mb-0.5">
+                                        <span>Pincode:</span>
+                                    </div>
+                                    <div className="flex items-center max-w-[220px] border-b border-zinc-200">
+                                        <input
+                                            type="text"
+                                            placeholder="Enter Pincode"
+                                            value={pincodeVal}
+                                            onChange={(e) => setPincodeVal(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                            className="py-1 text-[12px] font-medium w-full focus:outline-none placeholder-[#a9a9a9] text-[#333333] bg-transparent"
+                                        />
+                                        <button
+                                            onClick={handleCheckPincode}
+                                            className="text-[#709dbd] hover:text-blue-800 px-2 py-1 text-[11px] font-bold transition-colors"
+                                        >
+                                            Update
+                                        </button>
                                     </div>
                                     {pincodeStatus && (
-                                        <p className={`text-[11px] font-assistant font-semibold ${pincodeStatus.includes('✓') ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                        <p className={`text-[10px] font-medium ${pincodeStatus.includes('✓') ? 'text-emerald-600' : 'text-rose-500'}`}>
                                             {pincodeStatus}
                                         </p>
                                     )}
-                                    <p className="text-[10.5px] font-assistant font-medium text-zinc-400 leading-normal">
+                                    <p className="text-[9.5px] text-zinc-400 mt-0.5 leading-snug">
                                         Provide pincode for delivery date & nearby stores!
                                     </p>
                                 </div>
 
                                 {/* Product Specifications Label Bar */}
-                                <div className="text-[13px] font-assistant font-bold text-zinc-700 tracking-wide py-1.5 leading-snug">
+                                <div className="text-[12px] font-assistant font-bold text-zinc-700 tracking-wide pt-1 pb-0.5 leading-snug">
                                     {getProductSummaryLabel()}
                                 </div>
 
                                 {/* Customize design accordion */}
-                                <div className="border-t border-b border-zinc-200/50 py-2.5 my-1.5">
-                                    <button 
+                                <div className="border-t border-b border-zinc-150 py-2 my-0.5">
+                                    <button
                                         onClick={() => setIsCustomizeOpen(!isCustomizeOpen)}
                                         className="w-full flex items-center justify-between text-left focus:outline-none group"
                                     >
-                                        <span className="text-[13px] font-assistant font-bold text-zinc-700 tracking-wide">Customize this design</span>
+                                        <span className="text-[12px] font-assistant font-bold text-zinc-700 tracking-wide">Customize this design</span>
                                         {isCustomizeOpen ? (
                                             <Minus className="w-4 h-4 text-zinc-500 group-hover:text-zinc-700 transition-colors" />
                                         ) : (
@@ -971,11 +1037,10 @@ const ProductDetails = () => {
                                                                 <button
                                                                     key={pur}
                                                                     onClick={() => setCustomPurity(pur)}
-                                                                    className={`px-2.5 py-1 text-[11.5px] font-assistant font-bold border transition-all ${
-                                                                        customPurity === pur 
-                                                                            ? 'border-[#EF5F3F] text-[#EF5F3F] bg-[#EF5F3F]/[0.02]' 
+                                                                    className={`px-2.5 py-1 text-[11.5px] font-assistant font-bold border transition-all ${customPurity === pur
+                                                                            ? 'border-[#EF5F3F] text-[#EF5F3F] bg-[#EF5F3F]/[0.02]'
                                                                             : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
-                                                                    }`}
+                                                                        }`}
                                                                 >
                                                                     {pur}
                                                                 </button>
@@ -989,11 +1054,10 @@ const ProductDetails = () => {
                                                                 <button
                                                                     key={dia}
                                                                     onClick={() => setCustomDiamond(dia)}
-                                                                    className={`px-2.5 py-1 text-[11.5px] font-assistant font-bold border transition-all ${
-                                                                        customDiamond === dia 
-                                                                            ? 'border-[#EF5F3F] text-[#EF5F3F] bg-[#EF5F3F]/[0.02]' 
+                                                                    className={`px-2.5 py-1 text-[11.5px] font-assistant font-bold border transition-all ${customDiamond === dia
+                                                                            ? 'border-[#EF5F3F] text-[#EF5F3F] bg-[#EF5F3F]/[0.02]'
                                                                             : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
-                                                                    }`}
+                                                                        }`}
                                                                 >
                                                                     {dia}
                                                                 </button>
@@ -1010,97 +1074,48 @@ const ProductDetails = () => {
 
                         {/* Conditional Action Card: Sizes for Jewelry vs PDF Downloads for Machines/Tools */}
                         {isJewelleryProduct ? (
-                            <div className="flex flex-row items-center justify-between gap-4 py-1.5 mt-1 relative border-b border-zinc-100/50 pb-3">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-[11px] font-extrabold text-zinc-400 uppercase tracking-widest">Size</span>
-                                    
-                                    {/* Custom Dropdown Container */}
-                                    <div className="relative">
-                                        <button
-                                            onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
-                                            className="min-w-[110px] h-9 px-3 bg-white border border-zinc-200 hover:border-zinc-300 text-[12.5px] font-bold text-black flex items-center justify-between rounded-none shadow-sm transition-all focus:outline-none"
-                                        >
-                                            <span className="mr-3">{selectedSize}</span>
-                                            <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform duration-300 ${isSizeDropdownOpen ? 'rotate-180' : ''}`} />
-                                        </button>
-
-                                        {/* Dropdown Options List */}
-                                        <AnimatePresence>
-                                            {isSizeDropdownOpen && (
-                                                <>
-                                                    {/* Invisible Backdrop to close the dropdown when clicking outside */}
-                                                    <div 
-                                                        className="fixed inset-0 z-40 bg-transparent"
-                                                        onClick={() => setIsSizeDropdownOpen(false)}
-                                                    />
-                                                    
-                                                    <motion.div
-                                                        initial={{ opacity: 0, y: -5 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        exit={{ opacity: 0, y: -5 }}
-                                                        className="absolute left-0 mt-1 bg-white border border-zinc-200 shadow-xl z-50 max-h-[260px] overflow-y-auto rounded-none divide-y divide-zinc-100 w-[220px] md:w-[240px]"
-                                                    >
-                                                        {[
-                                                            { size: 5, mm: '44.8 mm', status: 'Made to Order' },
-                                                            { size: 6, mm: '45.9 mm', status: 'Only 2 left!' },
-                                                            { size: 7, mm: '47.1 mm', status: 'Only 2 left!' },
-                                                            { size: 8, mm: '48.1 mm', status: 'Only 5 left!' },
-                                                            { size: 9, mm: '49.0 mm', status: 'in Stock!' },
-                                                            { size: 10, mm: '50.0 mm', status: 'in Stock!' },
-                                                            { size: 11, mm: '50.9 mm', status: 'Only 1 left!' },
-                                                            { size: 12, mm: '51.8 mm', status: 'in Stock!' },
-                                                            { size: 13, mm: '52.8 mm', status: 'in Stock!' },
-                                                            { size: 14, mm: '54.0 mm', status: 'in Stock!' }
-                                                        ].map((opt) => {
-                                                            const isSelected = selectedSize === opt.size;
-                                                            const isLowStock = opt.status.includes('left');
-                                                            const isMadeToOrder = opt.status.includes('Order');
-                                                            return (
-                                                                <button
-                                                                    key={opt.size}
-                                                                    onClick={() => {
-                                                                        setSelectedSize(opt.size);
-                                                                        setIsSizeDropdownOpen(false);
-                                                                    }}
-                                                                    className={`w-full py-2 px-3 text-left text-[12px] font-semibold flex items-center transition-colors focus:outline-none ${
-                                                                        isSelected 
-                                                                            ? 'bg-[#EAF5EC] text-[#2E7D32] font-black' 
-                                                                            : 'text-zinc-800 hover:bg-zinc-50'
-                                                                    }`}
-                                                                >
-                                                                    <div className="flex items-center gap-2">
-                                                                        {isSelected ? (
-                                                                            <Check className="w-3.5 h-3.5 text-[#2E7D32] stroke-[3.5px]" />
-                                                                        ) : (
-                                                                            <div className="w-3.5 h-3.5" />
-                                                                        )}
-                                                                        <span className={`text-[12.5px] ${isSelected ? 'text-[#2E7D32]' : 'text-black'}`}>{opt.size}</span>
-                                                                        <span className="text-[9.5px] text-zinc-400 font-medium font-sans">({opt.mm})</span>
-                                                                    </div>
-                                                                    <span className={`ml-auto text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-none ${
-                                                                        isSelected 
-                                                                            ? 'bg-[#2E7D32]/10 text-[#2E7D32]'
-                                                                            : isLowStock 
-                                                                                ? 'bg-rose-50 text-rose-500' 
-                                                                                : isMadeToOrder 
-                                                                                    ? 'bg-zinc-100 text-zinc-400'
-                                                                                    : 'bg-emerald-50 text-emerald-600'
-                                                                    }`}>
-                                                                        {opt.status}
-                                                                    </span>
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </motion.div>
-                                                </>
-                                            )}
-                                        </AnimatePresence>
+                            <div className="flex flex-col gap-1 py-1.5 mt-1 border-b border-zinc-100/50 pb-2.5">
+                                <div className="flex items-center justify-between w-full max-w-[280px]">
+                                    <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Select Ring Size</span>
+                                    <button
+                                        onClick={() => setShowSizeGuide(true)}
+                                        className="text-[10.5px] font-bold text-[#709dbd] hover:text-blue-800 transition-colors uppercase tracking-wider outline-none"
+                                    >
+                                        Size Guide
+                                    </button>
+                                </div>
+                                
+                                <div className="relative w-full max-w-[280px] mt-0.5">
+                                    <select
+                                        value={selectedSize}
+                                        onChange={(e) => setSelectedSize(Number(e.target.value))}
+                                        className="w-full bg-white border border-zinc-200 py-2 px-3 pr-8 text-[12px] font-assistant font-bold text-zinc-800 focus:outline-none focus:border-[#8B4356] transition-all rounded-none appearance-none cursor-pointer"
+                                    >
+                                        {[
+                                            { size: 5, mm: '44.8 mm', status: 'Made to Order' },
+                                            { size: 6, mm: '45.9 mm', status: 'Only 2 left!' },
+                                            { size: 7, mm: '47.1 mm', status: 'Only 2 left!' },
+                                            { size: 8, mm: '48.1 mm', status: 'Only 5 left!' },
+                                            { size: 9, mm: '49.0 mm', status: 'In Stock' },
+                                            { size: 10, mm: '50.0 mm', status: 'In Stock' },
+                                            { size: 11, mm: '50.9 mm', status: 'Only 1 left!' },
+                                            { size: 12, mm: '51.8 mm', status: 'In Stock' },
+                                            { size: 13, mm: '52.8 mm', status: 'In Stock' },
+                                            { size: 14, mm: '54.0 mm', status: 'In Stock' }
+                                        ].map((opt) => (
+                                            <option key={opt.size} value={opt.size}>
+                                                Size {opt.size} ({opt.mm}) — {opt.status}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-zinc-500">
+                                        <ChevronDown className="w-4 h-4" />
                                     </div>
                                 </div>
 
                                 <button
                                     onClick={() => setShowSizeGuide(true)}
-                                    className="text-[11px] font-semibold text-[#2C6E9E] hover:text-[#1d4f73] underline tracking-wide transition-colors focus:outline-none"
+                                    className="text-[10px] font-semibold text-[#2C6E9E] hover:text-[#1d4f73] underline tracking-wide transition-colors focus:outline-none text-left mt-1 self-start"
                                 >
                                     Not sure about the size?
                                 </button>
@@ -1138,7 +1153,7 @@ const ProductDetails = () => {
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
                                             onClick={handleBuyNow}
-                                            className="bg-[#EF5F3F] hover:bg-[#e05435] text-white h-11 rounded-none font-bold uppercase tracking-[.15em] text-[11.5px] transition-all active:scale-95 shadow-sm focus:outline-none flex items-center justify-center"
+                                            className="bg-[#8B4356] hover:bg-[#7a394b] text-white h-[42px] rounded-none font-bold uppercase tracking-widest text-[11px] transition-all active:scale-95 shadow-sm focus:outline-none flex items-center justify-center"
                                         >
                                             Buy Now
                                         </button>
@@ -1149,7 +1164,7 @@ const ProductDetails = () => {
                                                 setShowInquiryForm(false);
                                                 setShowMonthlyPlanModal(true);
                                             }}
-                                            className="border border-[#EF5F3F] text-[#EF5F3F] bg-white hover:bg-[#EF5F3F]/[0.04] h-11 rounded-none font-bold uppercase tracking-[.1em] text-[11.5px] transition-all active:scale-95 shadow-sm focus:outline-none flex items-center justify-center"
+                                            className="border border-[#8B4356] text-[#8B4356] bg-white hover:bg-[#8B4356]/5 h-[42px] rounded-none font-bold uppercase tracking-widest text-[11px] transition-all active:scale-95 shadow-sm focus:outline-none flex items-center justify-center"
                                         >
                                             10+1 Monthly Plan
                                         </button>
@@ -1178,6 +1193,24 @@ const ProductDetails = () => {
                                     </div>
                                 </div>
 
+                                {/* Any Questions & WhatsApp Chat matching Bluestone style perfectly */}
+                                <div className="text-center py-2 bg-[#FFF9F6]/50 border border-[#F5E6E8]/30 mt-2">
+                                    <p className="text-[10.5px] md:text-[11px] font-assistant text-zinc-500 font-medium flex items-center justify-center gap-1.5 flex-wrap">
+                                        Any Questions? Please feel free to reach out to us at:
+                                        <a
+                                            href="https://wa.me/919076062592"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[#8B4356] hover:text-[#5C3F30] font-bold inline-flex items-center gap-1 hover:underline transition-all"
+                                        >
+                                            <svg className="w-3.5 h-3.5 fill-emerald-500 text-emerald-500 shrink-0" viewBox="0 0 24 24">
+                                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.47l-6.256 1.638zm6.54-3.32a9.774 9.774 0 0 0 5.41 1.605c5.493 0 9.961-4.42 9.965-9.864.002-2.637-1.019-5.117-2.877-6.98-1.858-1.863-4.327-2.887-6.963-2.888-5.49 0-9.957 4.422-9.961 9.869-.001 1.993.521 3.94 1.512 5.66l-.991 3.616 3.705-.968zm10.745-6.398c-.297-.148-1.758-.867-2.03-.967-.273-.099-.471-.148-.669.149-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.011c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                                            </svg>
+                                            90760 62592
+                                        </a>
+                                    </p>
+                                </div>
+
                             </div>
                         ) : (
                             <div className="bg-white p-2.5 lg:p-3 rounded-none border border-[#F5E6E8] shadow-sm space-y-2.5">
@@ -1204,35 +1237,20 @@ const ProductDetails = () => {
                                     </button>
                                 </div>
 
-                                <div className="pt-2 border-t border-zinc-50">
-                                    <p className="text-[8px] font-semibold text-zinc-400 leading-snug tracking-wide uppercase px-1">FREE Delivery by <span className="text-[#8B4356]">Sunday</span>. Order in <span className="text-black font-black">2 hrs 56 mins</span>.</p>
-                                </div>
                             </div>
                         )}
-                    </div>
-                </div>
+                    </div> {/* Close Right Column (col-span-6) */}
+                </div> {/* Close Main Purchase Grid (grid-cols-12) */}
 
-                {/* Related Products Section - Compact Gallery */}
-                <div className="mt-8 px-4 lg:px-0 mb-8">
-                    <h3 className="text-[10px] font-black uppercase tracking-[.6em] text-zinc-300 mb-5 flex items-center gap-3 px-1">Curated Seek <div className="h-[1px] flex-grow bg-zinc-100/20"></div></h3>
-                    <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-1">
-                        {products.filter(p => p.id !== product.id).slice(0, 6).map(rel => (
-                            <div key={rel.id} className="shrink-0 w-[160px] md:w-[240px]">
-                                <ProductCard product={rel} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Technical Specifications & Brand Promises Section - Matching Premium Compact Layout */}
-                <div className="mt-6 border-t border-[#F5E6E8]/60 pt-8 px-4 lg:px-0">
+                {/* 4. Specifications & Customer Feedback Side-by-Side Row */}
+                <div className="mt-8 border-t border-[#F5E6E8]/60 pt-8 px-4 lg:px-0">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-                        {/* Left Column: Specs Table & Accordions (lg:col-span-7) */}
-                        <div className="lg:col-span-7 space-y-4">
-                            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-black mb-4">
+                        
+                        {/* Left Column: Product Details Accordions (lg:col-span-6) */}
+                        <div className="lg:col-span-6 space-y-4">
+                            <h4 className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#333333] mb-3 border-b border-zinc-200/50 pb-2">
                                 Product Details
                             </h4>
-                            
                             {product.specifications && product.specifications.length > 0 ? (
                                 (() => {
                                     const groupedSpecs = getGroupedSpecs();
@@ -1327,8 +1345,11 @@ const ProductDetails = () => {
                                     No additional technical specifications listed for this collection.
                                 </div>
                             )}
+                        </div>
 
-                            {/* Customer Speak / Ratings & Reviews Section - Compact & Aligned to Left Column */}
+                        {/* Right Column: Customer Feedback & Promises (lg:col-span-6) */}
+                        <div className="lg:col-span-6 space-y-6">
+                            {/* Customer Speak / Ratings & Reviews Section - Compact & Beautiful */}
                             {(() => {
                                 const allReviewsList = [...reviews, ...[
                                     {
@@ -1360,7 +1381,7 @@ const ProductDetails = () => {
                                 const currReview = allReviewsList[activeReviewIdx % allReviewsList.length] || allReviewsList[0];
 
                                 return (
-                                    <div className="mt-8 pb-4 max-w-md mx-auto lg:mx-0 space-y-6">
+                                    <div className="pb-4 w-full space-y-6">
                                         <div className="bg-transparent p-1">
                                             <div className="flex items-center justify-between border-b border-[#2C6E9E] pb-3 mb-6">
                                                 <h3 className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-black">Customer Speak</h3>
@@ -1383,7 +1404,7 @@ const ProductDetails = () => {
                                                     >
                                                         <form onSubmit={handleAddReview} className="space-y-4">
                                                             <h4 className="text-[10px] font-black uppercase tracking-widest text-[#8B4356]">Submit Your Testimony</h4>
-                                                            
+
                                                             <div>
                                                                 <label className="block text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-2">Your Rating</label>
                                                                 <div className="flex gap-1.5">
@@ -1462,7 +1483,7 @@ const ProductDetails = () => {
                                                             animate={{ opacity: 1, scale: 1 }}
                                                             exit={{ opacity: 0, scale: 0.98 }}
                                                             transition={{ duration: 0.2 }}
-                                                            className="flex flex-col items-center"
+                                                            className="flex flex-col items-center w-full text-center"
                                                         >
                                                             <div className="w-44 h-44 md:w-52 md:h-52 bg-white mb-5 mx-auto overflow-hidden border border-zinc-200 p-1 shadow-sm">
                                                                 <img
@@ -1471,14 +1492,14 @@ const ProductDetails = () => {
                                                                     className="w-full h-full object-cover"
                                                                 />
                                                             </div>
-                                                            
-                                                            <p className="text-sm md:text-base font-medium font-assistant text-zinc-800 max-w-sm mx-auto leading-relaxed">
+
+                                                            <p className="text-sm md:text-base font-medium font-assistant text-zinc-800 max-w-sm mx-auto leading-relaxed text-center">
                                                                 "{currReview.comment}"
                                                             </p>
 
                                                             <div className="w-10 h-0.5 bg-[#2C6E9E] my-4 mx-auto"></div>
 
-                                                            <span className="font-serif text-sm md:text-base text-zinc-900 font-bold">
+                                                            <span className="font-serif text-sm md:text-base text-zinc-900 font-bold text-center">
                                                                 {currReview.userId?.name || 'Anonymous'}
                                                             </span>
                                                         </motion.div>
@@ -1498,7 +1519,7 @@ const ProductDetails = () => {
                                         <div className="bg-transparent border-t border-zinc-200 pt-5 space-y-3 text-xs font-assistant">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-3 gap-1">
                                                 <span className="text-zinc-500 font-medium">Manufacturer</span>
-                                                <span className="text-[#1D5C8A] font-semibold sm:text-right">Harshad Gauri Enterprises Limited<br/><span className="text-[10px] text-zinc-400 font-normal">302, Golden Plaza, Business District, Mumbai-400001</span></span>
+                                                <span className="text-[#1D5C8A] font-semibold sm:text-right">Harshad Gauri Enterprises Limited<br /><span className="text-[10px] text-zinc-400 font-normal">302, Golden Plaza, Business District, Mumbai-400001</span></span>
                                             </div>
                                             <div className="flex items-center justify-between pt-0.5">
                                                 <span className="text-zinc-500 font-medium">Country of Origin</span>
@@ -1508,53 +1529,67 @@ const ProductDetails = () => {
                                     </div>
                                 );
                             })()}
-                        </div>
 
-                        {/* Right Column: Brand Promise & Certificate of Authenticity (lg:col-span-5) */}
-                        <div className="lg:col-span-5 space-y-4">
-                            {/* Box 1: Brand Promises */}
-                            <div className="bg-white border border-zinc-200 p-4.5 md:p-5 shadow-sm">
-                                <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#2A2A2A] mb-4 text-center sm:text-left">
-                                    Harshad Gauri Promise
-                                </h4>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-3">
-                                    <div className="flex items-center gap-2">
-                                        <RotateCcw className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
-                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">30 Day Returnable</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <RefreshCw className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
-                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Lifetime Exchange & Buy-Back</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Award className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
-                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Certified Jewellery</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <ShieldCheck className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
-                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">100% Refund</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Truck className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
-                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Free Shipping</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Heart className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
-                                        <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Free Returns</span>
+                            {/* Brand Promises & Certificate Section */}
+                            <div className="space-y-4 mt-8 pt-8 border-t border-zinc-200/50">
+                                {/* Box 1: Brand Promises */}
+                                <div className="bg-white border border-zinc-200 p-4.5 md:p-5 shadow-sm">
+                                    <h4 className="text-[12px] font-bold uppercase tracking-wider text-[#333333] mb-4 text-center sm:text-left">
+                                        The Harshad Gauri Promise
+                                    </h4>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-3">
+                                        <div className="flex items-center gap-2">
+                                            <RotateCcw className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                            <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">30 Day Returnable</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <RefreshCw className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                            <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Lifetime Exchange & Buy-Back</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Award className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                            <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Certified Jewellery</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <ShieldCheck className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                            <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">100% Refund</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Truck className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                            <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Free Shipping</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Heart className="w-4 h-4 text-[#8B4356] shrink-0" strokeWidth={2.2} />
+                                            <span className="text-[10px] font-bold text-[#8B4356] uppercase tracking-wider leading-tight">Free Returns</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Box 2: Certificate of Authenticity */}
-                            <div className="bg-[#788896] text-white p-6 text-center shadow-sm">
-                                <h4 className="font-serif text-base tracking-wider mb-2">CERTIFICATE OF AUTHENTICITY</h4>
-                                <p className="text-[11px] leading-relaxed font-assistant opacity-90 max-w-sm mx-auto">
-                                    Every piece of jewellery that we make is certified for authenticity by third-party international laboratories like SGL, IGI, BIS, GIA, and GSI.
-                                </p>
+                                {/* Box 2: Certificate of Authenticity */}
+                                <div className="bg-[#788896] text-white p-6 text-center shadow-sm">
+                                    <h4 className="font-serif text-base tracking-wider mb-2">CERTIFICATE OF AUTHENTICITY</h4>
+                                    <p className="text-[11px] leading-relaxed font-assistant opacity-90 max-w-sm mx-auto">
+                                        Every piece of jewellery that we make is certified for authenticity by third-party international laboratories like SGL, IGI, BIS, GIA, and GSI.
+                                    </p>
+                                </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
+
+                    {/* Related Products Section - Compact Gallery */}
+                    <div className="mt-8 px-4 lg:px-0 mb-8">
+                        <h3 className="text-[10px] font-black uppercase tracking-[.6em] text-zinc-300 mb-5 flex items-center gap-3 px-1">Curated Seek <div className="h-[1px] flex-grow bg-zinc-100/20"></div></h3>
+                        <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-1">
+                            {products.filter(p => p.id !== product.id).slice(0, 6).map(rel => (
+                                <div key={rel.id} className="shrink-0 w-[160px] md:w-[240px]">
+                                    <ProductCard product={rel} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
             </main>
 
             {/* Floating Action Bar - Compact & Sharp */}
@@ -2030,19 +2065,19 @@ const ProductDetails = () => {
                                                 monthlyInstallment: monthlyInstallment,
                                                 maturityValue: monthlyInstallment * 11
                                             })
-                                            .then((res) => {
-                                                setIsSubmittingPlan(false);
-                                                setIsSubscribedPlan(true);
-                                                showNotification({ message: 'Inquiry submitted successfully!', type: 'success' });
-                                            })
-                                            .catch((err) => {
-                                                setIsSubmittingPlan(false);
-                                                console.error('[SUBMIT SUBSCRIPTION PLAN ERROR]', err);
-                                                showNotification({ 
-                                                    message: err.response?.data?.message || 'Failed to submit inquiry. Please try again.', 
-                                                    type: 'error' 
+                                                .then((res) => {
+                                                    setIsSubmittingPlan(false);
+                                                    setIsSubscribedPlan(true);
+                                                    showNotification({ message: 'Inquiry submitted successfully!', type: 'success' });
+                                                })
+                                                .catch((err) => {
+                                                    setIsSubmittingPlan(false);
+                                                    console.error('[SUBMIT SUBSCRIPTION PLAN ERROR]', err);
+                                                    showNotification({
+                                                        message: err.response?.data?.message || 'Failed to submit inquiry. Please try again.',
+                                                        type: 'error'
+                                                    });
                                                 });
-                                            });
                                         }}
                                         className="p-6 md:p-8 bg-[#F4F4F4] text-left space-y-5"
                                     >
@@ -2231,7 +2266,7 @@ const ProductDetails = () => {
                                     <p className="text-[11.5px] font-assistant font-medium text-zinc-500 leading-relaxed mb-2">
                                         Speak directly with our premium jewelry consultants from the comfort of your home. View the <span className="font-bold text-black">{product.name}</span> in detail, ask questions, and explore sizing live.
                                     </p>
-                                    
+
                                     <div>
                                         <label className="block text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1">Your Name</label>
                                         <input

@@ -16,7 +16,7 @@ const Footer = () => {
         footerSubTagline: 'Crafted for You.',
         footerDescription: 'HG Enterprises brings you the finest handcrafted jewellery, blending traditional artistry with modern sophistication. Discover a world of exquisite brilliance.',
         address: 'RNO.4 GULBERG CHAWL DAMU, NAGAR AKURLI ROAD, Kandivali East, Mumbai, Maharashtra, India, 400101',
-        phone: '+91 877 900 7979',
+        phone: '+91 90760 62592',
         email: 'concierge@hgjewels.com',
 
         footerColumn1Title: 'Experience',

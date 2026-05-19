@@ -10,6 +10,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Premium banner asset
 import proposalBanner from '../assets/proposal_banner.png';
+import catRings from '../assets/cat_rings.png';
+import catRingsCustom from '../assets/cat_rings_custom.png';
+import catRingsRuby from '../assets/cat_rings_ruby.jpg';
+import diamondSolitaire from '../assets/diamond_solitaire.png';
+import catRingWine from '../assets/cat_ring_wine.png';
+import catPendant from '../assets/cat_pendant.png';
+import catEarrings from '../assets/cat_earrings.png';
+import catBracelets from '../assets/cat_bracelets.png';
 
 const Shop = () => {
     const { products, categories } = useShop();
@@ -26,8 +34,9 @@ const Shop = () => {
     const [selectedType, setSelectedType] = useState('All');
     const [selectedGender, setSelectedGender] = useState('All');
     const [selectedMetal, setSelectedMetal] = useState('All');
-    const [sortBy, setSortBy] = useState('Newest');
+    const [sortBy, setSortBy] = useState('POPULAR');
     const [priceRange, setPriceRange] = useState({ min: 0, max: 500000 }); // Dual price slider support
+    const [expandedCategory, setExpandedCategory] = useState(null);
 
     // Sync with URL params & Normalize Category
     useEffect(() => {
@@ -45,9 +54,11 @@ const Shop = () => {
             if (catMatch) {
                 setSelectedCategory(catMatch.name);
                 setOpenCategory(catMatch.name);
+                setExpandedCategory(catMatch.name);
             } else {
                 setSelectedCategory(categoryQuery);
                 setOpenCategory(categoryQuery);
+                setExpandedCategory(categoryQuery);
             }
         }
 
@@ -163,10 +174,11 @@ const Shop = () => {
         // Price Filter
         result = result.filter(p => p.price >= priceRange.min && p.price <= priceRange.max);
 
-        if (sortBy === 'Price: Low to High') result.sort((a, b) => a.price - b.price);
-        else if (sortBy === 'Price: High to Low') result.sort((a, b) => b.price - a.price);
-        else if (sortBy === 'Best Selling') result.sort((a, b) => b.rating - a.rating);
-        else if (sortBy === 'Newest') result.sort((a, b) => (b.isNew === a.isNew) ? 0 : b.isNew ? 1 : -1);
+        if (sortBy === 'PRICE LOW TO HIGH') result.sort((a, b) => a.price - b.price);
+        else if (sortBy === 'PRICE HIGH TO LOW') result.sort((a, b) => b.price - a.price);
+        else if (sortBy === 'POPULAR') result.sort((a, b) => b.rating - a.rating);
+        else if (sortBy === 'WHAT\'S NEW') result.sort((a, b) => (b.isNew === a.isNew) ? 0 : b.isNew ? 1 : -1);
+        else if (sortBy === 'DISCOUNT') result.sort((a, b) => (b.discount || 0) - (a.discount || 0));
 
         return result;
     }, [selectedCategory, selectedSubCategory, selectedType, selectedGender, selectedMetal, priceRange, sortBy, location.search]);
@@ -174,6 +186,94 @@ const Shop = () => {
     const pageTitle = useMemo(() => {
         return selectedSubCategory || selectedCategory || 'Categories Master';
     }, [selectedCategory, selectedSubCategory]);
+
+    const enhancedCategories = useMemo(() => {
+        return categories.map(cat => {
+            const catNameLower = cat.name?.toLowerCase();
+            if (catNameLower === 'rings' && (!cat.subcategories || cat.subcategories.length === 0)) {
+                return {
+                    ...cat,
+                    subcategories: [
+                        { name: 'Engagement', image: catRings },
+                        { name: 'Diamond', image: diamondSolitaire },
+                        { name: 'Couple Bands', image: catRings },
+                        { name: 'Plain Gold', image: catRingWine },
+                        { name: 'Office Wear', image: catRingsCustom },
+                        { name: 'Gemstone', image: catRingsRuby },
+                        { name: 'Stackable', image: catRings },
+                        { name: 'Solitaire', image: diamondSolitaire },
+                        { name: 'Slider', image: catRings },
+                        { name: 'Cocktail', image: catRingsCustom },
+                        { name: 'Religious', image: catRings },
+                        { name: 'Multi-finger', image: catRingsCustom },
+                        { name: 'Platinum Bands', image: catRings },
+                        { name: 'Navaratna', image: catRingsRuby },
+                        { name: 'For Men', image: catRings },
+                        { name: 'Pearl', image: catRingsCustom },
+                        { name: 'For Gift', image: catRings }
+                    ]
+                };
+            } else if (catNameLower === 'pendants' && (!cat.subcategories || cat.subcategories.length === 0)) {
+                return {
+                    ...cat,
+                    subcategories: [
+                        { name: 'Diamond', image: diamondSolitaire },
+                        { name: 'Gold', image: catRingWine },
+                        { name: 'Gemstone', image: catRingsRuby },
+                        { name: 'Heart', image: catPendant },
+                        { name: 'Religious', image: catPendant },
+                        { name: 'Alphabet', image: catPendant }
+                    ]
+                };
+            } else if (catNameLower === 'earrings' && (!cat.subcategories || cat.subcategories.length === 0)) {
+                return {
+                    ...cat,
+                    subcategories: [
+                        { name: 'Studs', image: catEarrings },
+                        { name: 'Jhumkas', image: catEarrings },
+                        { name: 'Drops', image: catEarrings },
+                        { name: 'Hoops', image: catEarrings },
+                        { name: 'Chandbalis', image: catEarrings },
+                        { name: 'Sui Dhaga', image: catEarrings }
+                    ]
+                };
+            } else if (catNameLower === 'necklaces' && (!cat.subcategories || cat.subcategories.length === 0)) {
+                return {
+                    ...cat,
+                    subcategories: [
+                        { name: 'Choker', image: catEarrings }, // Fallback to earrings if no necklace image
+                        { name: 'Chains', image: catRingWine },
+                        { name: 'Collar', image: catEarrings },
+                        { name: 'Lariat', image: catEarrings },
+                        { name: 'Temple', image: catEarrings },
+                        { name: 'Pearl', image: catRingsCustom }
+                    ]
+                };
+            } else if (catNameLower === 'bracelets' && (!cat.subcategories || cat.subcategories.length === 0)) {
+                return {
+                    ...cat,
+                    subcategories: [
+                        { name: 'Chain', image: catBracelets },
+                        { name: 'Bangles', image: catBracelets },
+                        { name: 'Kada', image: catBracelets },
+                        { name: 'Charm', image: catBracelets },
+                        { name: 'Tennis', image: catBracelets }
+                    ]
+                };
+            } else if (catNameLower === 'mangalsutra' && (!cat.subcategories || cat.subcategories.length === 0)) {
+                return {
+                    ...cat,
+                    subcategories: [
+                        { name: 'Modern', image: catRings },
+                        { name: 'Traditional', image: catRings },
+                        { name: 'Gemstone', image: catRingsRuby },
+                        { name: 'Diamond', image: diamondSolitaire }
+                    ]
+                };
+            }
+            return cat;
+        });
+    }, [categories]);
 
     const handleCategoryToggle = (name) => {
         setOpenCategory(name);
@@ -183,10 +283,9 @@ const Shop = () => {
         setSelectedMetal('All');
     };
 
-    const [expandedCategory, setExpandedCategory] = useState(null);
-
     const SidebarContent = () => {
-        const currentCatData = categories.find(c => c.name === openCategory);
+        const currentCatData = enhancedCategories.find(c => c.name === openCategory);
+        const isJewelry = openCategory?.toLowerCase() === 'rings' || openCategory?.toLowerCase() === 'jewellery' || openCategory?.toLowerCase() === 'ring';
 
         return (
             <div className="flex flex-col h-full bg-white font-sans overflow-hidden relative border-r border-gray-200" style={{ fontFamily: "'Muli', 'Arial', sans-serif" }}>
@@ -197,11 +296,74 @@ const Shop = () => {
 
                 {/* Scrollable Middle Container */}
                 <div className="overflow-y-auto custom-sidebar-scrollbar px-2 pt-2 space-y-3 pb-4 js-prevent-page-scroll border border-gray-200 border-t-0" style={{ overscrollBehavior: 'contain', height: 'calc(100vh - 150px)' }} data-lenis-prevent>
-                    {/* Archive Hub / Categories */}
+                    
+                    {/* 1. Price (Top) */}
+                    {isJewelry ? (
+                        <div>
+                            <h4 className="text-xs font-normal text-gray-800 mb-1">Price</h4>
+                            <div className="flex flex-col gap-1.5 px-1">
+                                {[
+                                    { label: '₹ 0 - ₹ 10,000', min: 0, max: 10000 },
+                                    { label: '₹ 10,000 - ₹ 20,000', min: 10000, max: 20000 },
+                                    { label: '₹ 20,000 - ₹ 30,000', min: 20000, max: 30000 },
+                                    { label: '₹ 30,000 - ₹ 40,000', min: 30000, max: 40000 },
+                                    { label: '₹ 40,000 - ₹ 50,000', min: 40000, max: 50000 },
+                                    { label: '₹ 50,000 and Above', min: 50000, max: 500000 }
+                                ].map((range, idx) => {
+                                    const isSelected = priceRange.min === range.min && priceRange.max === range.max;
+                                    return (
+                                        <label key={idx} className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => {
+                                                    if (isSelected) {
+                                                        setPriceRange({ min: 0, max: 500000 });
+                                                    } else {
+                                                        setPriceRange({ min: range.min, max: range.max });
+                                                    }
+                                                }}
+                                                className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <span className="text-xs text-gray-700">{range.label}</span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <h4 className="text-xs font-normal text-gray-800 mb-1">Price</h4>
+                            <div className="px-1 space-y-1">
+                                <div className="flex justify-between items-end gap-1.5">
+                                    <div className="flex flex-col gap-0.5 flex-1">
+                                        <label className="text-[10px] text-gray-500">Min</label>
+                                        <input
+                                            type="number"
+                                            value={priceRange.min}
+                                            onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) || 0 }))}
+                                            className="w-full bg-white border border-gray-200 text-xs p-1 rounded"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-0.5 flex-1">
+                                        <label className="text-[10px] text-gray-500">Max</label>
+                                        <input
+                                            type="number"
+                                            value={priceRange.max}
+                                            onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) || 0 }))}
+                                            className="w-full bg-white border border-gray-200 text-xs p-1 rounded text-right"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 2. Categories (Types and Subcategories) */}
                     <div>
                         <h4 className="text-xs font-normal text-gray-800 mb-1">Categories</h4>
                         <div className="flex flex-col gap-0.5">
-                            {categories.map(cat => (
+                            {enhancedCategories.map(cat => (
                                 <div key={cat.id}>
                                     <button
                                         onClick={() => {
@@ -228,12 +390,16 @@ const Shop = () => {
                                                     {cat.subcategories?.map(sub => (
                                                         <button
                                                             key={sub.name}
-                                                            onClick={() => setSelectedSubCategory(sub.name === selectedSubCategory ? null : sub.name)}
+                                                            onClick={() => {
+                                                                const newVal = sub.name === selectedSubCategory ? null : sub.name;
+                                                                setSelectedSubCategory(newVal);
+                                                                setSelectedType(newVal || 'All');
+                                                            }}
                                                             className={`flex flex-col items-center gap-0.5 p-1 rounded transition-all duration-300 ${selectedSubCategory === sub.name ? 'bg-white shadow-sm ring-1 ring-blue-600' : 'bg-transparent hover:bg-gray-100'}`}
                                                         >
                                                             <div className="w-8 h-8 rounded overflow-hidden bg-gray-200 flex items-center justify-center">
                                                                 {sub.image ? (
-                                                                    <img src={sub.image} className="w-full h-full object-cover" crossOrigin="anonymous" loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
+                                                                    <img src={sub.image} className="w-full h-full object-cover" loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
                                                                 ) : (
                                                                     <ImageLucide className="w-3 h-3 text-gray-400" />
                                                                 )}
@@ -250,45 +416,11 @@ const Shop = () => {
                         </div>
                     </div>
 
+                    {/* 3. Other Details */}
                     <div className="border-t border-gray-100 pt-2">
-                        {((openCategory?.toLowerCase() === 'rings' || openCategory?.toLowerCase() === 'jewellery' || openCategory?.toLowerCase() === 'ring')) ? (
-                            /* Filters for Jewelry */
+                        {isJewelry ? (
                             <div className="space-y-3">
-                                {/* 1. Price */}
-                                <div>
-                                    <h4 className="text-xs font-normal text-gray-800 mb-1">Price</h4>
-                                    <div className="flex flex-col gap-1.5 px-1">
-                                        {[
-                                            { label: '₹ 0 - ₹ 10,000', min: 0, max: 10000 },
-                                            { label: '₹ 10,000 - ₹ 20,000', min: 10000, max: 20000 },
-                                            { label: '₹ 20,000 - ₹ 30,000', min: 20000, max: 30000 },
-                                            { label: '₹ 30,000 - ₹ 40,000', min: 30000, max: 40000 },
-                                            { label: '₹ 40,000 - ₹ 50,000', min: 40000, max: 50000 },
-                                            { label: '₹ 50,000 and Above', min: 50000, max: 500000 }
-                                        ].map((range, idx) => {
-                                            const isSelected = priceRange.min === range.min && priceRange.max === range.max;
-                                            return (
-                                                <label key={idx} className="flex items-center gap-1.5 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isSelected}
-                                                        onChange={() => {
-                                                            if (isSelected) {
-                                                                setPriceRange({ min: 0, max: 500000 });
-                                                            } else {
-                                                                setPriceRange({ min: range.min, max: range.max });
-                                                            }
-                                                        }}
-                                                        className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-xs text-gray-700">{range.label}</span>
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* 2. Type */}
+                                {/* Type (Subcategories list as checkboxes) */}
                                 <div>
                                     <h4 className="text-xs font-normal text-gray-800 mb-1">Type</h4>
                                     <div className="flex flex-col gap-1.5 px-1 max-h-[160px] overflow-y-auto custom-sidebar-scrollbar js-prevent-page-scroll" style={{ overscrollBehavior: 'contain' }} data-lenis-prevent>
@@ -310,7 +442,7 @@ const Shop = () => {
                                     </div>
                                 </div>
 
-                                {/* 3. Metal */}
+                                {/* Metal */}
                                 <div>
                                     <h4 className="text-xs font-normal text-gray-800 mb-1">Metal</h4>
                                     <div className="flex flex-col gap-1.5 px-1">
@@ -335,7 +467,7 @@ const Shop = () => {
                                     </div>
                                 </div>
 
-                                {/* 4. Gender */}
+                                {/* Gender */}
                                 <div>
                                     <h4 className="text-xs font-normal text-gray-800 mb-1">Gender</h4>
                                     <div className="flex flex-col gap-1.5 px-1">
@@ -354,7 +486,6 @@ const Shop = () => {
                                 </div>
                             </div>
                         ) : (
-                            /* Fallback standard filters for Machines and Tools */
                             <div className="space-y-3">
                                 {/* DYNAMIC MATERIAL SECTION */}
                                 {currentCatData?.materials && (
@@ -376,34 +507,7 @@ const Shop = () => {
                                     </div>
                                 )}
 
-                                {/* PRICE SLIDER */}
-                                <div>
-                                    <h4 className="text-xs font-normal text-gray-800 mb-1">Price</h4>
-                                    <div className="px-1 space-y-1">
-                                        <div className="flex justify-between items-end gap-1.5">
-                                            <div className="flex flex-col gap-0.5 flex-1">
-                                                <label className="text-[10px] text-gray-500">Min</label>
-                                                <input
-                                                    type="number"
-                                                    value={priceRange.min}
-                                                    onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) || 0 }))}
-                                                    className="w-full bg-white border border-gray-200 text-xs p-1 rounded"
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-0.5 flex-1">
-                                                <label className="text-[10px] text-gray-500">Max</label>
-                                                <input
-                                                    type="number"
-                                                    value={priceRange.max}
-                                                    onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) || 0 }))}
-                                                    className="w-full bg-white border border-gray-200 text-xs p-1 rounded text-right"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* TARGET GROUP FILTER */}
+                                {/* Gender */}
                                 <div>
                                     <h4 className="text-xs font-normal text-gray-800 mb-1">Gender</h4>
                                     <div className="flex flex-col gap-1.5 px-1">
@@ -471,15 +575,25 @@ const Shop = () => {
                         <button className="bg-white text-gray-700 px-3 py-1 rounded-sm border border-gray-200 uppercase text-[10px]">Designs in Store</button>
                     </div>
                     <div className="flex gap-2 items-center">
-                        <button className="bg-[#337ab7] text-white px-3 py-1 rounded-sm text-[10px] flex items-center gap-1"><span className="icon">📍</span> Pincode</button>
+                        <button 
+                            onClick={() => {
+                                const pincode = prompt("Enter your Pincode:");
+                                if (pincode) {
+                                    alert(`Pincode set to ${pincode}`);
+                                }
+                            }}
+                            className="bg-[#337ab7] text-white px-3 py-1 rounded-sm text-[10px] flex items-center gap-1"
+                        >
+                            <span className="icon">📍</span> Pincode
+                        </button>
                         <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-sm px-2 py-0.5">
-                            <span className="text-[9px] font-bold uppercase text-gray-400">Filter:</span>
+                            <span className="text-[9px] font-bold uppercase text-gray-400">Sort By:</span>
                             <select
-                                value={selectedGender}
-                                onChange={(e) => setSelectedGender(e.target.value)}
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
                                 className="bg-transparent border-none text-[10px] font-bold uppercase text-[#337ab7] focus:ring-0 cursor-pointer p-0"
                             >
-                                {['All', 'Male', 'Female', 'Children', 'Unisex'].map(opt => (
+                                {["WHAT'S NEW", "POPULAR", "PRICE LOW TO HIGH", "PRICE HIGH TO LOW", "DISCOUNT"].map(opt => (
                                     <option key={opt} value={opt}>{opt}</option>
                                 ))}
                             </select>

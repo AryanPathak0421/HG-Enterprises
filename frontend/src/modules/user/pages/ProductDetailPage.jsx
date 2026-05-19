@@ -130,26 +130,25 @@ const ProductDetailPage = () => {
                 const watermark = new Image();
                 watermark.src = watermarkLogo;
                 watermark.onload = () => {
-                    // Set watermark width to 10% of canvas width (beautifully compact)
-                    const wmWidth = canvas.width * 0.10;
+                    // Set watermark width to 20% of canvas width (larger for center watermark)
+                    const wmWidth = canvas.width * 0.20;
                     const wmHeight = watermark.naturalHeight * (wmWidth / watermark.naturalWidth);
                     
-                    // Position at bottom-left corner with nice padding
-                    const padding = canvas.width * 0.04;
-                    const x = padding;
-                    // Leave space for text below logo
-                    const y = canvas.height - wmHeight - padding - (canvas.width * 0.02);
+                    // Position in the center
+                    const x = (canvas.width - wmWidth) / 2;
+                    const y = (canvas.height - wmHeight) / 2;
                     
-                    // Set watermark transparency to 40% (subtle and high-end)
-                    ctx.globalAlpha = 0.40;
+                    // Set watermark transparency to 50% (proper visible)
+                    ctx.globalAlpha = 0.50;
                     ctx.drawImage(watermark, x, y, wmWidth, wmHeight);
                     
                     // Draw dark brown premium text below the logo
-                    ctx.globalAlpha = 0.70; // Highly readable
+                    ctx.globalAlpha = 0.80; // Highly readable
                     ctx.fillStyle = '#4E3629'; // Premium Dark Earth Brown
-                    const fontSize = Math.round(canvas.width * 0.018); // Sized elegantly
+                    const fontSize = Math.round(canvas.width * 0.025); // Elegant sizing
                     ctx.font = `bold ${fontSize}px "Cinzel", "Playfair Display", "Georgia", serif`;
-                    ctx.fillText('HG ENTERPRISES', x, y + wmHeight + (fontSize * 1.0));
+                    ctx.textAlign = 'center';
+                    ctx.fillText('HG ENTERPRISES', canvas.width / 2, y + wmHeight + (fontSize * 1.2));
                     
                     // Reset canvas alpha to default
                     ctx.globalAlpha = 1.0;

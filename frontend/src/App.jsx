@@ -28,6 +28,8 @@ import OffersPage from './modules/user/pages/OffersPage';
 import SmoothScroll from './components/SmoothScroll';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import WhatsAppButton from './modules/user/components/WhatsAppButton';
+
 
 
 // Admin Imports
@@ -110,6 +112,7 @@ const AppContent = () => {
               <Navbar />
             </div>
             <div className="h-[40px] md:h-[85px] w-full"></div>
+            <WhatsAppButton />
           </>
         )}
         <main className={`flex-grow ${!isAdminPath ? 'pb-16 md:pb-0' : ''}`}>

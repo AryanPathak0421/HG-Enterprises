@@ -38,12 +38,13 @@ const CategoryShowcase = () => {
             <div className="container mx-auto px-4 md:px-6 lg:px-20 text-center">
 
                 {/* Refined Department Tabs - Strictly 3 */}
-                <div className="flex justify-center gap-12 md:gap-24 mb-6 md:mb-10 border-b border-white/10 pb-0.5 overflow-x-auto scrollbar-hide">
+                <div className="flex justify-center gap-12 md:gap-24 mb-2 md:mb-4 border-b border-white/10 pb-0.5 overflow-x-auto scrollbar-hide">
                     {DEPARTMENT_TABS.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`font-serif text-[11px] md:text-sm tracking-[0.3em] uppercase transition-all duration-500 relative py-4 px-2 whitespace-nowrap ${
+                            style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                            className={`text-[11px] md:text-sm tracking-[0.3em] uppercase transition-all duration-500 relative py-2 px-2 whitespace-nowrap ${
                                 activeTab === tab.id ? 'text-white font-black' : 'text-white/40 hover:text-white/70 font-medium'
                             }`}
                         >

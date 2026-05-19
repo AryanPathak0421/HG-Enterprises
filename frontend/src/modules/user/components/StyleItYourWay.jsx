@@ -68,18 +68,18 @@ const StyleItYourWay = () => {
     if (displayCollections.length === 0) return null;
 
     return (
-        <section className="pt-8 pb-2 md:pt-12 md:pb-4 bg-white relative">
+        <section className="pt-2 pb-2 md:pt-12 md:pb-4 bg-white relative">
             <div className="container mx-auto px-2 md:px-4">
 
-                {/* Centered Header - Matched to Editorial Style */}
+                {/* Centered Header - Matched to Shop by Recipient Style */}
                 <div className="text-center mb-6 md:mb-8">
-                    <span className="text-primary font-serif tracking-[0.2em] font-normal italic text-[10px] md:text-sm mb-1 block">
-                        Curated For You
+                    <span className="text-[#c1a05b] font-bold tracking-[0.25em] uppercase text-[10px] md:text-xs mb-1 block">
+                        CURATED FOR YOU
                     </span>
-                    <h2 className="font-serif text-3xl md:text-4xl font-normal text-dark tracking-tight">
-                        {sectionData?.label || "Style It Your Way"}
+                    <h2 className="text-2xl md:text-3xl font-serif font-semibold text-dark mb-2 tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                        Style It Your <span className="italic text-[#8c2a3e] font-normal">Way</span>
                     </h2>
-                    <div className="h-[1px] w-12 bg-primary mx-auto opacity-30 mt-3"></div>
+                    <div className="h-[1px] w-12 bg-[#c1a05b] mx-auto mt-2"></div>
                 </div>
 
                 {/* Carousel Container */}

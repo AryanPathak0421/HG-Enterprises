@@ -47,7 +47,7 @@ const ContactPage = () => {
                                 </div>
                                 <div className="flex flex-col">
                                      <h3 className="font-serif text-[14px] font-normal text-black leading-none mb-1">Direct Line</h3>
-                                    <a href="tel:+918779007979" className="text-[10px] font-bold tracking-wider uppercase text-gray-500 hover:text-black transition-all">+91 877 900 7979</a>
+                                    <a href="tel:+919076062592" className="text-[10px] font-bold tracking-wider uppercase text-gray-500 hover:text-black transition-all">+91 90760 62592</a>
                                 </div>
                             </div>
 

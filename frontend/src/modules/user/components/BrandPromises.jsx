@@ -34,15 +34,15 @@ const BrandPromises = () => {
         <section className="pt-0 pb-4 md:pb-8 bg-white overflow-hidden">
             <div className="container mx-auto px-2 md:px-4">
 
-                {/* Header - Matched to Style It Your Way */}
+                {/* Header - Matched to Shop by Recipient Style */}
                 <div className="text-center mb-4 md:mb-6">
-                    <span className="text-primary font-serif tracking-[0.2em] font-normal italic text-[10px] md:text-sm mb-1 block">
-                        Our Commitments
+                    <span className="text-[#c1a05b] font-bold tracking-[0.25em] uppercase text-[10px] md:text-xs mb-1 block">
+                        OUR COMMITMENTS
                     </span>
-                    <h2 className="font-serif text-3xl md:text-4xl font-normal text-dark tracking-tight">
-                        Why Choose Us
+                    <h2 className="text-2xl md:text-3xl font-serif font-semibold text-dark mb-2 tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                        Why Choose <span className="italic text-[#8c2a3e] font-normal">Us</span>
                     </h2>
-                    <div className="h-[1px] w-12 bg-primary mx-auto opacity-30 mt-3"></div>
+                    <div className="h-[1px] w-12 bg-[#c1a05b] mx-auto mt-2"></div>
                 </div>
 
                 <div className="grid grid-cols-4 lg:grid-cols-4 gap-2 md:gap-12 lg:gap-8 pt-2 md:pt-4">
