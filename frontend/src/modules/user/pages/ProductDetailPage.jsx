@@ -130,25 +130,30 @@ const ProductDetailPage = () => {
                 const watermark = new Image();
                 watermark.src = watermarkLogo;
                 watermark.onload = () => {
-                    // Set watermark width to 20% of canvas width (larger for center watermark)
-                    const wmWidth = canvas.width * 0.20;
+                    // Center watermark
+                    const wmWidth = canvas.width * 0.30;
                     const wmHeight = watermark.naturalHeight * (wmWidth / watermark.naturalWidth);
                     
                     // Position in the center
                     const x = (canvas.width - wmWidth) / 2;
                     const y = (canvas.height - wmHeight) / 2;
                     
-                    // Set watermark transparency to 50% (proper visible)
-                    ctx.globalAlpha = 0.50;
+                    // Set watermark transparency to 45%
+                    ctx.globalAlpha = 0.45;
                     ctx.drawImage(watermark, x, y, wmWidth, wmHeight);
                     
-                    // Draw dark brown premium text below the logo
-                    ctx.globalAlpha = 0.80; // Highly readable
-                    ctx.fillStyle = '#4E3629'; // Premium Dark Earth Brown
-                    const fontSize = Math.round(canvas.width * 0.025); // Elegant sizing
-                    ctx.font = `bold ${fontSize}px "Cinzel", "Playfair Display", "Georgia", serif`;
+                    const fontSize = Math.round(canvas.width * 0.035); // Elegant sizing
+                    
+                    // Draw brand text below the logo with white fill + dark shadow for readability on any bg
+                    ctx.globalAlpha = 1.0;
+                    ctx.font = `bold ${fontSize}px "Cinzel", "Georgia", serif`;
                     ctx.textAlign = 'center';
-                    ctx.fillText('HG ENTERPRISES', canvas.width / 2, y + wmHeight + (fontSize * 1.2));
+                    // Shadow pass
+                    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                    ctx.fillText('HG ENTERPRISES', canvas.width / 2 + 2, y + wmHeight + fontSize + 2);
+                    // Actual text in gold
+                    ctx.fillStyle = '#D4AF37';
+                    ctx.fillText('HG ENTERPRISES', canvas.width / 2, y + wmHeight + fontSize);
                     
                     // Reset canvas alpha to default
                     ctx.globalAlpha = 1.0;

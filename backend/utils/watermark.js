@@ -21,25 +21,37 @@ async function applyWatermark(imageBuffer) {
         
         const composites = [];
 
-        // 1. Generate elegant diagonal brand text watermark in gold
-        const fontSize = Math.round(width * 0.045); // Dynamic font size based on width
+        // 1. Generate elegant centered brand text watermark in gold
+        const fontSize = Math.round(width * 0.055); // Dynamic font size based on width
         const svgText = `
             <svg width="${width}" height="${height}">
                 <style>
                     .watermark-text {
                         fill: #D4AF37; /* Premium Metallic Gold */
-                        fill-opacity: 0.12; /* Subtle transparency */
+                        fill-opacity: 0.45; /* Clearly visible */
                         font-size: ${fontSize}px;
                         font-family: 'Cinzel', 'Playfair Display', 'Georgia', serif;
                         font-weight: 900;
-                        letter-spacing: 0.15em;
+                        letter-spacing: 0.2em;
+                    }
+                    .watermark-shadow {
+                        fill: #000000;
+                        fill-opacity: 0.18;
+                        font-size: ${fontSize}px;
+                        font-family: 'Cinzel', 'Playfair Display', 'Georgia', serif;
+                        font-weight: 900;
+                        letter-spacing: 0.2em;
                     }
                 </style>
-                <!-- Diagonal repeating brand watermark -->
-                <text x="50%" y="35%" text-anchor="middle" transform="rotate(-30 ${width * 0.5} ${height * 0.35})" class="watermark-text">
+                <!-- Centered brand watermark with subtle shadow for visibility -->
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                    transform="rotate(-25 ${width * 0.5} ${height * 0.5})"
+                    class="watermark-shadow" dx="2" dy="2">
                     HG ENTERPRISES
                 </text>
-                <text x="50%" y="65%" text-anchor="middle" transform="rotate(-30 ${width * 0.5} ${height * 0.65})" class="watermark-text">
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                    transform="rotate(-25 ${width * 0.5} ${height * 0.5})"
+                    class="watermark-text">
                     HG ENTERPRISES
                 </text>
             </svg>
@@ -52,25 +64,33 @@ async function applyWatermark(imageBuffer) {
 
         // 2. Add logo watermark at the center if the logo file exists
         if (fs.existsSync(logoPath)) {
-            // Logo width should be roughly 25% of main image width
-            const logoWidth = Math.round(width * 0.22);
-            
-            // Read logo, resize, and apply beautiful transparency
-            const logoBuffer = await sharp(logoPath)
-                .resize(logoWidth)
+            // Logo width = 30% of main image width for clear visibility
+            const logoWidth = Math.round(width * 0.30);
+
+            // Get logo metadata to calculate centered position
+            const logoResized = sharp(logoPath).resize(logoWidth);
+            const logoMeta = await logoResized.clone().metadata();
+            const logoHeight = logoMeta.height || logoWidth;
+
+            // Apply opacity by multiplying alpha channel: 128/255 ≈ 50% opacity
+            const logoBuffer = await logoResized
+                .ensureAlpha()
+                .linear(1, 0)              // keep RGB unchanged
+                .toBuffer({ resolveWithObject: false });
+
+            // Use Sharp's built-in gravity: center for exact centering
+            const logoWithOpacity = await sharp(logoBuffer)
                 .ensureAlpha()
                 .composite([{
-                    // Create a 1x1 buffer with alpha channel to act as opacity mask
-                    input: Buffer.from([0, 0, 0, 90]), // 90/255 = ~35% opacity
-                    raw: { width: 1, height: 1, channels: 4 },
+                    input: Buffer.alloc(logoWidth * logoHeight * 4, 128), // 50% alpha mask
+                    raw: { width: logoWidth, height: logoHeight, channels: 4 },
                     blend: 'dest-in'
                 }])
                 .toBuffer();
 
             composites.push({
-                input: logoBuffer,
-                // Center the logo overlay
-                gravity: 'center'
+                input: logoWithOpacity,
+                gravity: 'center'   // Perfectly centered on the image
             });
         }
 
