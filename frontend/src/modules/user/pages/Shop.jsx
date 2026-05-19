@@ -37,6 +37,13 @@ const Shop = () => {
     const [sortBy, setSortBy] = useState('POPULAR');
     const [priceRange, setPriceRange] = useState({ min: 0, max: 500000 }); // Dual price slider support
     const [expandedCategory, setExpandedCategory] = useState(null);
+    
+    // Customization Box States
+    const [showCustomization, setShowCustomization] = useState(true);
+    const [custColor, setCustColor] = useState('YELLOW');
+    const [custPurity, setCustPurity] = useState('18Kt');
+    const [custCarat, setCustCarat] = useState('0.15');
+    const [custQuality, setCustQuality] = useState('SI IJ');
 
     // Sync with URL params & Normalize Category
     useEffect(() => {
@@ -420,6 +427,93 @@ const Shop = () => {
                     <div className="border-t border-gray-100 pt-2">
                         {isJewelry ? (
                             <div className="space-y-3">
+                                {/* Customization UI Box */}
+                                <div>
+                                    <div className="flex justify-between items-center cursor-pointer mb-1.5" onClick={() => setShowCustomization(!showCustomization)}>
+                                        <h4 className="text-[13px] font-normal text-gray-800">{showCustomization ? 'Hide' : 'Show'} Customization</h4>
+                                        <span className="text-gray-600 text-lg leading-none">{showCustomization ? '−' : '+'}</span>
+                                    </div>
+                                    
+                                    <AnimatePresence>
+                                        {showCustomization && (
+                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                                <div className="bg-[#fafafa] p-1.5 rounded-sm flex flex-col gap-1.5">
+                                                    <div className="flex items-center gap-1.5">
+                                                        {/* Color Select */}
+                                                        <div className="relative bg-white border border-gray-100 flex items-center px-1.5 py-1 rounded-[1px] w-[90px] shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+                                                            <div className={`w-3 h-3 rounded-[1px] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] shrink-0 mr-1.5 ${custColor === 'YELLOW' ? 'bg-gradient-to-br from-[#FFE383] to-[#F1B920]' : custColor === 'ROSE' ? 'bg-gradient-to-br from-[#F4C5B9] to-[#D58C7C]' : 'bg-gradient-to-br from-[#F5F5F5] to-[#D1D1D1]'}`}></div>
+                                                            <select 
+                                                                value={custColor}
+                                                                onChange={(e) => setCustColor(e.target.value)}
+                                                                className="w-full text-[10.5px] uppercase font-normal text-[#1A202C] bg-transparent appearance-none outline-none cursor-pointer tracking-wide"
+                                                                style={{ paddingRight: '12px' }}
+                                                            >
+                                                                <option value="YELLOW">YELLOW</option>
+                                                                <option value="ROSE">ROSE</option>
+                                                                <option value="WHITE">WHITE</option>
+                                                            </select>
+                                                            <svg className="w-2.5 h-2.5 absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                                        </div>
+
+                                                        {/* Purity Radio */}
+                                                        <div className="flex bg-white border border-gray-100 px-2 py-1 rounded-[1px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] gap-3 items-center w-full">
+                                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                                                <input type="radio" name="purity" checked={custPurity === '14Kt'} onChange={() => setCustPurity('14Kt')} className="w-3 h-3 text-[#1C5196] focus:ring-[#1C5196] border-gray-300 bg-transparent m-0 p-0" />
+                                                                <span className="text-[10.5px] text-gray-600 tracking-wide font-normal">14Kt</span>
+                                                            </label>
+                                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                                                <input type="radio" name="purity" checked={custPurity === '18Kt'} onChange={() => setCustPurity('18Kt')} className="w-3 h-3 text-[#1C5196] focus:ring-[#1C5196] border-gray-300 bg-transparent m-0 p-0" />
+                                                                <span className="text-[10.5px] text-gray-600 tracking-wide font-normal">18Kt</span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Solitaire section */}
+                                                    <div className="flex items-center bg-white border border-gray-100 py-1.5 px-2 rounded-[1px] shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+                                                        <div className="flex items-center gap-1.5 pr-2 border-r border-gray-200">
+                                                            <svg className="w-3 h-3 text-[#1C3B68]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5l8.25-4.5 8.25 4.5-8.25 12-8.25-12z" /><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5h16.5m-16.5 0l8.25 4.5 8.25-4.5" /></svg>
+                                                            <span className="text-[10.5px] uppercase text-[#1C3B68] font-normal tracking-wide">SOLITAIRE :</span>
+                                                        </div>
+                                                        
+                                                        <div className="flex items-center gap-1.5 px-2 border-r border-gray-200">
+                                                            <span className="text-[10.5px] text-gray-500">Carat</span>
+                                                            <div className="relative border border-black rounded-[2px]">
+                                                                <select 
+                                                                    value={custCarat}
+                                                                    onChange={(e) => setCustCarat(e.target.value)}
+                                                                    className="text-[10.5px] font-medium px-1.5 py-0.5 appearance-none outline-none bg-transparent cursor-pointer text-gray-800"
+                                                                    style={{ paddingRight: '16px' }}
+                                                                >
+                                                                    <option value="0.15">0.15</option>
+                                                                    <option value="0.25">0.25</option>
+                                                                    <option value="0.50">0.50</option>
+                                                                </select>
+                                                                <svg className="w-2.5 h-2.5 absolute right-1 top-1/2 -translate-y-1/2 text-black pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-1.5 pl-2">
+                                                            <span className="text-[10.5px] text-gray-500">Quality</span>
+                                                            <div className="relative bg-[#f5f5f5] rounded-[2px]">
+                                                                <select 
+                                                                    value={custQuality}
+                                                                    onChange={(e) => setCustQuality(e.target.value)}
+                                                                    className="text-[10.5px] font-medium text-gray-700 px-1.5 py-0.5 appearance-none border-none outline-none cursor-pointer tracking-wider bg-transparent"
+                                                                    style={{ paddingRight: '16px' }}
+                                                                >
+                                                                    <option value="SI IJ">SI IJ</option>
+                                                                    <option value="VVS EF">VVS EF</option>
+                                                                </select>
+                                                                <svg className="w-2.5 h-2.5 absolute right-1 top-1/2 -translate-y-1/2 text-gray-700 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
                                 {/* Type (Subcategories list as checkboxes) */}
                                 <div>
                                     <h4 className="text-xs font-normal text-gray-800 mb-1">Type</h4>
@@ -569,12 +663,12 @@ const Shop = () => {
                 </div>
 
                 {/* Pink Bar (Options) */}
-                <div className="bg-[#fff0f2] p-2 flex items-center justify-between mb-2 text-xs">
-                    <div className="flex gap-2">
-                        <button className="bg-[#337ab7] text-white px-3 py-1 rounded-sm uppercase text-[10px]">All</button>
-                        <button className="bg-white text-gray-700 px-3 py-1 rounded-sm border border-gray-200 uppercase text-[10px]">Designs in Store</button>
+                <div className="bg-[#fff0f2] p-2 flex items-center justify-between gap-4 mb-2 text-xs overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <div className="flex gap-2 shrink-0">
+                        <button className="bg-[#337ab7] text-white px-3 py-1 rounded-sm uppercase text-[10px] shrink-0">All</button>
+                        <button className="bg-white text-gray-700 px-3 py-1 rounded-sm border border-gray-200 uppercase text-[10px] shrink-0">Designs in Store</button>
                     </div>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex gap-2 items-center shrink-0">
                         <button 
                             onClick={() => {
                                 const pincode = prompt("Enter your Pincode:");
@@ -582,16 +676,16 @@ const Shop = () => {
                                     alert(`Pincode set to ${pincode}`);
                                 }
                             }}
-                            className="bg-[#337ab7] text-white px-3 py-1 rounded-sm text-[10px] flex items-center gap-1"
+                            className="bg-[#337ab7] text-white px-3 py-1 rounded-sm text-[10px] flex items-center gap-1 shrink-0"
                         >
                             <span className="icon">📍</span> Pincode
                         </button>
-                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-sm px-2 py-0.5">
-                            <span className="text-[9px] font-bold uppercase text-gray-400">Sort By:</span>
+                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-sm px-2 py-0.5 shrink-0">
+                            <span className="text-[9px] font-bold uppercase text-gray-400 whitespace-nowrap">Sort By:</span>
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="bg-transparent border-none text-[10px] font-bold uppercase text-[#337ab7] focus:ring-0 cursor-pointer p-0"
+                                className="bg-transparent border-none text-[10px] font-bold uppercase text-[#337ab7] focus:ring-0 cursor-pointer p-0 min-w-[75px]"
                             >
                                 {["WHAT'S NEW", "POPULAR", "PRICE LOW TO HIGH", "PRICE HIGH TO LOW", "DISCOUNT"].map(opt => (
                                     <option key={opt} value={opt}>{opt}</option>
@@ -601,7 +695,7 @@ const Shop = () => {
                         {/* Mobile Filter Button */}
                         <button
                             onClick={() => setIsFilterOpen(true)}
-                            className="lg:hidden w-8 h-8 rounded-sm border border-gray-200 flex items-center justify-center bg-white text-[#337ab7] shadow-sm active:scale-95 transition-all"
+                            className="lg:hidden w-8 h-8 rounded-sm border border-gray-200 flex items-center justify-center bg-white text-[#337ab7] shadow-sm active:scale-95 transition-all shrink-0"
                         >
                             <SlidersHorizontal className="w-4 h-4" strokeWidth={1.5} />
                         </button>

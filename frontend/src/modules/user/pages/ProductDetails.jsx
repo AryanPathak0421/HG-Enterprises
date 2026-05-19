@@ -107,7 +107,13 @@ const ProductDetails = () => {
     };
 
     const getProductSummaryLabel = () => {
-        if (!isJewelleryProduct) return '';
+        if (!isJewelleryProduct) {
+            const cat = product?.category || 'Product';
+            const sub = product?.subcategory || product?.subCategory || '';
+            const brand = product?.brand || 'HG Enterprises';
+            return `${brand} Premium ${cat}${sub ? ` - ${sub}` : ''}`;
+        }
+        
         const subCat = product.subCategory || product.subcategory || product.category || 'Ring';
         const capitalizedSubCat = subCat.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 
@@ -242,6 +248,14 @@ const ProductDetails = () => {
 
     // Helper to group specs for jewellery details accordion
     const getGroupedSpecs = () => {
+        if (!isJewelleryProduct) {
+            // For machines and other non-jewellery, group everything under "TECHNICAL SPECIFICATIONS"
+            if (!product?.specifications || product.specifications.length === 0) return {};
+            return {
+                'TECHNICAL SPECIFICATIONS': product.specifications
+            };
+        }
+
         const grouped = {
             'PRODUCT DETAILS': [],
             'DIAMOND DETAILS': [],
@@ -773,6 +787,110 @@ const ProductDetails = () => {
 
     const finalPrice = getDiscountedPrice();
 
+    const renderProductDetailsAccordion = () => {
+        return (
+            <div className="space-y-4">
+                <h4 className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#333333] mb-3 border-b border-zinc-200/50 pb-2">
+                    {isJewelleryProduct ? 'Product Details' : 'Technical Specifications'}
+                </h4>
+                {product.specifications && product.specifications.length > 0 ? (
+                    (() => {
+                        const groupedSpecs = getGroupedSpecs();
+                        const directSpecs = groupedSpecs['PRODUCT DETAILS'] || [];
+                        const accordionSpecs = Object.entries(groupedSpecs).filter(([secName]) => secName !== 'PRODUCT DETAILS');
+
+                        return (
+                            <div className="space-y-4">
+                                {/* Directly visible Product Details table rows */}
+                                {directSpecs.length > 0 && (
+                                    <div className="divide-y divide-[#F5E6E8]/60 border-y border-[#F5E6E8]/60 py-1">
+                                        {directSpecs.map((item, idx) => (
+                                            <div key={idx} className="flex items-center justify-between py-2.5 px-1 text-xs">
+                                                <div className="flex items-center gap-1.5 text-zinc-500">
+                                                    <span>{item.label}</span>
+                                                    <Info className="w-3 h-3 text-zinc-400" />
+                                                </div>
+                                                <span className="font-semibold text-[#1D5C8A]">
+                                                    {item.value}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Accordion breakdown for Diamonds, Metals, Price Breakup, etc. */}
+                                {accordionSpecs.length > 0 && (
+                                    <div className="space-y-1">
+                                        {accordionSpecs.map(([secName, items]) => {
+                                            const isExpanded = !!expandedSections[secName];
+                                            return (
+                                                <div key={secName} className="border-b border-zinc-200 bg-transparent rounded-none overflow-hidden transition-all duration-300">
+                                                    <button
+                                                        onClick={() => toggleSection(secName)}
+                                                        className="w-full flex items-center justify-between py-3.5 px-1 bg-transparent hover:text-[#8B4356] transition-colors outline-none"
+                                                    >
+                                                        <span className="text-[11px] font-bold text-black tracking-[0.15em] uppercase">{secName}</span>
+                                                        <span className="text-zinc-600 font-bold text-sm">
+                                                            {isExpanded ? '-' : '+'}
+                                                        </span>
+                                                    </button>
+
+                                                    <AnimatePresence initial={false}>
+                                                        {isExpanded && (
+                                                            <motion.div
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: 'auto', opacity: 1 }}
+                                                                exit={{ height: 0, opacity: 0 }}
+                                                                transition={{ duration: 0.2 }}
+                                                                className="overflow-hidden"
+                                                            >
+                                                                <div className="p-2 space-y-1 divide-y divide-zinc-100 bg-transparent">
+                                                                    {secName === 'TAGS' ? (
+                                                                        <div className="py-2 text-xs leading-relaxed text-[#2C6E9E] font-medium tracking-wide">
+                                                                            {items[0].value}
+                                                                        </div>
+                                                                    ) : (
+                                                                        items.map((item, idx) => {
+                                                                            const isTotal = item.label.toUpperCase() === 'TOTAL';
+                                                                            return (
+                                                                                <div
+                                                                                    key={idx}
+                                                                                    className={`flex items-center justify-between py-2.5 px-1 text-xs ${isTotal ? 'font-bold text-black border-t border-zinc-200' : ''}`}
+                                                                                >
+                                                                                    <div className="flex items-center gap-1.5">
+                                                                                        <span className={`${isTotal ? 'text-[#8B4356] font-bold' : 'text-zinc-600 font-medium'}`}>
+                                                                                            {item.label}
+                                                                                        </span>
+                                                                                        {!isTotal && <Info className="w-3 h-3 text-zinc-300" />}
+                                                                                    </div>
+                                                                                    <span className={`${isTotal ? 'text-black font-bold text-sm' : 'text-[#1D5C8A] font-semibold'}`}>
+                                                                                        {item.value}
+                                                                                    </span>
+                                                                                </div>
+                                                                            );
+                                                                        })
+                                                                    )}
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()
+                ) : (
+                    <div className="p-4 bg-white border border-[#F5E6E8] text-xs text-zinc-500 leading-relaxed font-assistant">
+                        No additional technical specifications listed for this {isJewelleryProduct ? 'collection' : 'product'}.
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-[#FDF5F6] font-body text-[#1A1A1A] pb-12 selection:bg-[#8B4356] selection:text-white overflow-x-hidden">
             <main className="container mx-auto px-4 lg:px-12 pt-10 lg:pt-8">
@@ -969,6 +1087,11 @@ const ProductDetails = () => {
                         </div>
 
                         {/* Interactive dynamic segments */}
+                        {/* Product Specifications Label Bar - ALWAYS RENDERED FOR ALL PRODUCTS */}
+                        <div className="text-[12px] font-assistant font-bold text-zinc-700 tracking-wide pt-1 pb-0.5 leading-snug">
+                            {getProductSummaryLabel()}
+                        </div>
+
                         {isJewelleryProduct && (
                             <div className="space-y-2.5 pt-3.5 border-t border-zinc-100 mt-3">
 
@@ -1000,11 +1123,6 @@ const ProductDetails = () => {
                                     <p className="text-[9.5px] text-zinc-400 mt-0.5 leading-snug">
                                         Provide pincode for delivery date & nearby stores!
                                     </p>
-                                </div>
-
-                                {/* Product Specifications Label Bar */}
-                                <div className="text-[12px] font-assistant font-bold text-zinc-700 tracking-wide pt-1 pb-0.5 leading-snug">
-                                    {getProductSummaryLabel()}
                                 </div>
 
                                 {/* Customize design accordion */}
@@ -1212,31 +1330,38 @@ const ProductDetails = () => {
 
                             </div>
                         ) : (
-                            <div className="bg-white p-2.5 lg:p-3 rounded-none border border-[#F5E6E8] shadow-sm space-y-2.5">
-                                <div className="flex items-center justify-between px-1">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                                        <span className="text-[9.5px] font-black text-emerald-600 uppercase tracking-widest">In Stock Now</span>
+                            <>
+                                <div className="bg-white p-2.5 lg:p-3 rounded-none border border-[#F5E6E8] shadow-sm space-y-2.5">
+                                    <div className="flex items-center justify-between px-1">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                                            <span className="text-[9.5px] font-black text-emerald-600 uppercase tracking-widest">In Stock Now</span>
+                                        </div>
+                                        <span className="text-[12px] font-black text-black tracking-tighter">₹{currentPrice.toLocaleString()}</span>
                                     </div>
-                                    <span className="text-[12px] font-black text-black tracking-tighter">₹{currentPrice.toLocaleString()}</span>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={handleAddToCart}
-                                        className="bg-[#2a2a2a] text-white h-9 rounded-none font-black uppercase tracking-[.2em] text-[9px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all duration-300 hover:bg-[#5C3F30]"
-                                    >
-                                        <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} /> Add to Bag
-                                    </button>
-                                    <button
-                                        onClick={handleBuyNow}
-                                        className="bg-[#8B4356] text-white h-9 rounded-none font-black uppercase tracking-[.2em] text-[9px] transition-all hover:bg-[#7a394b] active:scale-95 shadow-sm"
-                                    >
-                                        Buy Now
-                                    </button>
-                                </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={handleAddToCart}
+                                            className="bg-[#2a2a2a] text-white h-9 rounded-none font-black uppercase tracking-[.2em] text-[9px] flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all duration-300 hover:bg-[#5C3F30]"
+                                        >
+                                            <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} /> Add to Bag
+                                        </button>
+                                        <button
+                                            onClick={handleBuyNow}
+                                            className="bg-[#8B4356] text-white h-9 rounded-none font-black uppercase tracking-[.2em] text-[9px] transition-all hover:bg-[#7a394b] active:scale-95 shadow-sm"
+                                        >
+                                            Buy Now
+                                        </button>
+                                    </div>
 
-                            </div>
+                                </div>
+                                
+                                {/* Technical Specifications Accordion explicitly in right column for non-jewellery */}
+                                <div className="mt-6 pt-6 border-t border-[#F5E6E8]/60">
+                                    {renderProductDetailsAccordion()}
+                                </div>
+                            </>
                         )}
                     </div> {/* Close Right Column (col-span-6) */}
                 </div> {/* Close Main Purchase Grid (grid-cols-12) */}
@@ -1245,106 +1370,12 @@ const ProductDetails = () => {
                 <div className="mt-8 border-t border-[#F5E6E8]/60 pt-8 px-4 lg:px-0">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                         
-                        {/* Left Column: Product Details Accordions (lg:col-span-6) */}
-                        <div className="lg:col-span-6 space-y-4">
-                            <h4 className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#333333] mb-3 border-b border-zinc-200/50 pb-2">
-                                Product Details
-                            </h4>
-                            {product.specifications && product.specifications.length > 0 ? (
-                                (() => {
-                                    const groupedSpecs = getGroupedSpecs();
-                                    const directSpecs = groupedSpecs['PRODUCT DETAILS'] || [];
-                                    const accordionSpecs = Object.entries(groupedSpecs).filter(([secName]) => secName !== 'PRODUCT DETAILS');
-
-                                    return (
-                                        <div className="space-y-4">
-                                            {/* Directly visible Product Details table rows */}
-                                            {directSpecs.length > 0 && (
-                                                <div className="divide-y divide-[#F5E6E8]/60 border-y border-[#F5E6E8]/60 py-1">
-                                                    {directSpecs.map((item, idx) => (
-                                                        <div key={idx} className="flex items-center justify-between py-2.5 px-1 text-xs">
-                                                            <div className="flex items-center gap-1.5 text-zinc-500">
-                                                                <span>{item.label}</span>
-                                                                <Info className="w-3 h-3 text-zinc-400" />
-                                                            </div>
-                                                            <span className="font-semibold text-[#1D5C8A]">
-                                                                {item.value}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            {/* Accordion breakdown for Diamonds, Metals, Price Breakup, etc. */}
-                                            {accordionSpecs.length > 0 && (
-                                                <div className="space-y-1">
-                                                    {accordionSpecs.map(([secName, items]) => {
-                                                        const isExpanded = !!expandedSections[secName];
-                                                        return (
-                                                            <div key={secName} className="border-b border-zinc-200 bg-transparent rounded-none overflow-hidden transition-all duration-300">
-                                                                <button
-                                                                    onClick={() => toggleSection(secName)}
-                                                                    className="w-full flex items-center justify-between py-3.5 px-1 bg-transparent hover:text-[#8B4356] transition-colors outline-none"
-                                                                >
-                                                                    <span className="text-[11px] font-bold text-black tracking-[0.15em] uppercase">{secName}</span>
-                                                                    <span className="text-zinc-600 font-bold text-sm">
-                                                                        {isExpanded ? '-' : '+'}
-                                                                    </span>
-                                                                </button>
-
-                                                                <AnimatePresence initial={false}>
-                                                                    {isExpanded && (
-                                                                        <motion.div
-                                                                            initial={{ height: 0, opacity: 0 }}
-                                                                            animate={{ height: 'auto', opacity: 1 }}
-                                                                            exit={{ height: 0, opacity: 0 }}
-                                                                            transition={{ duration: 0.2 }}
-                                                                            className="overflow-hidden"
-                                                                        >
-                                                                            <div className="p-2 space-y-1 divide-y divide-zinc-100 bg-transparent">
-                                                                                {secName === 'TAGS' ? (
-                                                                                    <div className="py-2 text-xs leading-relaxed text-[#2C6E9E] font-medium tracking-wide">
-                                                                                        {items[0].value}
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    items.map((item, idx) => {
-                                                                                        const isTotal = item.label.toUpperCase() === 'TOTAL';
-                                                                                        return (
-                                                                                            <div
-                                                                                                key={idx}
-                                                                                                className={`flex items-center justify-between py-2.5 px-1 text-xs ${isTotal ? 'font-bold text-black border-t border-zinc-200' : ''}`}
-                                                                                            >
-                                                                                                <div className="flex items-center gap-1.5">
-                                                                                                    <span className={`${isTotal ? 'text-[#8B4356] font-bold' : 'text-zinc-600 font-medium'}`}>
-                                                                                                        {item.label}
-                                                                                                    </span>
-                                                                                                    {!isTotal && <Info className="w-3 h-3 text-zinc-300" />}
-                                                                                                </div>
-                                                                                                <span className={`${isTotal ? 'text-black font-bold text-sm' : 'text-[#1D5C8A] font-semibold'}`}>
-                                                                                                    {item.value}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                        );
-                                                                                    })
-                                                                                )}
-                                                                            </div>
-                                                                        </motion.div>
-                                                                    )}
-                                                                </AnimatePresence>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })()
-                            ) : (
-                                <div className="p-4 bg-white border border-[#F5E6E8] text-xs text-zinc-500 leading-relaxed font-assistant">
-                                    No additional technical specifications listed for this collection.
-                                </div>
-                            )}
-                        </div>
+                        {/* Left Column: Product Details Accordions (lg:col-span-6) - Only for Jewellery */}
+                        {isJewelleryProduct && (
+                            <div className="lg:col-span-6 space-y-4">
+                                {renderProductDetailsAccordion()}
+                            </div>
+                        )}
 
                         {/* Right Column: Customer Feedback & Promises (lg:col-span-6) */}
                         <div className="lg:col-span-6 space-y-6">

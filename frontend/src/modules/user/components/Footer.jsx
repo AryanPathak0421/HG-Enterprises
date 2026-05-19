@@ -34,6 +34,9 @@ const Footer = () => {
             { name: "Privacy Policy", path: "/privacy" },
             { name: "Cancellation Policy", path: "/cancellation-policy" },
             { name: "Terms & Conditions", path: "/terms" },
+            { name: "Jewellery Return & Exchange", path: "/returns" },
+            { name: "Lifetime Buyback Policy", path: "/policies/buyback" },
+            { name: "Diamond Certification", path: "/policies/certification" },
         ],
         footerWorldLinks: [
             { name: "About Us", path: "/about" },
@@ -53,7 +56,19 @@ const Footer = () => {
 
     useEffect(() => {
         if (globalSettings) {
-            setSettings(prev => ({ ...prev, ...globalSettings }));
+            setSettings(prev => {
+                const updated = { ...prev };
+                Object.keys(globalSettings).forEach(key => {
+                    // Prevent empty arrays from the DB from overwriting our rich default links
+                    if (Array.isArray(globalSettings[key]) && globalSettings[key].length === 0) {
+                        return; // keep default array
+                    }
+                    if (globalSettings[key] !== undefined && globalSettings[key] !== null) {
+                        updated[key] = globalSettings[key];
+                    }
+                });
+                return updated;
+            });
         }
     }, [globalSettings]);
 
