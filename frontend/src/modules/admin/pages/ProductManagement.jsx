@@ -123,7 +123,12 @@ const ProductManagement = () => {
                 { label: 'NECKLACES', value: 'necklaces' },
                 { label: 'RINGS', value: 'rings' },
                 { label: 'EARRINGS', value: 'earrings' },
-                { label: 'BANGLES', value: 'bangles' }
+                { label: 'BANGLES', value: 'bangles' },
+                { label: 'PENDANTS', value: 'pendants' },
+                { label: 'BRACELETS', value: 'bracelets' },
+                { label: 'MANGALSUTRA', value: 'mangalsutra' },
+                { label: 'CHAINS', value: 'chains' },
+                { label: 'NOSE PINS', value: 'nose pins' }
             ],
             onChange: (val) => setSelectedCategory(val)
         }

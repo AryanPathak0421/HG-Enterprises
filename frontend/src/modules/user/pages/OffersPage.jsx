@@ -116,10 +116,10 @@ const OffersPage = () => {
             <div className="container mx-auto px-4 py-8 md:py-12">
                 <AnimatePresence mode="popLayout">
                     {filteredDeals.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        <div key="offers-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                             {filteredDeals.map((deal, idx) => (
                                 <motion.div
-                                    key={deal.id}
+                                    key={deal._id || deal.id || `deal-${idx}`}
                                     layout
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
@@ -186,6 +186,7 @@ const OffersPage = () => {
                         </div>
                     ) : (
                         <motion.div
+                            key="offers-empty"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             className="text-center py-20 px-6 border border-zinc-50 rounded-[3rem] bg-zinc-50/30"

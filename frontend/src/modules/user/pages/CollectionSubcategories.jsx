@@ -141,7 +141,18 @@ const CollectionSubcategories = () => {
         const fetchCategory = async () => {
             try {
                 const res = await api.get(`/categories/${categoryId}`);
-                setCategory(res.data);
+                const catData = res.data;
+                setCategory(catData);
+                
+                // If there are no subcategories, redirect to shop with this category filter
+                if (catData && (!catData.subcategories || catData.subcategories.length === 0)) {
+                    const isTools = catData.name?.toLowerCase().includes('tool') || catData.id?.toLowerCase().includes('tool');
+                    const isMachines = catData.name?.toLowerCase().includes('machine') || catData.id?.toLowerCase().includes('machine');
+                    
+                    if (!isTools && !isMachines) {
+                        navigate(`/shop?category=${encodeURIComponent(catData.name)}`, { replace: true });
+                    }
+                }
             } catch (err) {
                 console.error("Failed to load collection:", err);
             } finally {
@@ -150,7 +161,7 @@ const CollectionSubcategories = () => {
         };
         fetchCategory();
         window.scrollTo(0, 0);
-    }, [categoryId]);
+    }, [categoryId, navigate]);
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-white">

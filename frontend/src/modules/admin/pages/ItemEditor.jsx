@@ -8,6 +8,7 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import api from '../../../utils/api';
 import toast from 'react-hot-toast';
+import { FILTER_CATEGORIES, MACHINE_FILTERS, TOOL_FILTERS } from '../../user/data/filterData';
 
 const quillModules = {
     toolbar: [
@@ -70,6 +71,28 @@ const ItemEditor = () => {
         variantStock: {},
         categories: [{ id: Date.now(), category: '', subcategory: '' }],
         targetGroup: 'Unisex',
+        metal: 'Gold',
+        offers: 'None',
+        goldPurity: '18k',
+        stones: 'None',
+        occasion: 'Everyday Wear',
+        numOfStones: 'Single Stone',
+        design: 'Classic',
+        stoneColor: 'White',
+        zodiac: 'None',
+        stoneShape: 'Round',
+        collection: 'None',
+        tanmaniya: 'None',
+        characteristics: 'None',
+        machineType: 'None',
+        condition: 'New',
+        country: 'India',
+        operation: 'Automatic',
+        horsepower: 'None',
+        phase: 'None',
+        brand: 'None',
+        toolType: 'None',
+        subTool: 'None',
         hoverImage: '',
         tags: {
             isNewArrival: false,
@@ -445,6 +468,258 @@ const ItemEditor = () => {
                                         disabled={isViewMode}
                                     />
                                 </div>
+                            )}
+
+                            {isProduct && (
+                                <FormSection title="Extended Categorization" className="grid grid-cols-2 gap-4">
+                                    <Select
+                                        label="Metal"
+                                        value={formData.metal}
+                                        onChange={(e) => setFormData({ ...formData, metal: e.target.value })}
+                                        options={[
+                                            { label: 'Select Metal', value: 'None' },
+                                            ...FILTER_CATEGORIES.METAL.options.map(m => ({ label: m, value: m }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Gold Purity"
+                                        value={formData.goldPurity}
+                                        onChange={(e) => setFormData({ ...formData, goldPurity: e.target.value })}
+                                        options={[
+                                            { label: 'Select Purity', value: 'None' },
+                                            ...FILTER_CATEGORIES.GOLD_PURITY.options.map(p => ({ label: p, value: p }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Offers"
+                                        value={formData.offers}
+                                        onChange={(e) => setFormData({ ...formData, offers: e.target.value })}
+                                        options={[
+                                            { label: 'Select Offer', value: 'None' },
+                                            ...FILTER_CATEGORIES.OFFERS.options.map(o => ({ label: o, value: o }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Stones"
+                                        value={formData.stones}
+                                        onChange={(e) => setFormData({ ...formData, stones: e.target.value })}
+                                        options={[
+                                            { label: 'Select Stone', value: 'None' },
+                                            ...FILTER_CATEGORIES.STONES.options.map(s => ({ label: s, value: s }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Occasion"
+                                        value={formData.occasion}
+                                        onChange={(e) => setFormData({ ...formData, occasion: e.target.value })}
+                                        options={[
+                                            { label: 'Select Occasion', value: 'None' },
+                                            ...FILTER_CATEGORIES.OCCASION.options.map(o => ({ label: o, value: o }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Number of Stones"
+                                        value={formData.numOfStones}
+                                        onChange={(e) => setFormData({ ...formData, numOfStones: e.target.value })}
+                                        options={[
+                                            { label: 'Select Number', value: 'None' },
+                                            ...FILTER_CATEGORIES.NUM_OF_STONES.options.map(n => ({ label: n, value: n }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Design"
+                                        value={formData.design}
+                                        onChange={(e) => setFormData({ ...formData, design: e.target.value })}
+                                        options={[
+                                            { label: 'Select Design', value: 'None' },
+                                            ...FILTER_CATEGORIES.DESIGN.options.map(d => ({ label: d, value: d }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Stone Color"
+                                        value={formData.stoneColor}
+                                        onChange={(e) => setFormData({ ...formData, stoneColor: e.target.value })}
+                                        options={[
+                                            { label: 'Select Color', value: 'None' },
+                                            ...FILTER_CATEGORIES.STONE_COLOR.options.map(c => ({ label: c, value: c }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Zodiac"
+                                        value={formData.zodiac}
+                                        onChange={(e) => setFormData({ ...formData, zodiac: e.target.value })}
+                                        options={[
+                                            { label: 'Select Zodiac', value: 'None' },
+                                            ...FILTER_CATEGORIES.ZODIAC.options.map(z => ({ label: z, value: z }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Stone Shape"
+                                        value={formData.stoneShape}
+                                        onChange={(e) => setFormData({ ...formData, stoneShape: e.target.value })}
+                                        options={[
+                                            { label: 'Select Shape', value: 'None' },
+                                            ...FILTER_CATEGORIES.STONE_SHAPE.options.map(s => ({ label: s, value: s }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Collection"
+                                        value={formData.collection}
+                                        onChange={(e) => setFormData({ ...formData, collection: e.target.value })}
+                                        options={[
+                                            { label: 'Select Collection', value: 'None' },
+                                            ...FILTER_CATEGORIES.COLLECTIONS.options.map(c => ({ label: c, value: c }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Tanmaniya"
+                                        value={formData.tanmaniya}
+                                        onChange={(e) => setFormData({ ...formData, tanmaniya: e.target.value })}
+                                        options={[
+                                            { label: 'Select Tanmaniya', value: 'None' },
+                                            ...FILTER_CATEGORIES.TANMANIYA.options.map(t => ({ label: t, value: t }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Characteristics"
+                                        value={formData.characteristics}
+                                        onChange={(e) => setFormData({ ...formData, characteristics: e.target.value })}
+                                        options={[
+                                            { label: 'Select Characteristics', value: 'None' },
+                                            ...FILTER_CATEGORIES.CHARACTERISTICS.options.map(c => ({ label: c, value: c }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                </FormSection>
+                            )}
+
+                            {isProduct && formData.department === 'machines' && (
+                                <FormSection title="Machine Specifications" className="grid grid-cols-2 gap-4">
+                                    <Select
+                                        label="Machine Type"
+                                        value={formData.machineType}
+                                        onChange={(e) => setFormData({ ...formData, machineType: e.target.value })}
+                                        options={[
+                                            { label: 'Select Machine Type', value: 'None' },
+                                            ...MACHINE_FILTERS.MACHINE_TYPE.options.map(t => ({ label: t, value: t }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Condition"
+                                        value={formData.condition}
+                                        onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                                        options={[
+                                            { label: 'Select Condition', value: 'None' },
+                                            ...MACHINE_FILTERS.CONDITION.options.map(c => ({ label: c, value: c }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Country of Origin"
+                                        value={formData.country}
+                                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                                        options={[
+                                            { label: 'Select Country', value: 'None' },
+                                            ...MACHINE_FILTERS.COUNTRY.options.map(c => ({ label: c, value: c }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Operation Mode"
+                                        value={formData.operation}
+                                        onChange={(e) => setFormData({ ...formData, operation: e.target.value })}
+                                        options={[
+                                            { label: 'Select Mode', value: 'None' },
+                                            ...MACHINE_FILTERS.OPERATION.options.map(o => ({ label: o, value: o }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Horsepower"
+                                        value={formData.horsepower}
+                                        onChange={(e) => setFormData({ ...formData, horsepower: e.target.value })}
+                                        options={[
+                                            { label: 'Select HP', value: 'None' },
+                                            ...MACHINE_FILTERS.HORSEPOWER.options.map(h => ({ label: h, value: h }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Electrical Phase"
+                                        value={formData.phase}
+                                        onChange={(e) => setFormData({ ...formData, phase: e.target.value })}
+                                        options={[
+                                            { label: 'Select Phase', value: 'None' },
+                                            ...MACHINE_FILTERS.PHASE.options.map(p => ({ label: p, value: p }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Input
+                                        label="Brand Name"
+                                        value={formData.brand}
+                                        onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                        disabled={isViewMode}
+                                        placeholder="Enter brand name..."
+                                    />
+                                </FormSection>
+                            )}
+
+                            {isProduct && formData.department === 'tools' && (
+                                <FormSection title="Tool Specifications" className="grid grid-cols-2 gap-4">
+                                    <Select
+                                        label="Tool Category"
+                                        value={formData.toolType}
+                                        onChange={(e) => setFormData({ ...formData, toolType: e.target.value })}
+                                        options={[
+                                            { label: 'Select Tool Category', value: 'None' },
+                                            ...TOOL_FILTERS.TOOL_TYPE.options.map(t => ({ label: t, value: t }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Specific Tool"
+                                        value={formData.subTool}
+                                        onChange={(e) => setFormData({ ...formData, subTool: e.target.value })}
+                                        options={[
+                                            { label: 'Select Specific Tool', value: 'None' },
+                                            ...TOOL_FILTERS.SUB_TOOLS.options.map(t => ({ label: t, value: t }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Tool Brand"
+                                        value={formData.brand}
+                                        onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                        options={[
+                                            { label: 'Select Brand', value: 'None' },
+                                            ...TOOL_FILTERS.BRANDS.options.map(b => ({ label: b, value: b }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                    <Select
+                                        label="Country of Origin"
+                                        value={formData.country}
+                                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                                        options={[
+                                            { label: 'Select Country', value: 'None' },
+                                            ...TOOL_FILTERS.COUNTRY.options.map(c => ({ label: c, value: c }))
+                                        ]}
+                                        disabled={isViewMode}
+                                    />
+                                </FormSection>
                             )}
 
                             {isCategory && (
