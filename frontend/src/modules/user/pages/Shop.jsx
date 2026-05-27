@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FILTER_CATEGORIES, MACHINE_FILTERS, TOOL_FILTERS } from '../data/filterData';
 
 // Premium banner asset
 import proposalBanner from '../assets/proposal_banner.png';
@@ -34,6 +35,33 @@ const Shop = () => {
     const [selectedType, setSelectedType] = useState('All');
     const [selectedGender, setSelectedGender] = useState('All');
     const [selectedMetal, setSelectedMetal] = useState('All');
+    const [selectedOffers, setSelectedOffers] = useState('All');
+    const [selectedGoldPurity, setSelectedGoldPurity] = useState('All');
+    const [selectedStones, setSelectedStones] = useState('All');
+    const [selectedOccasion, setSelectedOccasion] = useState('All');
+    const [selectedNumOfStones, setSelectedNumOfStones] = useState('All');
+    const [selectedDesign, setSelectedDesign] = useState('All');
+    const [selectedStoneColor, setSelectedStoneColor] = useState('All');
+    const [selectedZodiac, setSelectedZodiac] = useState('All');
+    const [selectedStoneShape, setSelectedStoneShape] = useState('All');
+    const [selectedCollections, setSelectedCollections] = useState('All');
+    const [selectedTanmaniya, setSelectedTanmaniya] = useState('All');
+    const [selectedCharacteristics, setSelectedCharacteristics] = useState('All');
+    
+    // Machine Filter States
+    const [selectedMachineType, setSelectedMachineType] = useState('All');
+    const [selectedCondition, setSelectedCondition] = useState('All');
+    const [selectedCountry, setSelectedCountry] = useState('All');
+    const [selectedOperation, setSelectedOperation] = useState('All');
+    const [selectedHorsepower, setSelectedHorsepower] = useState('All');
+    const [selectedPhase, setSelectedPhase] = useState('All');
+    const [selectedBrand, setSelectedBrand] = useState('All');
+
+    // Tool Filter States
+    const [selectedToolType, setSelectedToolType] = useState('All');
+    const [selectedSubTool, setSelectedSubTool] = useState('All');
+    const [selectedToolBrand, setSelectedToolBrand] = useState('All');
+
     const [sortBy, setSortBy] = useState('POPULAR');
     const [priceRange, setPriceRange] = useState({ min: 0, max: 500000 }); // Dual price slider support
     const [expandedCategory, setExpandedCategory] = useState(null);
@@ -58,10 +86,19 @@ const Shop = () => {
         if (categoryQuery) {
             const normalizedCat = decodeURIComponent(categoryQuery).toLowerCase();
             const catMatch = categories.find(c => (c.name?.toLowerCase() === normalizedCat) || (c.id?.toLowerCase() === normalizedCat));
+            
+            // Check if the category is actually a department name
+            const isDept = ['jewellery', 'machines', 'machine', 'tools', 'tool'].includes(normalizedCat);
+
             if (catMatch) {
                 setSelectedCategory(catMatch.name);
                 setOpenCategory(catMatch.name);
                 setExpandedCategory(catMatch.name);
+            } else if (isDept) {
+                const normalizedDept = normalizedCat.startsWith('machine') ? 'Machines' : (normalizedCat.startsWith('tool') ? 'Tools' : 'Jewellery');
+                setSelectedCategory(normalizedDept);
+                setOpenCategory(normalizedDept);
+                setExpandedCategory(null);
             } else {
                 setSelectedCategory(categoryQuery);
                 setOpenCategory(categoryQuery);
@@ -144,11 +181,20 @@ const Shop = () => {
         }
 
         if (selectedCategory && selectedCategory !== 'All') {
-            result = result.filter(p =>
-                (p.category?.toLowerCase() === selectedCategory.toLowerCase()) ||
-                (p.department?.toLowerCase() === selectedCategory.toLowerCase()) ||
-                (selectedCategory.toLowerCase() === 'machine' && p.department?.toLowerCase() === 'machines')
-            );
+            result = result.filter(p => {
+                const catMatch = p.category?.toLowerCase() === selectedCategory.toLowerCase();
+                
+                // Normalize department comparison (machine vs machines)
+                const pDept = p.department?.toLowerCase();
+                const sCat = selectedCategory.toLowerCase();
+                const deptMatch = pDept === sCat || 
+                                 (pDept === 'machines' && sCat === 'machine') || 
+                                 (pDept === 'machine' && sCat === 'machines') ||
+                                 (pDept === 'tools' && sCat === 'tool') ||
+                                 (pDept === 'tool' && sCat === 'tools');
+                
+                return catMatch || deptMatch;
+            });
 
             if (selectedSubCategory) {
                 result = result.filter(p =>
@@ -167,7 +213,16 @@ const Shop = () => {
             });
         }
 
-        if (selectedGender !== 'All') result = result.filter(p => p.targetGroup?.toLowerCase() === selectedGender.toLowerCase());
+        if (selectedGender !== 'All') {
+            result = result.filter(p => {
+                const target = p.targetGroup?.toLowerCase();
+                const selected = selectedGender.toLowerCase();
+                if (selected === 'women') return target === 'female' || target === 'women';
+                if (selected === 'men') return target === 'male' || target === 'men';
+                if (selected === 'kids') return target === 'children' || target === 'kids';
+                return target === selected;
+            });
+        }
 
         if (selectedMetal !== 'All') {
             result = result.filter(p => {
@@ -176,6 +231,154 @@ const Shop = () => {
                 const isSpecMatch = p.specifications?.some(s => s.value?.toLowerCase().includes(selectedMetal.toLowerCase()) || s.label?.toLowerCase().includes(selectedMetal.toLowerCase()));
                 return isMetalMatch || isNameMatch || isSpecMatch;
             });
+        }
+
+        if (selectedOffers !== 'All') {
+            result = result.filter(p => 
+                (p.offers?.toLowerCase() === selectedOffers.toLowerCase()) || 
+                (selectedOffers === '0% Making Charge' && (p.makingCharge === 0 || p.makingCharge === '0'))
+            );
+        }
+
+        if (selectedGoldPurity !== 'All') {
+            result = result.filter(p => 
+                (p.goldPurity?.toLowerCase() === selectedGoldPurity.toLowerCase()) || 
+                (p.purity?.toLowerCase() === selectedGoldPurity.toLowerCase()) ||
+                (p.specifications?.some(s => s.label.toLowerCase().includes('purity') && s.value.toLowerCase().includes(selectedGoldPurity.toLowerCase())))
+            );
+        }
+
+        if (selectedStones !== 'All') {
+            result = result.filter(p => 
+                (p.stones?.toLowerCase().includes(selectedStones.toLowerCase())) ||
+                (p.stoneType?.toLowerCase().includes(selectedStones.toLowerCase())) ||
+                (p.specifications?.some(s => s.label.toLowerCase().includes('stone') && s.value.toLowerCase().includes(selectedStones.toLowerCase())))
+            );
+        }
+
+        if (selectedOccasion !== 'All') {
+            result = result.filter(p => 
+                (p.occasion?.toLowerCase().includes(selectedOccasion.toLowerCase())) ||
+                (p.occasions?.some(o => o.toLowerCase() === selectedOccasion.toLowerCase()))
+            );
+        }
+
+        if (selectedNumOfStones !== 'All') {
+            result = result.filter(p => 
+                (p.numOfStones?.toLowerCase() === selectedNumOfStones.toLowerCase()) ||
+                (p.stoneCount?.toString() === selectedNumOfStones)
+            );
+        }
+
+        if (selectedDesign !== 'All') {
+            result = result.filter(p => 
+                (p.design?.toLowerCase() === selectedDesign.toLowerCase()) ||
+                (p.collection?.toLowerCase().includes(selectedDesign.toLowerCase()))
+            );
+        }
+
+        if (selectedStoneColor !== 'All') {
+            result = result.filter(p => 
+                (p.stoneColor?.toLowerCase() === selectedStoneColor.toLowerCase()) ||
+                (p.specifications?.some(s => s.label.toLowerCase().includes('color') && s.value.toLowerCase().includes(selectedStoneColor.toLowerCase())))
+            );
+        }
+
+        if (selectedZodiac !== 'All') {
+            result = result.filter(p => 
+                (p.zodiac?.toLowerCase() === selectedZodiac.toLowerCase())
+            );
+        }
+
+        if (selectedStoneShape !== 'All') {
+            result = result.filter(p => 
+                (p.stoneShape?.toLowerCase() === selectedStoneShape.toLowerCase()) ||
+                (p.specifications?.some(s => s.label.toLowerCase().includes('shape') && s.value.toLowerCase().includes(selectedStoneShape.toLowerCase())))
+            );
+        }
+
+        if (selectedCollections !== 'All') {
+            result = result.filter(p => 
+                (p.collection?.toLowerCase().includes(selectedCollections.toLowerCase()))
+            );
+        }
+
+        if (selectedTanmaniya !== 'All') {
+            result = result.filter(p => 
+                (p.tanmaniya?.toLowerCase() === selectedTanmaniya.toLowerCase()) ||
+                (p.subCategory?.toLowerCase() === 'tanmaniya')
+            );
+        }
+
+        if (selectedCharacteristics !== 'All') {
+            result = result.filter(p => 
+                (p.characteristics?.toLowerCase().includes(selectedCharacteristics.toLowerCase()))
+            );
+        }
+
+        // Machine Filters
+        if (selectedMachineType !== 'All') {
+            result = result.filter(p => 
+                (p.machineType?.toLowerCase() === selectedMachineType.toLowerCase()) ||
+                (p.subcategory?.toLowerCase() === selectedMachineType.toLowerCase())
+            );
+        }
+
+        if (selectedCondition !== 'All') {
+            result = result.filter(p => 
+                (p.condition?.toLowerCase() === selectedCondition.toLowerCase())
+            );
+        }
+
+        if (selectedCountry !== 'All') {
+            result = result.filter(p => 
+                (p.country?.toLowerCase() === selectedCountry.toLowerCase())
+            );
+        }
+
+        if (selectedOperation !== 'All') {
+            result = result.filter(p => 
+                (p.operation?.toLowerCase() === selectedOperation.toLowerCase())
+            );
+        }
+
+        if (selectedHorsepower !== 'All') {
+            result = result.filter(p => 
+                (p.horsepower?.toLowerCase() === selectedHorsepower.toLowerCase())
+            );
+        }
+
+        if (selectedPhase !== 'All') {
+            result = result.filter(p => 
+                (p.phase?.toLowerCase() === selectedPhase.toLowerCase())
+            );
+        }
+
+        if (selectedBrand !== 'All') {
+            result = result.filter(p => 
+                (p.brand?.toLowerCase().includes(selectedBrand.toLowerCase()))
+            );
+        }
+
+        // Tool Filters
+        if (selectedToolType !== 'All') {
+            result = result.filter(p => 
+                (p.toolType?.toLowerCase() === selectedToolType.toLowerCase()) ||
+                (p.subcategory?.toLowerCase() === selectedToolType.toLowerCase())
+            );
+        }
+
+        if (selectedSubTool !== 'All') {
+            result = result.filter(p => 
+                (p.subTool?.toLowerCase() === selectedSubTool.toLowerCase()) ||
+                (p.name?.toLowerCase().includes(selectedSubTool.toLowerCase()))
+            );
+        }
+
+        if (selectedToolBrand !== 'All') {
+            result = result.filter(p => 
+                (p.brand?.toLowerCase() === selectedToolBrand.toLowerCase())
+            );
         }
 
         // Price Filter
@@ -188,7 +391,7 @@ const Shop = () => {
         else if (sortBy === 'DISCOUNT') result.sort((a, b) => (b.discount || 0) - (a.discount || 0));
 
         return result;
-    }, [selectedCategory, selectedSubCategory, selectedType, selectedGender, selectedMetal, priceRange, sortBy, location.search]);
+    }, [selectedCategory, selectedSubCategory, selectedType, selectedGender, selectedMetal, selectedOffers, selectedGoldPurity, selectedStones, selectedOccasion, selectedNumOfStones, selectedDesign, selectedStoneColor, selectedZodiac, selectedStoneShape, selectedCollections, selectedTanmaniya, selectedCharacteristics, selectedMachineType, selectedCondition, selectedCountry, selectedOperation, selectedHorsepower, selectedPhase, selectedBrand, selectedToolType, selectedSubTool, selectedToolBrand, priceRange, sortBy, location.search]);
 
     const pageTitle = useMemo(() => {
         return selectedSubCategory || selectedCategory || 'Categories Master';
@@ -291,8 +494,73 @@ const Shop = () => {
     };
 
     const SidebarContent = () => {
-        const currentCatData = enhancedCategories.find(c => c.name === openCategory);
-        const isJewelry = openCategory?.toLowerCase() === 'rings' || openCategory?.toLowerCase() === 'jewellery' || openCategory?.toLowerCase() === 'ring';
+        const currentCatData = enhancedCategories.find(c => c.name?.toLowerCase() === openCategory?.toLowerCase());
+        const catNameLower = openCategory?.toLowerCase() || '';
+        
+        // Robust department detection
+        let department = 'jewellery';
+        if (currentCatData?.department) {
+            department = currentCatData.department.toLowerCase();
+        } else if (['machines', 'machine', 'laser'].some(k => catNameLower.includes(k))) {
+            department = 'machines';
+        } else if (['tools', 'tool', 'equipment', 'industrial'].some(k => catNameLower.includes(k))) {
+            department = 'tools';
+        }
+        
+        // Normalize department names
+        if (department === 'machine') department = 'machines';
+        if (department === 'tool') department = 'tools';
+
+        const isJewelry = department === 'jewellery';
+        const isMachine = department === 'machines';
+        const isTool = department === 'tools';
+
+        // Filter the main categories list to only show categories from the current department
+        const departmentCategories = enhancedCategories.filter(cat => {
+            const catDept = (cat.department || 'Jewellery').toLowerCase();
+            const normalizedCatDept = catDept === 'machine' ? 'machines' : (catDept === 'tool' ? 'tools' : catDept);
+            return normalizedCatDept === department;
+        });
+
+        const jewelryFilterGroups = [
+            { id: 'price', label: 'Price', type: 'price' },
+            { id: 'type', label: 'Type', options: FILTER_CATEGORIES.TYPE.options, state: selectedType, setState: setSelectedType },
+            { id: 'metal', label: 'Metal', options: FILTER_CATEGORIES.METAL.options, state: selectedMetal, setState: setSelectedMetal },
+            { id: 'gender', label: 'Gender', options: FILTER_CATEGORIES.GENDER.options, state: selectedGender, setState: setSelectedGender },
+            { id: 'offers', label: 'Offers', options: FILTER_CATEGORIES.OFFERS.options, state: selectedOffers, setState: setSelectedOffers },
+            { id: 'gold_purity', label: 'Gold Purity', options: FILTER_CATEGORIES.GOLD_PURITY.options, state: selectedGoldPurity, setState: setSelectedGoldPurity },
+            { id: 'stones', label: 'Stones', options: FILTER_CATEGORIES.STONES.options, state: selectedStones, setState: setSelectedStones },
+            { id: 'occasion', label: 'Occasion', options: FILTER_CATEGORIES.OCCASION.options, state: selectedOccasion, setState: setSelectedOccasion },
+            { id: 'num_of_stones', label: '# Of Stones', options: FILTER_CATEGORIES.NUM_OF_STONES.options, state: selectedNumOfStones, setState: setSelectedNumOfStones },
+            { id: 'design', label: 'Design', options: FILTER_CATEGORIES.DESIGN.options, state: selectedDesign, setState: setSelectedDesign },
+            { id: 'stone_color', label: 'Stone Color', options: FILTER_CATEGORIES.STONE_COLOR.options, state: selectedStoneColor, setState: setSelectedStoneColor },
+            { id: 'zodiac', label: 'Zodiac', options: FILTER_CATEGORIES.ZODIAC.options, state: selectedZodiac, setState: setSelectedZodiac },
+            { id: 'stone_shape', label: 'Stone Shape', options: FILTER_CATEGORIES.STONE_SHAPE.options, state: selectedStoneShape, setState: setSelectedStoneShape },
+            { id: 'collections', label: 'Collections', options: FILTER_CATEGORIES.COLLECTIONS.options, state: selectedCollections, setState: setSelectedCollections },
+            { id: 'tanmaniya', label: 'Tanmaniya', options: FILTER_CATEGORIES.TANMANIYA.options, state: selectedTanmaniya, setState: setSelectedTanmaniya },
+            { id: 'characteristics', label: 'Characteristics', options: FILTER_CATEGORIES.CHARACTERISTICS.options, state: selectedCharacteristics, setState: setSelectedCharacteristics },
+        ];
+
+        const machineFilterGroups = [
+            { id: 'price', label: 'Price', type: 'price' },
+            { id: 'machine_type', label: 'Machine Type', options: MACHINE_FILTERS.MACHINE_TYPE.options, state: selectedMachineType, setState: setSelectedMachineType },
+            { id: 'condition', label: 'New / Used Machine', options: MACHINE_FILTERS.CONDITION.options, state: selectedCondition, setState: setSelectedCondition },
+            { id: 'country', label: 'Country', options: MACHINE_FILTERS.COUNTRY.options, state: selectedCountry, setState: setSelectedCountry },
+            { id: 'operation', label: 'Automatic / Manual', options: MACHINE_FILTERS.OPERATION.options, state: selectedOperation, setState: setSelectedOperation },
+            { id: 'horsepower', label: 'Horsepower', options: MACHINE_FILTERS.HORSEPOWER.options, state: selectedHorsepower, setState: setSelectedHorsepower },
+            { id: 'phase', label: 'Phase', options: MACHINE_FILTERS.PHASE.options, state: selectedPhase, setState: setSelectedPhase },
+            { id: 'brand', label: 'Brand', type: 'search', state: selectedBrand, setState: setSelectedBrand },
+        ];
+
+        const toolFilterGroups = [
+            { id: 'price', label: 'Price', type: 'price' },
+            { id: 'tool_type', label: 'Tool Category', options: TOOL_FILTERS.TOOL_TYPE.options, state: selectedToolType, setState: setSelectedToolType },
+            { id: 'sub_tool', label: 'Specific Tool', options: TOOL_FILTERS.SUB_TOOLS.options, state: selectedSubTool, setState: setSelectedSubTool },
+            { id: 'tool_brand', label: 'Brand', options: TOOL_FILTERS.BRANDS.options, state: selectedToolBrand, setState: setSelectedToolBrand },
+            { id: 'country', label: 'Country', options: TOOL_FILTERS.COUNTRY.options, state: selectedCountry, setState: setSelectedCountry },
+        ];
+
+        const activeFilterGroups = isTool ? toolFilterGroups : (isMachine ? machineFilterGroups : (isJewelry ? jewelryFilterGroups : []));
 
         return (
             <div className="flex flex-col h-full bg-white font-sans overflow-hidden relative border-r border-gray-200" style={{ fontFamily: "'Muli', 'Arial', sans-serif" }}>
@@ -302,97 +570,30 @@ const Shop = () => {
                 </div>
 
                 {/* Scrollable Middle Container */}
-                <div className="overflow-y-auto custom-sidebar-scrollbar px-2 pt-2 space-y-3 pb-4 js-prevent-page-scroll border border-gray-200 border-t-0" style={{ overscrollBehavior: 'contain', height: 'calc(100vh - 150px)' }} data-lenis-prevent>
+                <div className="overflow-y-auto custom-sidebar-scrollbar px-2 pt-2 space-y-4 pb-10 js-prevent-page-scroll border border-gray-200 border-t-0" style={{ overscrollBehavior: 'contain', height: 'calc(100vh - 150px)' }} data-lenis-prevent>
                     
-                    {/* 1. Price (Top) */}
-                    {isJewelry ? (
-                        <div>
-                            <h4 className="text-xs font-normal text-gray-800 mb-1">Price</h4>
-                            <div className="flex flex-col gap-1.5 px-1">
-                                {[
-                                    { label: '₹ 0 - ₹ 10,000', min: 0, max: 10000 },
-                                    { label: '₹ 10,000 - ₹ 20,000', min: 10000, max: 20000 },
-                                    { label: '₹ 20,000 - ₹ 30,000', min: 20000, max: 30000 },
-                                    { label: '₹ 30,000 - ₹ 40,000', min: 30000, max: 40000 },
-                                    { label: '₹ 40,000 - ₹ 50,000', min: 40000, max: 50000 },
-                                    { label: '₹ 50,000 and Above', min: 50000, max: 500000 }
-                                ].map((range, idx) => {
-                                    const isSelected = priceRange.min === range.min && priceRange.max === range.max;
-                                    return (
-                                        <label key={idx} className="flex items-center gap-1.5 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={isSelected}
-                                                onChange={() => {
-                                                    if (isSelected) {
-                                                        setPriceRange({ min: 0, max: 500000 });
-                                                    } else {
-                                                        setPriceRange({ min: range.min, max: range.max });
-                                                    }
-                                                }}
-                                                className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                            />
-                                            <span className="text-xs text-gray-700">{range.label}</span>
-                                        </label>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ) : (
-                        <div>
-                            <h4 className="text-xs font-normal text-gray-800 mb-1">Price</h4>
-                            <div className="px-1 space-y-1">
-                                <div className="flex justify-between items-end gap-1.5">
-                                    <div className="flex flex-col gap-0.5 flex-1">
-                                        <label className="text-[10px] text-gray-500">Min</label>
-                                        <input
-                                            type="number"
-                                            value={priceRange.min}
-                                            onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) || 0 }))}
-                                            className="w-full bg-white border border-gray-200 text-xs p-1 rounded"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-0.5 flex-1">
-                                        <label className="text-[10px] text-gray-500">Max</label>
-                                        <input
-                                            type="number"
-                                            value={priceRange.max}
-                                            onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) || 0 }))}
-                                            className="w-full bg-white border border-gray-200 text-xs p-1 rounded text-right"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* 2. Categories (Types and Subcategories) */}
-                    <div>
-                        <h4 className="text-xs font-normal text-gray-800 mb-1">Categories</h4>
+                    {/* Categories (Filtered by Department) */}
+                    <div className="border-b border-gray-100 pb-3">
+                        <h4 className="text-xs font-bold text-gray-800 mb-2 uppercase tracking-tight">
+                            {department === 'machines' ? 'Machine Categories' : (department === 'tools' ? 'Tool Categories' : 'Jewellery Categories')}
+                        </h4>
                         <div className="flex flex-col gap-0.5">
-                            {enhancedCategories.map(cat => (
+                            {departmentCategories.map(cat => (
                                 <div key={cat.id}>
                                     <button
                                         onClick={() => {
                                             handleCategoryToggle(cat.name);
                                             setExpandedCategory(expandedCategory === cat.name ? null : cat.name);
                                         }}
-                                        className={`w-full text-left px-2 py-1 rounded text-xs transition-all flex items-center justify-between ${openCategory === cat.name ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                                        className={`w-full text-left px-2 py-1 rounded text-xs transition-all flex items-center justify-between ${openCategory?.toLowerCase() === cat.name?.toLowerCase() ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
                                     >
                                         <span className="capitalize">{cat.name.toLowerCase()}</span>
                                         <ChevronRight className={`w-3 h-3 transition-transform ${expandedCategory === cat.name ? 'rotate-90 text-blue-600' : 'text-gray-400'}`} />
                                     </button>
 
-                                    {/* Expanded subcategories with images */}
                                     <AnimatePresence>
                                         {expandedCategory === cat.name && (
-                                            <motion.div
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: 'auto' }}
-                                                exit={{ opacity: 0, height: 0 }}
-                                                transition={{ duration: 0.2 }}
-                                                className="overflow-hidden"
-                                            >
+                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                                                 <div className="grid grid-cols-3 gap-1 p-1 bg-gray-50 rounded mt-0.5">
                                                     {cat.subcategories?.map(sub => (
                                                         <button
@@ -401,6 +602,8 @@ const Shop = () => {
                                                                 const newVal = sub.name === selectedSubCategory ? null : sub.name;
                                                                 setSelectedSubCategory(newVal);
                                                                 setSelectedType(newVal || 'All');
+                                                                if (isMachine) setSelectedMachineType(newVal || 'All');
+                                                                if (isTool) setSelectedToolType(newVal || 'All');
                                                             }}
                                                             className={`flex flex-col items-center gap-0.5 p-1 rounded transition-all duration-300 ${selectedSubCategory === sub.name ? 'bg-white shadow-sm ring-1 ring-blue-600' : 'bg-transparent hover:bg-gray-100'}`}
                                                         >
@@ -423,204 +626,60 @@ const Shop = () => {
                         </div>
                     </div>
 
-                    {/* 3. Other Details */}
-                    <div className="border-t border-gray-100 pt-2">
-                        {isJewelry ? (
-                            <div className="space-y-3">
-                                {/* Customization UI Box */}
-                                <div>
-                                    <div className="flex justify-between items-center cursor-pointer mb-1.5" onClick={() => setShowCustomization(!showCustomization)}>
-                                        <h4 className="text-[13px] font-normal text-gray-800">{showCustomization ? 'Hide' : 'Show'} Customization</h4>
-                                        <span className="text-gray-600 text-lg leading-none">{showCustomization ? '−' : '+'}</span>
-                                    </div>
-                                    
-                                    <AnimatePresence>
-                                        {showCustomization && (
-                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                                <div className="bg-[#fafafa] p-1.5 rounded-sm flex flex-col gap-1.5">
-                                                    <div className="flex items-center gap-1.5">
-                                                        {/* Color Select */}
-                                                        <div className="relative bg-white border border-gray-100 flex items-center px-1.5 py-1 rounded-[1px] w-[90px] shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-                                                            <div className={`w-3 h-3 rounded-[1px] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] shrink-0 mr-1.5 ${custColor === 'YELLOW' ? 'bg-gradient-to-br from-[#FFE383] to-[#F1B920]' : custColor === 'ROSE' ? 'bg-gradient-to-br from-[#F4C5B9] to-[#D58C7C]' : 'bg-gradient-to-br from-[#F5F5F5] to-[#D1D1D1]'}`}></div>
-                                                            <select 
-                                                                value={custColor}
-                                                                onChange={(e) => setCustColor(e.target.value)}
-                                                                className="w-full text-[10.5px] uppercase font-normal text-[#1A202C] bg-transparent appearance-none outline-none cursor-pointer tracking-wide"
-                                                                style={{ paddingRight: '12px' }}
-                                                            >
-                                                                <option value="YELLOW">YELLOW</option>
-                                                                <option value="ROSE">ROSE</option>
-                                                                <option value="WHITE">WHITE</option>
-                                                            </select>
-                                                            <svg className="w-2.5 h-2.5 absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                                        </div>
-
-                                                        {/* Purity Radio */}
-                                                        <div className="flex bg-white border border-gray-100 px-2 py-1 rounded-[1px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] gap-3 items-center w-full">
-                                                            <label className="flex items-center gap-1.5 cursor-pointer">
-                                                                <input type="radio" name="purity" checked={custPurity === '14Kt'} onChange={() => setCustPurity('14Kt')} className="w-3 h-3 text-[#1C5196] focus:ring-[#1C5196] border-gray-300 bg-transparent m-0 p-0" />
-                                                                <span className="text-[10.5px] text-gray-600 tracking-wide font-normal">14Kt</span>
-                                                            </label>
-                                                            <label className="flex items-center gap-1.5 cursor-pointer">
-                                                                <input type="radio" name="purity" checked={custPurity === '18Kt'} onChange={() => setCustPurity('18Kt')} className="w-3 h-3 text-[#1C5196] focus:ring-[#1C5196] border-gray-300 bg-transparent m-0 p-0" />
-                                                                <span className="text-[10.5px] text-gray-600 tracking-wide font-normal">18Kt</span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Solitaire section */}
-                                                    <div className="flex items-center bg-white border border-gray-100 py-1.5 px-2 rounded-[1px] shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-                                                        <div className="flex items-center gap-1.5 pr-2 border-r border-gray-200">
-                                                            <svg className="w-3 h-3 text-[#1C3B68]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5l8.25-4.5 8.25 4.5-8.25 12-8.25-12z" /><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5h16.5m-16.5 0l8.25 4.5 8.25-4.5" /></svg>
-                                                            <span className="text-[10.5px] uppercase text-[#1C3B68] font-normal tracking-wide">SOLITAIRE :</span>
-                                                        </div>
-                                                        
-                                                        <div className="flex items-center gap-1.5 px-2 border-r border-gray-200">
-                                                            <span className="text-[10.5px] text-gray-500">Carat</span>
-                                                            <div className="relative border border-black rounded-[2px]">
-                                                                <select 
-                                                                    value={custCarat}
-                                                                    onChange={(e) => setCustCarat(e.target.value)}
-                                                                    className="text-[10.5px] font-medium px-1.5 py-0.5 appearance-none outline-none bg-transparent cursor-pointer text-gray-800"
-                                                                    style={{ paddingRight: '16px' }}
-                                                                >
-                                                                    <option value="0.15">0.15</option>
-                                                                    <option value="0.25">0.25</option>
-                                                                    <option value="0.50">0.50</option>
-                                                                </select>
-                                                                <svg className="w-2.5 h-2.5 absolute right-1 top-1/2 -translate-y-1/2 text-black pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex items-center gap-1.5 pl-2">
-                                                            <span className="text-[10.5px] text-gray-500">Quality</span>
-                                                            <div className="relative bg-[#f5f5f5] rounded-[2px]">
-                                                                <select 
-                                                                    value={custQuality}
-                                                                    onChange={(e) => setCustQuality(e.target.value)}
-                                                                    className="text-[10.5px] font-medium text-gray-700 px-1.5 py-0.5 appearance-none border-none outline-none cursor-pointer tracking-wider bg-transparent"
-                                                                    style={{ paddingRight: '16px' }}
-                                                                >
-                                                                    <option value="SI IJ">SI IJ</option>
-                                                                    <option value="VVS EF">VVS EF</option>
-                                                                </select>
-                                                                <svg className="w-2.5 h-2.5 absolute right-1 top-1/2 -translate-y-1/2 text-gray-700 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-
-                                {/* Type (Subcategories list as checkboxes) */}
-                                <div>
-                                    <h4 className="text-xs font-normal text-gray-800 mb-1">Type</h4>
-                                    <div className="flex flex-col gap-1.5 px-1 max-h-[160px] overflow-y-auto custom-sidebar-scrollbar js-prevent-page-scroll" style={{ overscrollBehavior: 'contain' }} data-lenis-prevent>
-                                        {(openCategory?.toLowerCase() === 'rings' || openCategory?.toLowerCase() === 'ring' ? [
-                                            'Engagement', 'Diamond', 'Couple Bands', 'Plain Gold', 'Office Wear', 'Gemstone', 'Stackable', 'Solitaire', 'Slider', 'Cocktail', 'Religious', 'Multi-finger', 'Platinum Bands', 'Navaratna', 'For Men', 'Pearl', 'For Gift'
-                                        ] : [
-                                            'Studs', 'Jhumkas', 'Drops', 'Hoops', 'Choker', 'Kundan', 'Lariat', 'Collar', 'Temple', 'Gold Chain', 'Diamond Necklace', 'Gold Bangles', 'Diamond Bracelets', 'Kada'
-                                        ]).map(t => (
-                                            <label key={t} className="flex items-center gap-1.5 cursor-pointer">
+                    {activeFilterGroups.map((group) => (
+                        <div key={group.id} className="border-b border-gray-100 pb-3 last:border-0">
+                            <h4 className="text-xs font-bold text-gray-800 mb-2 uppercase tracking-tight">{group.label}</h4>
+                            
+                            {group.type === 'price' ? (
+                                <div className="flex flex-col gap-1.5 px-1">
+                                    {(isTool ? TOOL_FILTERS.PRICE.options : (isMachine ? MACHINE_FILTERS.PRICE.options : FILTER_CATEGORIES.PRICE.options)).map((range, idx) => {
+                                        const isSelected = priceRange.min === range.min && priceRange.max === range.max;
+                                        return (
+                                            <label key={idx} className="flex items-center gap-2 cursor-pointer group">
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedType === t}
-                                                    onChange={() => setSelectedType(t === selectedType ? 'All' : t)}
+                                                    checked={isSelected}
+                                                    onChange={() => {
+                                                        if (isSelected) {
+                                                            setPriceRange({ min: 0, max: isMachine ? 50000000 : (isTool ? 1000000 : 5000000) });
+                                                        } else {
+                                                            setPriceRange({ min: range.min, max: range.max });
+                                                        }
+                                                    }}
                                                     className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                                 />
-                                                <span className="text-xs text-gray-700">{t}</span>
+                                                <span className={`text-[11px] transition-colors ${isSelected ? 'text-blue-600 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{range.label}</span>
                                             </label>
-                                        ))}
-                                    </div>
+                                        );
+                                    })}
                                 </div>
-
-                                {/* Metal */}
-                                <div>
-                                    <h4 className="text-xs font-normal text-gray-800 mb-1">Metal</h4>
-                                    <div className="flex flex-col gap-1.5 px-1">
-                                        {[
-                                            { label: 'Diamond', val: 'Diamond' },
-                                            { label: 'Gold', val: 'Gold' },
-                                            { label: 'White Gold', val: 'White Gold' },
-                                            { label: 'Rose Gold', val: 'Rose Gold' },
-                                            { label: 'Platinum', val: 'Platinum' },
-                                            { label: 'Solitaire', val: 'Solitaire' }
-                                        ].map((item, idx) => (
-                                            <label key={idx} className="flex items-center gap-1.5 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedMetal === item.val}
-                                                    onChange={() => setSelectedMetal(item.val === selectedMetal ? 'All' : item.val)}
-                                                    className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                />
-                                                <span className="text-xs text-gray-700">{item.label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
+                            ) : group.type === 'search' ? (
+                                <div className="px-1">
+                                    <input 
+                                        type="text" 
+                                        placeholder={`Search ${group.label}...`}
+                                        value={group.state === 'All' ? '' : group.state}
+                                        onChange={(e) => group.setState(e.target.value || 'All')}
+                                        className="w-full text-[11px] border border-gray-200 rounded px-2 py-1 outline-none focus:border-blue-500"
+                                    />
                                 </div>
-
-                                {/* Gender */}
-                                <div>
-                                    <h4 className="text-xs font-normal text-gray-800 mb-1">Gender</h4>
-                                    <div className="flex flex-col gap-1.5 px-1">
-                                        {['All', 'Male', 'Female', 'Children', 'Unisex'].map(g => (
-                                            <label key={g} className="flex items-center gap-1.5 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedGender === g}
-                                                    onChange={() => setSelectedGender(g)}
-                                                    className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                />
-                                                <span className="text-xs text-gray-700">{g}</span>
-                                            </label>
-                                        ))}
-                                    </div>
+                            ) : (
+                                <div className="flex flex-col gap-1.5 px-1 max-h-[150px] overflow-y-auto custom-sidebar-scrollbar pr-1">
+                                    {group.options.map((opt) => (
+                                        <label key={opt} className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={group.state === opt}
+                                                onChange={() => group.setState(opt === group.state ? 'All' : opt)}
+                                                className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <span className={`text-[11px] transition-colors ${group.state === opt ? 'text-blue-600 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{opt}</span>
+                                        </label>
+                                    ))}
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {/* DYNAMIC MATERIAL SECTION */}
-                                {currentCatData?.materials && (
-                                    <div>
-                                        <h4 className="text-xs font-normal text-gray-800 mb-1">{currentCatData.materialLabel || "By Material"}</h4>
-                                        <div className="flex flex-col gap-1.5 px-1">
-                                            {currentCatData.materials.map(m => (
-                                                <label key={m} className="flex items-center gap-1.5 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedMetal === m}
-                                                        onChange={() => setSelectedMetal(m === selectedMetal ? 'All' : m)}
-                                                        className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-xs text-gray-700">{m}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Gender */}
-                                <div>
-                                    <h4 className="text-xs font-normal text-gray-800 mb-1">Gender</h4>
-                                    <div className="flex flex-col gap-1.5 px-1">
-                                        {['All', 'Male', 'Female', 'Children', 'Unisex'].map(g => (
-                                            <label key={g} className="flex items-center gap-1.5 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedGender === g}
-                                                    onChange={() => setSelectedGender(g)}
-                                                    className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                />
-                                                <span className="text-xs text-gray-700">{g}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
 
                 {/* Fixed Footer */}
@@ -657,9 +716,18 @@ const Shop = () => {
                 </div>
 
                 {/* Title and Count */}
-                <div className="flex items-baseline gap-4 mb-2">
-                    <h1 className="text-2xl font-medium uppercase text-[#337ab7]" style={{ fontFamily: 'Arial, sans-serif' }}>{pageTitle}</h1>
-                    <span className="text-xs text-gray-500">{filteredProducts.length} Designs</span>
+                <div className="flex items-baseline justify-between mb-2">
+                    <div className="flex items-baseline gap-4">
+                        <h1 className="text-2xl font-medium uppercase text-[#337ab7]" style={{ fontFamily: 'Arial, sans-serif' }}>{pageTitle}</h1>
+                        <span className="text-xs text-gray-500">{filteredProducts.length} Designs</span>
+                    </div>
+                    {/* Mobile Filter Button */}
+                    <button
+                        onClick={() => setIsFilterOpen(true)}
+                        className="lg:hidden p-2 text-[#337ab7] active:scale-95 transition-all"
+                    >
+                        <SlidersHorizontal className="w-5 h-5" strokeWidth={1.5} />
+                    </button>
                 </div>
 
                 {/* Pink Bar (Options) */}
@@ -692,13 +760,6 @@ const Shop = () => {
                                 ))}
                             </select>
                         </div>
-                        {/* Mobile Filter Button */}
-                        <button
-                            onClick={() => setIsFilterOpen(true)}
-                            className="lg:hidden w-8 h-8 rounded-sm border border-gray-200 flex items-center justify-center bg-white text-[#337ab7] shadow-sm active:scale-95 transition-all shrink-0"
-                        >
-                            <SlidersHorizontal className="w-4 h-4" strokeWidth={1.5} />
-                        </button>
                     </div>
                 </div>
             </div>
@@ -729,7 +790,19 @@ const Shop = () => {
                                         setSelectedType('All');
                                         setSelectedGender('All');
                                         setSelectedMetal('All');
-                                        setPriceRange({ min: 0, max: 500000 });
+                                        setSelectedOffers('All');
+                                        setSelectedGoldPurity('All');
+                                        setSelectedStones('All');
+                                        setSelectedOccasion('All');
+                                        setSelectedNumOfStones('All');
+                                        setSelectedDesign('All');
+                                        setSelectedStoneColor('All');
+                                        setSelectedZodiac('All');
+                                        setSelectedStoneShape('All');
+                                        setSelectedCollections('All');
+                                        setSelectedTanmaniya('All');
+                                        setSelectedCharacteristics('All');
+                                        setPriceRange({ min: 0, max: 5000000 });
                                         setSortBy('Newest');
                                         navigate('/shop');
                                     }}

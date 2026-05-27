@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Heart, ShoppingBag, User, Store, Menu, X, Bell, ChevronDown, ChevronRight, Home, Gift, Coins } from 'lucide-react';
+import { Search, Heart, ShoppingBag, User, Store, Menu, X, Bell, ChevronDown, ChevronRight, Home, Gift, Coins, Plus, Minus, MessageCircle, Phone } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 import hgLogo from '../assets/hg_logo_gold.png';
 import hgLogoPremium from '../assets/logo_final.jpg';
@@ -148,12 +148,33 @@ const Navbar = () => {
     const navigate = useNavigate();
     const isHome = location.pathname === '/';
 
+    // Lock body scroll when menu is open
+    useEffect(() => {
+        if (isMenuOpen) {
+            const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+            document.body.style.overflow = 'hidden';
+            document.body.style.paddingRight = `${scrollBarWidth}px`;
+            document.body.style.height = '100vh';
+            
+            // Prevent touch scroll on body for mobile
+            const preventDefault = (e) => e.preventDefault();
+            document.addEventListener('touchmove', preventDefault, { passive: false });
+            
+            return () => {
+                document.body.style.overflow = 'unset';
+                document.body.style.paddingRight = '0px';
+                document.body.style.height = 'auto';
+                document.removeEventListener('touchmove', preventDefault);
+            };
+        }
+    }, [isMenuOpen]);
+
     // Sidebar Menu Data
     const sidebarMenu = {
         mainCategories: [
-            { name: "Jewellery", path: "/category/jewellery" },
-            { name: "Machine", path: "/category/machine" },
-            { name: "Tools", path: "/category/tools" },
+            { name: "Jewellery", path: "/shop?category=Jewellery" },
+            { name: "Machines", path: "/shop?category=Machines" },
+            { name: "Tools", path: "/shop?category=Tools" },
             { name: "Shop All", path: "/shop" }
         ],
         support: (settings?.navbarLinks && settings.navbarLinks.length > 0) ? settings.navbarLinks : [
@@ -189,7 +210,7 @@ const Navbar = () => {
             <div className="w-full bg-white z-[100] relative">
                 {/* 1. Top Utility Header - Even more compact */}
                 <div className="hidden md:block bg-gray-50/50 border-b border-gray-100 py-0.5">
-                    <div className="container mx-auto px-6 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    <div className="container mx-auto px-6 flex justify-between items-center text-[10px] font-normal text-gray-400 uppercase tracking-widest">
                         <div className="flex items-center gap-6">
                             <Link to="/help" className="flex items-center gap-1.5 hover:text-primary cursor-pointer transition-colors">
                                 <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
@@ -216,37 +237,39 @@ const Navbar = () => {
 
                 {/* 2. Main Navigation Bar - Balanced Compactness */}
                 <nav className="w-full bg-black border-b border-white/10 shadow-sm sticky top-0 md:relative z-50">
-                    <div className="w-full flex items-center justify-between h-8 md:h-10 px-4 md:px-8">
+                    <div className="w-full flex items-center justify-between h-7 md:h-9 px-3 md:px-6">
 
-                        {/* Logo & Brand Heading - Refined Placement */}
-                        <Link to="/" className="flex items-center group flex-shrink-0 gap-2 md:gap-4">
-                            <motion.div
-                                animate={{
-                                    y: [0, -2, 0],
-                                }}
-                                transition={{
-                                    duration: 4,
-                                    repeat: Infinity,
-                                    ease: "easeInOut"
-                                }}
-                                className="relative bg-black"
-                            >
-                                <img
-                                    src={hgLogoPremium}
-                                    alt="HG"
-                                    className="h-[24px] md:h-[36px] w-auto object-contain"
-                                />
-                            </motion.div>
+                        {/* Logo & Brand Heading */}
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <Link to="/" className="flex items-center group flex-shrink-0 gap-2 md:gap-3">
+                                <motion.div
+                                    animate={{
+                                        y: [0, -1, 0],
+                                    }}
+                                    transition={{
+                                        duration: 4,
+                                        repeat: Infinity,
+                                        ease: "easeInOut"
+                                    }}
+                                    className="relative bg-black"
+                                >
+                                    <img
+                                        src={hgLogoPremium}
+                                        alt="HG"
+                                        className="h-[20px] md:h-[30px] w-auto object-contain"
+                                    />
+                                </motion.div>
 
-                            <div className="flex flex-col font-serif">
-                                <span className="text-white text-[12px] md:text-[16px] font-medium tracking-wider leading-none group-hover:text-[#EBCDD0] transition-colors">
-                                    Harshad Gauri
-                                </span>
-                                <span className="text-[#FDF5F6]/80 italic text-[8px] md:text-[9px] tracking-normal pb-0.5 transition-colors group-hover:text-white lowercase">
-                                    enterprises
-                                </span>
-                            </div>
-                        </Link>
+                                <div className="flex flex-col font-serif">
+                                    <span className="text-white text-[10px] md:text-[14px] font-medium tracking-wider leading-none group-hover:text-[#EBCDD0] transition-colors">
+                                        Harshad Gauri
+                                    </span>
+                                    <span className="text-[#FDF5F6]/80 italic text-[7px] md:text-[8px] tracking-normal pb-0 transition-colors group-hover:text-white lowercase">
+                                        enterprises
+                                    </span>
+                                </div>
+                            </Link>
+                        </div>
 
                         {/* Centered Search Bar */}
                         <div className="hidden lg:flex flex-1 max-w-xl relative group">
@@ -301,6 +324,15 @@ const Navbar = () => {
                             <Link to="/profile" aria-label="View profile" className="hidden md:flex w-10 h-10 items-center justify-center rounded-full hover:bg-white/10 group transition-colors">
                                 <User className="w-5 h-5 text-white/90 group-hover:text-primary transition-colors" />
                             </Link>
+
+                            {/* Top Hamburger Menu (Mobile) - Moved to Right */}
+                            <button
+                                onClick={() => toggleMenu(!isMenuOpen)}
+                                aria-label="Toggle menu"
+                                className="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 group transition-colors"
+                            >
+                                <Menu className="w-5 h-5 text-white group-hover:text-primary transition-colors" />
+                            </button>
                         </div>
                     </div>
 
@@ -340,8 +372,8 @@ const Navbar = () => {
 
                     {/* 3. Secondary Navigation Links Row - Ultra Compact & Clean */}
                     <div className="hidden md:block bg-white border-t border-gray-100 py-0.5 shadow-sm relative">
-                        <div className="container mx-auto px-6 flex justify-center items-center gap-8 font-['Poppins',_sans-serif]">
-                            <Link to="/" className="text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-primary transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-primary pb-0.5">
+                        <div className="container mx-auto px-6 flex justify-center items-center gap-8 font-sans">
+                            <Link to="/" className="text-[11px] font-normal uppercase text-black hover:text-primary transition-all tracking-normal border-b-2 border-transparent hover:border-primary pb-0.5">
                                 Home
                             </Link>
 
@@ -353,7 +385,7 @@ const Navbar = () => {
                                 <button
                                     aria-label="Open categories menu"
                                     onClick={() => setIsMegaOpen(!isMegaOpen)}
-                                    className="flex items-center gap-1 text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-primary transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-primary pb-0.5 cursor-pointer"
+                                    className="flex items-center gap-1 text-[11px] font-normal uppercase text-black hover:text-primary transition-all tracking-normal border-b-2 border-transparent hover:border-primary pb-0.5 cursor-pointer"
                                 >
                                     Categories
                                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isMegaOpen ? 'rotate-180' : ''}`} />
@@ -573,7 +605,7 @@ const Navbar = () => {
                             >
                                 <Link
                                     to="/shop?tag=coin"
-                                    className="text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-[#C5A059] transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-[#C5A059] pb-0.5 flex items-center gap-1 cursor-pointer"
+                                    className="text-[11px] font-normal uppercase text-black hover:text-[#C5A059] transition-all tracking-normal border-b-2 border-transparent hover:border-[#C5A059] pb-0.5 flex items-center gap-1 cursor-pointer"
                                 >
                                     Gold Coins
                                     <ChevronDown className={`w-3 h-3 transition-transform ${isCoinsOpen ? 'rotate-180' : ''}`} />
@@ -637,7 +669,7 @@ const Navbar = () => {
                             >
                                 <Link
                                     to="/shop?tag=gift"
-                                    className="text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-[#3E2723] transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-[#3E2723] pb-0.5 flex items-center gap-1 cursor-pointer"
+                                    className="text-[11px] font-normal uppercase text-black hover:text-[#3E2723] transition-all tracking-normal border-b-2 border-transparent hover:border-[#3E2723] pb-0.5 flex items-center gap-1 cursor-pointer"
                                 >
                                     Gifts
                                     <ChevronDown className={`w-3 h-3 transition-transform ${isGiftsOpen ? 'rotate-180' : ''}`} />
@@ -770,7 +802,7 @@ const Navbar = () => {
                                     key={idx}
                                     to={nav.path}
                                     aria-label={`Go to ${nav.name}`}
-                                    className="text-[11px] font-['Poppins',_sans-serif] font-medium text-black hover:text-primary transition-all tracking-normal uppercase border-b-2 border-transparent hover:border-primary pb-0.5"
+                                    className="text-[11px] font-normal uppercase text-black hover:text-primary transition-all tracking-normal border-b-2 border-transparent hover:border-primary pb-0.5"
                                 >
                                     {nav.name}
                                 </Link>
@@ -790,44 +822,67 @@ const Navbar = () => {
                             exit={{ opacity: 0 }}
                             onClick={() => toggleMenu(false)}
                             className="fixed inset-0 bg-[#4A1015]/30 z-[110] backdrop-blur-[4px]"
+                            data-lenis-prevent
                         />
                         <motion.div
                             initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
-                            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-                            className="fixed top-0 right-0 h-full w-[320px] bg-[#FFF5F6] z-[120] shadow-2xl overflow-hidden flex flex-col"
+                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                            className="fixed top-0 right-0 h-full w-[85%] max-w-[320px] bg-white z-[120] shadow-2xl overflow-hidden flex flex-col font-mulish"
                         >
-                            <div className="p-6 border-b border-pink-100/50 flex justify-between items-center bg-white/40 font-mulish">
-                                <span className="font-mulish text-sm font-black tracking-widest text-black uppercase">Main Menu</span>
-                                <button aria-label="Close menu" onClick={() => toggleMenu(false)} className="p-2 hover:bg-white rounded-full transition-all hover:rotate-90">
-                                    <X className="w-5 h-5 text-black" />
+                            {/* BlueStone Style Header - Themed and Compact */}
+                            <div className="bg-black p-4 pt-6 flex items-center justify-between text-white relative border-b border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10">
+                                        <User className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] text-white/50 leading-none mb-0.5 uppercase tracking-widest font-bold">Guest User</span>
+                                        <div className="flex items-center gap-1.5 text-[13px] font-normal">
+                                            <Link to="/login" onClick={() => toggleMenu(false)} className="hover:text-primary transition-colors">Login</Link>
+                                            <span className="text-white/30 font-sans">/</span>
+                                            <Link to="/signup" onClick={() => toggleMenu(false)} className="hover:text-primary transition-colors">Sign Up</Link>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button aria-label="Close menu" onClick={() => toggleMenu(false)} className="p-1.5 hover:bg-white/10 rounded-full transition-all">
+                                    <X className="w-5 h-5 text-white" />
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar font-mulish">
-                                <div className="space-y-1">
-                                    {sidebarMenu.mainCategories.map((item, idx) => {
-                                        const isDept = ['jewellery', 'machine', 'tools'].includes(item.name.toLowerCase());
-                                        const isOpen = activeSidebarDept?.toLowerCase() === item.name.toLowerCase();
-                                        
-                                        // Find categories matching this department
-                                        const deptCats = categories.filter(c => {
-                                            const deptName = item.name === 'Machine' ? 'machines' : item.name.toLowerCase();
-                                            return (c.department || 'Jewellery').toLowerCase() === deptName;
-                                        });
+                            <div 
+                                className="flex-1 overflow-y-auto custom-scrollbar bg-white overscroll-contain pb-40"
+                                style={{ touchAction: 'pan-y' }}
+                                data-lenis-prevent
+                            >
+                                {/* Section: Shop For */}
+                                <div className="px-5 py-3">
+                                    <span className="text-[10px] text-gray-400 tracking-widest font-bold mb-3 block font-mulish">Shop For</span>
+                                    <div className="space-y-0 font-mulish">
+                                        {sidebarMenu.mainCategories.map((item, idx) => {
+                                            const isDept = ['jewellery', 'machines', 'tools'].includes(item.name.toLowerCase());
+                                            const isOpen = activeSidebarDept?.toLowerCase() === item.name.toLowerCase();
+                                            
+                                            const deptCats = categories.filter(c => {
+                                                const deptName = item.name.toLowerCase() === 'machines' ? 'machines' : item.name.toLowerCase();
+                                                return (c.department || 'Jewellery').toLowerCase() === deptName;
+                                            });
 
-                                        if (isDept) {
                                             return (
-                                                <div key={idx} className="border-b border-pink-50/10 last:border-0">
+                                                <div key={idx} className="border-b border-gray-100 last:border-0">
                                                     <button
                                                         onClick={() => setActiveSidebarDept(isOpen ? null : item.name)}
-                                                        className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-pink-50/20 group transition-all"
+                                                        className="w-full flex items-center gap-4 py-2 group transition-all"
                                                     >
-                                                        <span className={`font-mulish text-sm uppercase tracking-widest transition-all font-bold ${isOpen ? 'text-primary' : 'text-gray-800 group-hover:text-primary'}`}>
+                                                        {isOpen ? (
+                                                            <Minus className="w-4 h-4 text-gray-400 group-hover:text-primary transition-all" />
+                                                        ) : (
+                                                            <Plus className="w-4 h-4 text-gray-400 group-hover:text-primary transition-all" />
+                                                        )}
+                                                        <span className={`text-[13px] font-normal transition-all ${isOpen ? 'text-primary' : 'text-gray-800 group-hover:text-primary'}`}>
                                                             {item.name}
                                                         </span>
-                                                        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary' : 'text-gray-300 group-hover:text-primary'}`} />
                                                     </button>
                                                     
                                                     <AnimatePresence initial={false}>
@@ -837,64 +892,123 @@ const Navbar = () => {
                                                                 animate={{ height: 'auto', opacity: 1 }}
                                                                 exit={{ height: 0, opacity: 0 }}
                                                                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                                                className="overflow-hidden bg-pink-50/5 pl-6 pr-4 pb-3"
+                                                                className="overflow-hidden bg-gray-50/50"
                                                             >
-                                                                <div className="flex flex-col gap-1 py-1 border-l-2 border-pink-200/40 pl-4">
-                                                                    {deptCats.map((cat) => (
-                                                                        <button
-                                                                             key={cat.id || cat._id}
-                                                                            onClick={() => {
-                                                                                toggleMenu(false);
-                                                                                navigate(`/collection/${cat.id || cat.name.toLowerCase()}`);
-                                                                            }}
-                                                                            className="w-full text-left py-2 px-3 rounded-lg hover:bg-pink-100/10 text-xs font-mulish font-bold tracking-wider text-gray-700 hover:text-primary transition-all uppercase"
-                                                                        >
-                                                                            {cat.name}
-                                                                        </button>
-                                                                    ))}
+                                                                <div className="flex flex-col pl-8 pr-5 pb-3">
                                                                     <button
                                                                         onClick={() => {
                                                                             toggleMenu(false);
                                                                             navigate(item.path);
                                                                         }}
-                                                                        className="w-full text-left py-2 px-3 rounded-lg hover:bg-pink-100/20 text-[9px] font-mulish font-black tracking-widest text-primary transition-all uppercase mt-2 border border-dashed border-pink-200/40 text-center"
+                                                                        className="w-full text-left py-1.5 text-sm font-bold text-primary hover:underline uppercase tracking-wider"
                                                                     >
-                                                                        View All {item.name}
+                                                                        View All {item.name === 'Machines' ? 'Machine' : item.name}
                                                                     </button>
+
+                                                                    {deptCats.map((cat) => (
+                                                                        <button
+                                                                             key={cat.id || cat._id}
+                                                                            onClick={() => {
+                                                                                toggleMenu(false);
+                                                                                navigate(`/shop?category=${encodeURIComponent(cat.name)}`);
+                                                                            }}
+                                                                            className="w-full text-left py-1.5 text-sm text-gray-600 hover:text-primary transition-all"
+                                                                        >
+                                                                            {cat.name}
+                                                                        </button>
+                                                                    ))}
                                                                 </div>
                                                             </motion.div>
                                                         )}
                                                     </AnimatePresence>
                                                 </div>
                                             );
-                                        }
-
-                                        // Fallback for non-department items (like Shop All, Gifts, Gold Coins)
-                                        return (
-                                            <Link
-                                                key={idx}
-                                                to={item.path}
-                                                aria-label={`Go to ${item.name}`}
-                                                onClick={() => toggleMenu(false)}
-                                                className="flex items-center justify-between p-4 rounded-xl hover:bg-pink-50/20 group transition-all"
-                                            >
-                                                <span className="font-mulish text-sm uppercase tracking-widest text-gray-800 group-hover:text-primary transition-all font-bold">
-                                                    {item.name}
-                                                </span>
-                                                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                        })}
+                                        
+                                        {/* BlueStone Style Static Links */}
+                                        <div className="border-b border-gray-100">
+                                            <Link to="/offers" onClick={() => toggleMenu(false)} className="flex items-center gap-4 py-2 group">
+                                                <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#FF6B6B]" />
+                                                <span className="text-[13px] font-normal text-[#FF6B6B]">Offers</span>
                                             </Link>
-                                        );
-                                    })}
+                                        </div>
+                                        <div className="border-b border-gray-100">
+                                            <Link to="/shop?tag=gift" onClick={() => toggleMenu(false)} className="flex items-center gap-4 py-2 group">
+                                                <Plus className="w-4 h-4 text-gray-400 group-hover:text-gray-700" />
+                                                <span className="text-[13px] font-normal text-gray-700">Gifting</span>
+                                            </Link>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="mt-8 pt-6 border-t border-gray-100 space-y-1.5 px-4 font-mulish">
-                                    {sidebarMenu.support.map((item, idx) => (
+                                {/* Monthly Plan Banners */}
+                                <div className="my-4 space-y-3 px-5">
+                                    <Link to="/gold-mine" onClick={() => toggleMenu(false)} className="flex items-center justify-between bg-pink-50 p-3 rounded-xl border border-pink-100 group transition-all hover:bg-pink-100/50 shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex flex-col">
+                                                <span className="font-serif text-base font-normal text-[#002147] leading-none">Gold Mine</span>
+                                                <div className="w-full h-[1px] bg-[#002147]/30 mt-1"></div>
+                                            </div>
+                                            <span className="text-[9px] font-normal text-gray-600 tracking-tighter">10 + 1 Monthly Plan</span>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                    
+                                    <Link to="/gold-reserve" onClick={() => toggleMenu(false)} className="flex items-center justify-between bg-yellow-50/50 p-3 rounded-xl border border-yellow-100 group transition-all hover:bg-yellow-50 shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex flex-col">
+                                                <span className="font-serif text-base font-normal text-[#3E2723] leading-none">Gold Reserve</span>
+                                                <div className="w-full h-[1px] bg-[#3E2723]/30 mt-1"></div>
+                                            </div>
+                                            <span className="text-[9px] font-normal text-gray-600 tracking-tighter">10 + 1 Monthly Plan</span>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                </div>
+
+                                {/* More Links */}
+                                <div className="px-5 py-3">
+                                     <span className="text-[10px] text-gray-400 tracking-widest font-bold mb-3 block">Jewellery Guide</span>
+                                     <div className="space-y-2">
+                                         {sidebarMenu.support.map((item, idx) => (
+                                             <Link
+                                                         key={idx}
+                                                         to={item.path}
+                                                         onClick={() => toggleMenu(false)}
+                                                         className="block text-[13px] font-normal text-gray-700 hover:text-primary transition-all capitalize"
+                                                     >
+                                                         {item.name.toLowerCase()}
+                                                     </Link>
+                                         ))}
+                                     </div>
+                                 </div>
+
+                                {/* Locate Store Banner */}
+                                <Link to="/stores" onClick={() => toggleMenu(false)} className="mx-5 mb-4 relative rounded-xl overflow-hidden group">
+                                    <div className="bg-[#D4AF37]/20 p-3.5 flex items-center gap-4 border border-[#D4AF37]/30">
+                                        <div className="w-9 h-9 bg-[#002147] rounded-lg flex items-center justify-center shrink-0">
+                                            <Store className="w-5.5 h-5.5 text-white" />
+                                        </div>
+                                        <span className="text-xs font-normal tracking-[0.15em] text-[#002147]">Locate Our Store</span>
+                                    </div>
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all"></div>
+                                </Link>
+
+                                {/* Additional Sidebar Options from Image */}
+                                <div className="px-5 pb-6 space-y-0 flex flex-col border-t border-gray-100 pt-2">
+                                    {[
+                                        { name: "Recently Viewed", path: "/recently-viewed", color: "text-[#FF6B6B]" },
+                                        { name: "Video Call Cart", path: "/video-call" },
+                                        { name: "Track Order", path: "/profile/orders" },
+                                        { name: "Jewellery Guide", path: "/guide" },
+                                        { name: "Privacy Policy", path: "/privacy" },
+                                        { name: "Terms & Conditions", path: "/terms" }
+                                    ].map((item, idx) => (
                                         <Link
                                             key={idx}
                                             to={item.path}
-                                            aria-label={`Go to ${item.name}`}
                                             onClick={() => toggleMenu(false)}
-                                            className="block text-[11px] font-mulish font-bold uppercase tracking-widest text-gray-700 hover:text-primary hover:translate-x-1.5 transition-all duration-300 py-1.5"
+                                            className={`py-3 border-b border-gray-50 text-[14px] font-normal transition-all ${item.color || 'text-gray-700'} hover:pl-2`}
                                         >
                                             {item.name}
                                         </Link>
@@ -902,15 +1016,16 @@ const Navbar = () => {
                                 </div>
                             </div>
 
-                            <div className="p-6 bg-white/40 border-t border-pink-100/50 font-mulish">
-                                <Link
-                                    to="/login"
-                                    aria-label="Proceed to login"
-                                    onClick={() => toggleMenu(false)}
-                                    className="w-full bg-black text-white py-4 rounded-xl font-mulish font-black text-[10px] uppercase tracking-[0.3em] text-center block hover:bg-primary transition-all shadow-lg"
-                                >
-                                    Login / Signup
-                                </Link>
+                            {/* Sidebar Bottom Action Bar */}
+                            <div className="bg-gray-50 border-t border-gray-200 py-3 flex justify-around items-center">
+                                <button className="flex flex-col items-center gap-1 group flex-1 border-r border-gray-200">
+                                    <MessageCircle className="w-5 h-5 text-gray-500 group-hover:text-primary transition-colors" />
+                                    <span className="text-[10px] text-gray-500 font-medium group-hover:text-primary transition-colors">Chat</span>
+                                </button>
+                                <button className="flex flex-col items-center gap-1 group flex-1">
+                                    <Phone className="w-5 h-5 text-gray-500 group-hover:text-primary transition-colors" />
+                                    <span className="text-[10px] text-gray-500 font-medium group-hover:text-primary transition-colors">Call</span>
+                                </button>
                             </div>
                         </motion.div>
                     </>
@@ -921,44 +1036,47 @@ const Navbar = () => {
             <motion.div 
                 initial={{ y: 100 }}
                 animate={{ y: 0 }}
-                className={`md:hidden fixed ${location.pathname.startsWith('/product/') ? 'bottom-20' : 'bottom-6'} left-6 right-6 h-16 bg-[#FFF5F6] border border-pink-100/80 rounded-2xl flex items-center justify-around z-[120] shadow-[0_10px_40px_rgba(255,245,246,0.5)] px-4 backdrop-blur-md`}
+                className={`md:hidden fixed ${location.pathname.startsWith('/product/') ? 'bottom-24' : 'bottom-6'} left-4 right-4 h-14 bg-white/90 border border-gray-100/50 rounded-[24px] flex items-center justify-around z-[120] shadow-[0_8px_32px_rgba(0,0,0,0.08)] px-1 backdrop-blur-xl`}
             >
-                <Link to="/" aria-label="Go to home" onClick={() => toggleMenu(false)} className="flex flex-col items-center gap-1 group relative">
-                    <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.1 }}>
-                        <Home className={`w-5 h-5 ${location.pathname === '/' ? 'text-primary' : 'text-gray-400'} group-active:scale-90 transition-all`} />
-                    </motion.div>
-                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${location.pathname === '/' ? 'text-primary' : 'text-gray-400'}`}>Home</span>
-                    {location.pathname === '/' && (
-                        <motion.div layoutId="activeNav" className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full" />
-                    )}
-                </Link>
-
-                <button aria-label="Open mobile menu" onClick={() => toggleMenu(!isMenuOpen)} className="flex flex-col items-center gap-1 group relative">
-                    <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.1 }}>
-                        <Menu className={`w-5 h-5 ${isMenuOpen ? 'text-primary' : 'text-gray-400'} group-active:scale-90 transition-all`} />
-                    </motion.div>
-                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${isMenuOpen ? 'text-primary' : 'text-gray-400'}`}>Menu</span>
-                </button>
-
-                <Link to="/wishlist" aria-label="View favorites" onClick={() => toggleMenu(false)} className="flex flex-col items-center gap-1 group relative">
-                    <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.1 }}>
-                        <Heart className={`w-5 h-5 ${location.pathname === '/wishlist' ? 'text-primary' : 'text-gray-400'} group-active:scale-90 transition-all`} />
-                    </motion.div>
-                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${location.pathname === '/wishlist' ? 'text-primary' : 'text-gray-400'}`}>Favs</span>
-                    {location.pathname === '/wishlist' && (
-                        <motion.div layoutId="activeNav" className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full" />
-                    )}
-                </Link>
-
-                <Link to="/profile" aria-label="View profile" onClick={() => toggleMenu(false)} className="flex flex-col items-center gap-1 group relative">
-                    <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.1 }}>
-                        <User className={`w-5 h-5 ${location.pathname === '/profile' ? 'text-primary' : 'text-gray-400'} group-active:scale-90 transition-all`} />
-                    </motion.div>
-                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${location.pathname === '/profile' ? 'text-primary' : 'text-gray-400'}`}>Me</span>
-                    {location.pathname === '/profile' && (
-                        <motion.div layoutId="activeNav" className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full" />
-                    )}
-                </Link>
+                {[
+                    { to: "/", icon: Home, label: "Home", match: (p) => p === '/' },
+                    { to: "/shop", icon: ShoppingBag, label: "Shop", match: (p, s) => p === '/shop' && !s.includes('tag=') },
+                    { to: "/shop?tag=gift", icon: Gift, label: "Gifts", match: (p, s) => s.includes('tag=gift') },
+                    { to: "/shop?tag=coin", icon: Coins, label: "Coins", match: (p, s) => s.includes('tag=coin') },
+                    { to: "/wishlist", icon: Heart, label: "Favs", match: (p) => p === '/wishlist' },
+                    { to: "/profile", icon: User, label: "Me", match: (p) => p === '/profile' }
+                ].map((item) => {
+                    const isActive = item.match(location.pathname, location.search);
+                    return (
+                        <Link 
+                            key={item.label}
+                            to={item.to} 
+                            onClick={() => toggleMenu(false)} 
+                            className="flex flex-col items-center justify-center flex-1 h-full relative"
+                        >
+                            <motion.div 
+                                whileTap={{ scale: 0.9 }}
+                                className={`flex flex-col items-center gap-0.5 transition-all duration-300 ${isActive ? 'scale-110' : 'opacity-70 hover:opacity-100'}`}
+                            >
+                                <item.icon 
+                                    className={`w-5 h-5 transition-colors ${isActive ? 'text-primary' : 'text-gray-500'}`} 
+                                    strokeWidth={isActive ? 2.5 : 2}
+                                />
+                                <span className={`text-[8px] font-bold tracking-tight transition-colors ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+                                    {item.label}
+                                </span>
+                            </motion.div>
+                            
+                            {isActive && (
+                                <motion.div 
+                                    layoutId="bottomNavDot"
+                                    className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.6)]"
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                />
+                            )}
+                        </Link>
+                    );
+                })}
             </motion.div>
         </>
     );

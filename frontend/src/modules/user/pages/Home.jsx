@@ -134,16 +134,16 @@ const Home = () => {
                                                     <h1 className="font-serif uppercase leading-none mb-2 px-4">
                                                         {/* Mobile Split Title */}
                                                         <span className="md:hidden block">
-                                                            <span className="block text-2xl font-light tracking-[0.45em] mb-2">HARSHAD</span>
-                                                            <span className="block text-2xl font-light tracking-[0.45em] mb-3">GAURI</span>
+                                                            <span className="block text-2xl font-normal tracking-[0.2em] mb-2">HARSHAD</span>
+                                                            <span className="block text-2xl font-normal tracking-[0.2em] mb-3">GAURI</span>
                                                         </span>
                                                         {/* Desktop Single Line Title */}
-                                                        <span className="hidden md:block text-5xl font-light drop-shadow-2xl text-white tracking-[0.55em]">
+                                                        <span className="hidden md:block text-5xl font-normal drop-shadow-2xl text-white tracking-[0.3em]">
                                                             {heroSlides[currentSlide].title}
                                                         </span>
 
                                                         {/* Enlarged Italic Subtitle for Mobile */}
-                                                        <span className="block font-serif italic lowercase font-light text-2xl md:text-3xl text-gold-light mt-1 tracking-normal">
+                                                        <span className="block font-serif italic lowercase font-normal text-2xl md:text-3xl text-gold-light mt-1 tracking-normal">
                                                             {heroSlides[currentSlide].titleItalic}
                                                         </span>
                                                     </h1>
