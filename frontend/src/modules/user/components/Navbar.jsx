@@ -272,14 +272,14 @@ const Navbar = () => {
                         </div>
 
                         {/* Centered Search Bar */}
-                        <div className="hidden lg:flex flex-1 max-w-xl relative group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Search className="h-3.5 w-3.5 text-gray-400 group-focus-within:text-primary transition-colors" />
+                        <div className="hidden lg:flex flex-1 max-w-sm relative group mx-6">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search className="h-3 w-3 text-gray-500 group-focus-within:text-primary transition-colors" />
                             </div>
                             <input
                                 type="text"
                                 placeholder="Search for jewellery..."
-                                className="w-full bg-white border border-gray-100 rounded-full py-2 px-5 pl-10 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all text-black placeholder-gray-400 shadow-sm"
+                                className="w-full bg-white/90 hover:bg-white border border-transparent rounded-full py-1.5 px-4 pl-8 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all text-black placeholder-gray-500 shadow-inner"
                             />
                         </div>
 
