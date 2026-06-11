@@ -134,11 +134,11 @@ const Home = () => {
                                                     <h1 className="font-serif uppercase leading-none mb-2 px-4">
                                                         {/* Mobile Split Title */}
                                                         <span className="md:hidden block">
-                                                            <span className="block text-2xl font-normal tracking-[0.1em] mb-2">HARSHAD</span>
-                                                            <span className="block text-2xl font-normal tracking-[0.1em] mb-3">GAURI</span>
+                                                            <span className="block text-2xl font-normal tracking-[0.2em] mb-2">HARSHAD</span>
+                                                            <span className="block text-2xl font-normal tracking-[0.2em] mb-3">GAURI</span>
                                                         </span>
                                                         {/* Desktop Single Line Title */}
-                                                        <span className="hidden md:block text-5xl font-normal drop-shadow-2xl text-white tracking-[0.1em]">
+                                                        <span className="hidden md:block text-5xl font-normal drop-shadow-2xl text-white tracking-[0.3em]">
                                                             {heroSlides[currentSlide].title}
                                                         </span>
 

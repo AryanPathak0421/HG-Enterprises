@@ -563,14 +563,14 @@ const Shop = () => {
         const activeFilterGroups = isTool ? toolFilterGroups : (isMachine ? machineFilterGroups : (isJewelry ? jewelryFilterGroups : []));
 
         return (
-            <div className="flex flex-col h-full bg-white font-mulish overflow-hidden relative border-r border-gray-200">
+            <div className="flex flex-col h-full bg-white font-sans overflow-hidden relative border-r border-gray-200" style={{ fontFamily: "'Muli', 'Arial', sans-serif" }}>
                 {/* Fixed Header */}
                 <div className="h-8 flex items-center px-3 bg-black text-white shrink-0 z-[70] shadow-sm">
                     <span className="text-xs font-normal tracking-wider text-white uppercase" style={{ fontFamily: 'Arial, sans-serif' }}>Filters</span>
                 </div>
 
                 {/* Scrollable Middle Container */}
-                <div className="overflow-y-auto custom-sidebar-scrollbar px-3 pt-1 space-y-3 pb-10 js-prevent-page-scroll border border-gray-200 border-t-0" style={{ overscrollBehavior: 'contain', height: 'calc(100vh - 150px)' }} data-lenis-prevent>
+                <div className="overflow-y-auto custom-sidebar-scrollbar px-2 pt-2 space-y-4 pb-10 js-prevent-page-scroll border border-gray-200 border-t-0" style={{ overscrollBehavior: 'contain', height: 'calc(100vh - 150px)' }} data-lenis-prevent>
                     
                     {/* Categories (Filtered by Department) */}
                     <div className="border-b border-gray-100 pb-3">
@@ -646,9 +646,9 @@ const Shop = () => {
                                                             setPriceRange({ min: range.min, max: range.max });
                                                         }
                                                     }}
-                                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                                    className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                                 />
-                                                <span className={`text-[13px] font-mulish transition-colors ${isSelected ? 'text-blue-600 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{range.label}</span>
+                                                <span className={`text-[11px] transition-colors ${isSelected ? 'text-blue-600 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{range.label}</span>
                                             </label>
                                         );
                                     })}
@@ -671,9 +671,9 @@ const Shop = () => {
                                                 type="checkbox"
                                                 checked={group.state === opt}
                                                 onChange={() => group.setState(opt === group.state ? 'All' : opt)}
-                                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                                className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                             />
-                                            <span className={`text-[13px] font-mulish transition-colors ${group.state === opt ? 'text-blue-600 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{opt}</span>
+                                            <span className={`text-[11px] transition-colors ${group.state === opt ? 'text-blue-600 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{opt}</span>
                                         </label>
                                     ))}
                                 </div>
@@ -693,9 +693,9 @@ const Shop = () => {
 
 
     return (
-        <div className="min-h-screen bg-white font-body selection:bg-[#337ab7] selection:text-white mt-4">
+        <div className="min-h-screen bg-white font-body selection:bg-[#337ab7] selection:text-white mt-[17px]">
             {/* Top Section - Full Width */}
-            <div className="max-w-[1700px] mx-auto px-4 py-1">
+            <div className="max-w-[1700px] mx-auto px-4 py-2">
                 {/* Breadcrumbs */}
                 <div className="flex items-center gap-2 text-[8px] uppercase tracking-[0.5em] font-bold text-zinc-300 mb-1 px-1">
                     <Link to="/" className="hover:text-[#337ab7] transition-colors">Home</Link>
@@ -731,7 +731,7 @@ const Shop = () => {
                 </div>
 
                 {/* Pink Bar (Options) */}
-                <div className="bg-[#fff0f2] p-2 flex items-center justify-between gap-4 text-xs overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="bg-[#fff0f2] p-2 flex items-center justify-between gap-4 mb-2 text-xs overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <div className="flex gap-2 shrink-0">
                         <button className="bg-[#337ab7] text-white px-3 py-1 rounded-sm uppercase text-[10px] shrink-0">All</button>
                         <button className="bg-white text-gray-700 px-3 py-1 rounded-sm border border-gray-200 uppercase text-[10px] shrink-0">Designs in Store</button>
@@ -765,8 +765,8 @@ const Shop = () => {
             </div>
 
             {/* Content Section - Split */}
-            <div className="flex max-w-[1700px] mx-auto h-[calc(100vh-120px)] overflow-hidden">
-                <aside className="hidden lg:block w-[240px] shrink-0 border-r border-zinc-100 h-full flex flex-col bg-white shadow-sm">{SidebarContent()}</aside>
+            <div className="flex max-w-[1700px] mx-auto h-[calc(100vh-140px)] overflow-hidden">
+                <aside className="hidden lg:block w-[220px] shrink-0 border-r border-zinc-100 h-full flex flex-col bg-white shadow-sm">{SidebarContent()}</aside>
                 <main className="flex-grow min-w-0 bg-[#fdf2f8]/5 h-full overflow-y-auto" data-lenis-prevent>
                     <div className="pt-2 pb-4 px-2 md:p-4 lg:px-4 lg:pt-0 lg:pb-6">
 
