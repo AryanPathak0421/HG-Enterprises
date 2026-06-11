@@ -693,7 +693,7 @@ const Shop = () => {
 
 
     return (
-        <div className="min-h-screen bg-white font-body selection:bg-[#337ab7] selection:text-white mt-[17px]">
+        <div className="min-h-screen bg-white font-body selection:bg-[#337ab7] selection:text-white mt-0">
             {/* Top Section - Full Width */}
             <div className="max-w-[1700px] mx-auto px-4 py-2">
                 {/* Breadcrumbs */}
