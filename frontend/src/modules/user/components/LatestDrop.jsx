@@ -50,7 +50,7 @@ const LatestDrop = () => {
             <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header Section */}
                 <div className="text-center mb-6 md:mb-10">
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-normal italic text-white mb-3 tracking-wide">
+                    <h2 className="luxury-heading text-white mb-3">
                         {sectionData?.label || "Latest Drops"}
                     </h2>
                     <div className="h-[1px] w-12 bg-white/40 mx-auto mt-2"></div>
@@ -89,7 +89,7 @@ const LatestDrop = () => {
                                             <div className="absolute inset-x-0 bottom-0 p-3 md:p-4 pb-4 md:pb-6 flex flex-col items-center justify-end text-center z-10">
                                                 
                                                 {/* Product Title */}
-                                                <h3 className="font-serif text-white text-[11px] md:text-[14px] uppercase tracking-[0.12em] md:tracking-[0.15em] font-medium leading-relaxed line-clamp-2 px-1">
+                                                <h3 className="font-serif text-white text-[9px] md:text-[11px] uppercase tracking-[0.1em] md:tracking-[0.15em] font-medium leading-relaxed line-clamp-2 px-1">
                                                     {item.name}
                                                 </h3>
 

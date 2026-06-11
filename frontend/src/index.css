@@ -178,7 +178,7 @@ body {
 /* 3D Curved Carousel (Latest Drop) */
 .carousel-3d-container {
     perspective: 2000px;
-    height: 350px;
+    height: 250px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -188,23 +188,23 @@ body {
 
 @media (max-width: 768px) {
     .carousel-3d-container {
-        height: 250px;
+        height: 200px;
         perspective: 1000px;
     }
 }
 
 .carousel-3d-track {
     position: relative;
-    width: 220px;
-    height: 300px;
+    width: 160px;
+    height: 220px;
     transform-style: preserve-3d;
     animation: rotateCarousel3D 32s linear infinite;
 }
 
 @media (max-width: 768px) {
     .carousel-3d-track {
-        width: 140px;
-        height: 200px;
+        width: 120px;
+        height: 160px;
         animation-duration: 24s;
     }
 }
@@ -257,8 +257,12 @@ body {
 
 .custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(139, 67, 86, 0.5);
-    border: 1px solid transparent;
-    background-clip: padding-box;
+}
+
+@layer components {
+    .luxury-heading {
+        @apply text-2xl md:text-3xl lg:text-3xl font-serif font-normal italic tracking-wide text-center;
+    }
 }
 
 /* Support Firefox */

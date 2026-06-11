@@ -153,7 +153,7 @@ const EditorialSection = () => {
             <div className="max-w-[1400px] mx-auto px-4 md:px-8">
                 
                 {/* Section Header - Matched to Shop by Recipient Style */}
-                <div className="text-center mb-10 md:mb-16">
+                <div className="text-center mb-6 md:mb-8">
                     <span className="text-[#c1a05b] font-bold tracking-[0.25em] uppercase text-[10px] md:text-xs mb-1 block">
                         OUR VISION
                     </span>
@@ -164,7 +164,7 @@ const EditorialSection = () => {
                 </div>
                 
                 {/* --- Block 1: Bluestone Grid Pattern (Mobile: 3cols) --- */}
-                <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-6 mb-2 md:mb-16">
+                <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-6 mb-2 md:mb-6">
                     
                     {/* Big Feature (2x2 on Mobile) */}
                     <FlipCard 
@@ -238,7 +238,7 @@ const EditorialSection = () => {
                 </div>
 
                 {/* --- Block 2: Continued Pattern (Mobile: 3cols) --- */}
-                <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-6 mt-2">
+                <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-6">
                     
                     {/* Row 1 Small Cards (Right to Left Slide) */}
                     <FlipCard 

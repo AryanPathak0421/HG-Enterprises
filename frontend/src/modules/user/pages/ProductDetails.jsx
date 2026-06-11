@@ -232,11 +232,13 @@ const ProductDetails = () => {
 
     // Accordion expand/collapse states matching the screenshot (Image 1 and 2)
     const [expandedSections, setExpandedSections] = useState({
-        'PRODUCT DETAILS': false,
-        'DIAMOND DETAILS': false,
-        'METAL DETAILS': false,
-        'PRICE BREAKUP': false,
-        'TAGS': false
+        'PRODUCT DETAILS':         true,
+        'SOLITAIRE DETAILS':       true,
+        'DIAMOND DETAILS':         true,
+        'METAL DETAILS':           true,
+        'PRICE BREAKUP':           true,
+        'TECHNICAL SPECIFICATIONS':true,
+        'TAGS':                    false
     });
 
     const toggleSection = (secName) => {
@@ -257,11 +259,12 @@ const ProductDetails = () => {
         }
 
         const grouped = {
-            'PRODUCT DETAILS': [],
-            'DIAMOND DETAILS': [],
-            'METAL DETAILS': [],
-            'PRICE BREAKUP': [],
-            'TAGS': []
+            'PRODUCT DETAILS':   [],
+            'SOLITAIRE DETAILS': [],
+            'DIAMOND DETAILS':   [],
+            'METAL DETAILS':     [],
+            'PRICE BREAKUP':     [],
+            'TAGS':              []
         };
 
         const other = {};
@@ -270,7 +273,12 @@ const ProductDetails = () => {
             product.specifications.forEach(spec => {
                 const labelUpper = spec.label.toUpperCase();
 
-                if (labelUpper.includes('PRODUCT CODE') || labelUpper.includes('HEIGHT') || labelUpper.includes('WIDTH') || labelUpper.includes('PRODUCT WEIGHT')) {
+                if (
+                    labelUpper.includes('PRODUCT CODE') ||
+                    labelUpper.includes('HEIGHT') ||
+                    labelUpper.includes('WIDTH') ||
+                    labelUpper.includes('PRODUCT WEIGHT')
+                ) {
                     let cleanLabel = spec.label;
                     if (labelUpper.includes('PRODUCT CODE')) cleanLabel = 'Product Code';
                     if (labelUpper.includes('HEIGHT')) cleanLabel = 'Height';
@@ -278,10 +286,30 @@ const ProductDetails = () => {
                     if (labelUpper.includes('PRODUCT WEIGHT')) cleanLabel = 'Product Weight';
                     grouped['PRODUCT DETAILS'].push({ label: cleanLabel, value: spec.value });
                 }
-                else if (labelUpper.includes('DIAMOND') || labelUpper.includes('TOTAL WEIGHT') || labelUpper.includes('TOTAL NO. OF DIAMONDS')) {
+                else if (
+                    labelUpper.includes('SOLITAIRE') ||
+                    labelUpper.includes('CLARITY') ||
+                    labelUpper.includes('FLUORESCENCE') ||
+                    labelUpper.includes('CUT-POLISH') ||
+                    labelUpper.includes('CUT POLISH') ||
+                    (labelUpper.includes('COLOR') && !labelUpper.includes('GOLD')) ||
+                    (labelUpper.includes('SHAPE') && !labelUpper.includes('DIAMOND')) ||
+                    (labelUpper.includes('TOTAL') && labelUpper.includes('SOLITAIRE'))
+                ) {
+                    grouped['SOLITAIRE DETAILS'].push({ label: spec.label, value: spec.value });
+                }
+                else if (
+                    labelUpper.includes('DIAMOND') ||
+                    (labelUpper.includes('TOTAL WEIGHT') && !labelUpper.includes('SOLITAIRE')) ||
+                    labelUpper.includes('TOTAL NO. OF DIAMONDS') ||
+                    labelUpper.includes('COUNT') ||
+                    (labelUpper.includes('SHAPE') && labelUpper.includes('DIAMOND')) ||
+                    labelUpper.includes('SETTING TYPE') ||
+                    labelUpper.includes('SETTING')
+                ) {
                     let cleanLabel = spec.label;
                     if (labelUpper.includes('TOTAL WEIGHT') || labelUpper.includes('DIAMOND WEIGHT')) cleanLabel = 'Total Weight';
-                    if (labelUpper.includes('TOTAL NO.') || labelUpper.includes('DIAMOND COUNT') || labelUpper.includes('TOTAL DIAMONDS') || labelUpper.includes('DIAMONDS')) cleanLabel = 'Total No. Of Diamonds';
+                    if (labelUpper.includes('TOTAL NO.') || labelUpper.includes('DIAMOND COUNT') || labelUpper.includes('TOTAL DIAMONDS')) cleanLabel = 'Total No. Of Diamonds';
                     grouped['DIAMOND DETAILS'].push({ label: cleanLabel, value: spec.value });
                 }
                 else if (labelUpper.includes('METAL') || labelUpper.includes('TYPE') || labelUpper.includes('GOLD WEIGHT')) {
@@ -788,114 +816,126 @@ const ProductDetails = () => {
     const finalPrice = getDiscountedPrice();
 
     const renderProductDetailsAccordion = () => {
-        return (
-            <div className="space-y-4">
-                <h4 className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#333333] mb-3 border-b border-zinc-200/50 pb-2">
-                    {isJewelleryProduct ? 'Product Details' : 'Technical Specifications'}
-                </h4>
-                {product.specifications && product.specifications.length > 0 ? (
-                    (() => {
-                        const groupedSpecs = getGroupedSpecs();
-                        const directSpecs = groupedSpecs['PRODUCT DETAILS'] || [];
-                        const accordionSpecs = Object.entries(groupedSpecs).filter(([secName]) => secName !== 'PRODUCT DETAILS');
+        const hasSpecs = product.specifications && product.specifications.length > 0;
+        const groupedSpecs = hasSpecs ? getGroupedSpecs() : {};
 
-                        return (
-                            <div className="space-y-4">
-                                {/* Directly visible Product Details table rows */}
-                                {directSpecs.length > 0 && (
-                                    <div className="divide-y divide-[#F5E6E8]/60 border-y border-[#F5E6E8]/60 py-1">
-                                        {directSpecs.map((item, idx) => (
-                                            <div key={idx} className="flex items-center justify-between py-2.5 px-1 text-xs">
-                                                <div className="flex items-center gap-1.5 text-zinc-500">
-                                                    <span>{item.label}</span>
-                                                    <Info className="w-3 h-3 text-zinc-400" />
-                                                </div>
-                                                <span className="font-semibold text-[#1D5C8A]">
-                                                    {item.value}
-                                                </span>
-                                            </div>
-                                        ))}
+        // Sub-component: a single label–value row (safe, no hooks)
+        const SpecRow = ({ label, value, isTotal = false }) => (
+            <div className={`grid grid-cols-2 gap-2 py-2.5 px-3 text-[11px] border-b border-zinc-100 last:border-0
+                ${isTotal ? 'bg-[#FDF5F6]' : 'hover:bg-zinc-50/60'}
+            `}>
+                <span className={`leading-snug ${isTotal ? 'text-[#8B4356] font-black' : 'text-zinc-500 font-medium'}`}>
+                    {label}
+                </span>
+                <span className={`leading-snug text-right ${isTotal ? 'text-[#1a1a1a] font-black text-[11.5px]' : 'text-[#1D5C8A] font-semibold'}`}>
+                    {value}
+                </span>
+            </div>
+        );
+
+        // Accordion section — uses shared expandedSections + toggleSection (no useState inside render)
+        const AccordionSection = ({ sectionKey, title, items, isTagSection = false }) => {
+            const isOpen = expandedSections[sectionKey] !== false; // default open unless explicitly false
+            return (
+                <div className="border-b border-zinc-200 last:border-0">
+                    <button
+                        onClick={() => toggleSection(sectionKey)}
+                        className="w-full flex items-center justify-between py-3 px-3 bg-zinc-50 hover:bg-[#FDF5F6] transition-colors"
+                    >
+                        <span className="text-[10px] font-black text-[#1a1a1a] tracking-[0.2em] uppercase">{title}</span>
+                        <span className={`text-[#8B4356] font-black text-base leading-none transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`}>+</span>
+                    </button>
+                    <AnimatePresence initial={false}>
+                        {isOpen && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.18 }}
+                                className="overflow-hidden"
+                            >
+                                {isTagSection ? (
+                                    <div className="px-3 py-3 text-[10.5px] text-[#2C6E9E] font-medium leading-relaxed tracking-wide">
+                                        {items[0]?.value}
                                     </div>
-                                )}
-
-                                {/* Accordion breakdown for Diamonds, Metals, Price Breakup, etc. */}
-                                {accordionSpecs.length > 0 && (
-                                    <div className="space-y-1">
-                                        {accordionSpecs.map(([secName, items]) => {
-                                            const isExpanded = !!expandedSections[secName];
-                                            return (
-                                                <div key={secName} className="border-b border-zinc-200 bg-transparent rounded-none overflow-hidden transition-all duration-300">
-                                                    <button
-                                                        onClick={() => toggleSection(secName)}
-                                                        className="w-full flex items-center justify-between py-3.5 px-1 bg-transparent hover:text-[#8B4356] transition-colors outline-none"
-                                                    >
-                                                        <span className="text-[11px] font-bold text-black tracking-[0.15em] uppercase">{secName}</span>
-                                                        <span className="text-zinc-600 font-bold text-sm">
-                                                            {isExpanded ? '-' : '+'}
-                                                        </span>
-                                                    </button>
-
-                                                    <AnimatePresence initial={false}>
-                                                        {isExpanded && (
-                                                            <motion.div
-                                                                initial={{ height: 0, opacity: 0 }}
-                                                                animate={{ height: 'auto', opacity: 1 }}
-                                                                exit={{ height: 0, opacity: 0 }}
-                                                                transition={{ duration: 0.2 }}
-                                                                className="overflow-hidden"
-                                                            >
-                                                                <div className="p-2 space-y-1 divide-y divide-zinc-100 bg-transparent">
-                                                                    {secName === 'TAGS' ? (
-                                                                        <div className="py-2 text-xs leading-relaxed text-[#2C6E9E] font-medium tracking-wide">
-                                                                            {items[0].value}
-                                                                        </div>
-                                                                    ) : (
-                                                                        items.map((item, idx) => {
-                                                                            const isTotal = item.label.toUpperCase() === 'TOTAL';
-                                                                            return (
-                                                                                <div
-                                                                                    key={idx}
-                                                                                    className={`flex items-center justify-between py-2.5 px-1 text-xs ${isTotal ? 'font-bold text-black border-t border-zinc-200' : ''}`}
-                                                                                >
-                                                                                    <div className="flex items-center gap-1.5">
-                                                                                        <span className={`${isTotal ? 'text-[#8B4356] font-bold' : 'text-zinc-600 font-medium'}`}>
-                                                                                            {item.label}
-                                                                                        </span>
-                                                                                        {!isTotal && <Info className="w-3 h-3 text-zinc-300" />}
-                                                                                    </div>
-                                                                                    <span className={`${isTotal ? 'text-black font-bold text-sm' : 'text-[#1D5C8A] font-semibold'}`}>
-                                                                                        {item.value}
-                                                                                    </span>
-                                                                                </div>
-                                                                            );
-                                                                        })
-                                                                    )}
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
-                                                </div>
-                                            );
+                                ) : (
+                                    <div>
+                                        {items.map((item, i) => {
+                                            const isTotal = item.label.toUpperCase() === 'TOTAL';
+                                            return <SpecRow key={i} label={item.label} value={item.value} isTotal={isTotal} />;
                                         })}
                                     </div>
                                 )}
-                            </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            );
+        };
+
+        if (!hasSpecs) {
+            return (
+                <div className="p-4 bg-white border border-[#F5E6E8] text-xs text-zinc-500 leading-relaxed">
+                    No additional specifications listed for this {isJewelleryProduct ? 'collection' : 'product'}.
+                </div>
+            );
+        }
+
+        // Section title
+        const mainTitle = isJewelleryProduct ? 'Product Details' : 'Technical Specifications';
+
+        // The sections to render in order
+        const knownSections = [
+            { key: 'PRODUCT DETAILS',         label: 'Product Details',           open: true  },
+            { key: 'SOLITAIRE DETAILS',        label: 'Solitaire Details',         open: true  },
+            { key: 'DIAMOND DETAILS',          label: 'Diamond Details',           open: true  },
+            { key: 'METAL DETAILS',            label: 'Metal Details',             open: true  },
+            { key: 'PRICE BREAKUP',            label: 'Price Breakup',             open: true  },
+            { key: 'TAGS',                     label: 'Tags',                      open: false, isTag: true },
+            { key: 'TECHNICAL SPECIFICATIONS', label: 'Technical Specifications',  open: true  },
+        ];
+
+        const renderedKeys = new Set();
+
+        return (
+            <div>
+                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#333] mb-3 pb-2 border-b-2 border-[#8B4356]/20">
+                    {mainTitle}
+                </h4>
+
+                <div className="border border-zinc-200 rounded-sm overflow-hidden divide-y divide-zinc-200">
+                    {knownSections.map(({ key, label, isTag }) => {
+                        const items = groupedSpecs[key];
+                        if (!items || items.length === 0) return null;
+                        renderedKeys.add(key);
+                        return (
+                            <AccordionSection
+                                key={key}
+                                sectionKey={key}
+                                title={label}
+                                items={items}
+                                isTagSection={!!isTag}
+                            />
                         );
-                    })()
-                ) : (
-                    <div className="p-4 bg-white border border-[#F5E6E8] text-xs text-zinc-500 leading-relaxed font-assistant">
-                        No additional technical specifications listed for this {isJewelleryProduct ? 'collection' : 'product'}.
-                    </div>
-                )}
+                    })}
+
+                    {/* Catch-all for any ungrouped extra sections */}
+                    {Object.entries(groupedSpecs)
+                        .filter(([k]) => !renderedKeys.has(k) && groupedSpecs[k]?.length > 0)
+                        .map(([k, items]) => (
+                            <AccordionSection key={k} sectionKey={k} title={k} items={items} />
+                        ))
+                    }
+                </div>
             </div>
         );
     };
 
     return (
         <div className="min-h-screen bg-[#FDF5F6] font-body text-[#1A1A1A] pb-12 selection:bg-[#8B4356] selection:text-white overflow-x-hidden">
-            <main className="container mx-auto px-4 lg:px-12 pt-10 lg:pt-8">
+            <main className="w-full px-3 lg:px-6 pt-4 lg:pt-6">
                 {/* Full-width Left-Aligned Heading & Breadcrumbs */}
-                <div className="w-full space-y-1 pb-2 mt-1 lg:mt-1.5 border-b border-[#F5E6E8]/40">
+                <div className="w-full space-y-2 pb-3 mb-1 border-b border-[#F5E6E8]/40">
                     <div className="flex flex-wrap items-center gap-1.5 text-[9.5px] md:text-[10px] uppercase tracking-[0.18em] font-normal font-assistant text-[#709dbd]">
                         <Link to="/" className="hover:text-[#8B4356] transition-colors">Home</Link>
                         <span className="opacity-50">/</span>
@@ -906,7 +946,7 @@ const ProductDetails = () => {
                         <span className="text-black font-assistant">{product.name}</span>
                     </div>
 
-                    <h1 className="text-[20px] md:text-[24px] lg:text-[28px] font-assistant font-normal leading-tight text-zinc-800 tracking-wide">
+                    <h1 className="text-[22px] md:text-[26px] lg:text-[30px] font-assistant font-semibold leading-snug text-zinc-800 tracking-wide">
                         {product.name ? (product.name === product.name.toUpperCase() ? product.name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : product.name) : ''}
                     </h1>
 
@@ -917,10 +957,10 @@ const ProductDetails = () => {
                     )}
                 </div>
 
-                <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-10 items-start pt-2 lg:pt-3.5">
+                <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-2 items-start pt-3 lg:pt-4">
 
                     {/* 2. Left Column: Image Gallery - Sticky & Sharp Corners */}
-                    <div className="lg:col-span-5 lg:sticky lg:top-20 w-full space-y-1.5">
+                    <div className="lg:col-span-5 lg:sticky lg:top-20 w-full space-y-1.5 lg:pl-6">
                         <div className="px-4 lg:px-0">
                             <div
                                 onClick={() => setIsZoomed(!isZoomed)}
@@ -1014,7 +1054,7 @@ const ProductDetails = () => {
                     </div>
 
                     {/* 3. Right Column: Product Detail Info - Sticky Details Flow */}
-                    <div className="px-5 lg:px-0 lg:pt-0 lg:col-span-7 space-y-4 w-full">
+                    <div className="px-5 lg:px-0 lg:pt-0 lg:col-span-7 lg:-ml-16 space-y-4 w-full">
                         <div className="space-y-3">
 
                             <div className="flex items-center gap-3">

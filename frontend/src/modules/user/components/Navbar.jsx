@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Heart, ShoppingBag, User, Store, Menu, X, Bell, ChevronDown, ChevronRight, Home, Gift, Coins, Plus, Minus, MessageCircle, Phone } from 'lucide-react';
+import { Search, Heart, ShoppingBag, User, Store, Menu, X, Bell, ChevronDown, ChevronRight, Home, Gift, Coins, Plus, Minus, MessageCircle, Phone, History } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 import hgLogo from '../assets/hg_logo_gold.png';
 import hgLogoPremium from '../assets/logo_final.jpg';
@@ -237,7 +237,7 @@ const Navbar = () => {
 
                 {/* 2. Main Navigation Bar - Balanced Compactness */}
                 <nav className="w-full bg-black border-b border-white/10 shadow-sm sticky top-0 md:relative z-50">
-                    <div className="w-full flex items-center justify-between h-7 md:h-9 px-3 md:px-6">
+                    <div className="w-full flex items-center justify-between px-3 md:px-6 py-2 md:py-3">
 
                         {/* Logo & Brand Heading */}
                         <div className="flex items-center gap-2 md:gap-3">
@@ -256,15 +256,15 @@ const Navbar = () => {
                                     <img
                                         src={hgLogoPremium}
                                         alt="HG"
-                                        className="h-[20px] md:h-[30px] w-auto object-contain"
+                                        className="h-[24px] md:h-[36px] w-auto object-contain"
                                     />
                                 </motion.div>
 
                                 <div className="flex flex-col font-serif">
-                                    <span className="text-white text-[10px] md:text-[14px] font-medium tracking-wider leading-none group-hover:text-[#EBCDD0] transition-colors">
+                                    <span className="text-white text-[12px] md:text-[16px] font-medium tracking-wider leading-none group-hover:text-[#EBCDD0] transition-colors">
                                         Harshad Gauri
                                     </span>
-                                    <span className="text-[#FDF5F6]/80 italic text-[7px] md:text-[8px] tracking-normal pb-0 transition-colors group-hover:text-white lowercase">
+                                    <span className="text-[#FDF5F6]/80 italic text-[8px] md:text-[10px] tracking-normal pb-0 transition-colors group-hover:text-white lowercase">
                                         enterprises
                                     </span>
                                 </div>
@@ -272,66 +272,97 @@ const Navbar = () => {
                         </div>
 
                         {/* Centered Search Bar */}
-                        <div className="hidden lg:flex flex-1 max-w-xl relative group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Search className="h-3.5 w-3.5 text-gray-400 group-focus-within:text-primary transition-colors" />
-                            </div>
+                        <div className="hidden lg:flex flex-1 max-w-xl mx-6">
                             <input
                                 type="text"
-                                placeholder="Search for jewellery..."
-                                className="w-full bg-white border border-gray-100 rounded-full py-2 px-5 pl-10 text-xs focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all text-black placeholder-gray-400 shadow-sm"
+                                placeholder="Search..."
+                                className="w-full bg-white rounded-l-md py-2 px-4 text-[14px] focus:outline-none text-black placeholder-gray-400 shadow-sm"
                             />
+                            <button 
+                                aria-label="Search"
+                                className="bg-[#C5A059] hover:bg-[#B38F4D] transition-colors rounded-r-md px-5 flex items-center justify-center shadow-sm"
+                            >
+                                <Search className="h-4 w-4 text-white" />
+                            </button>
                         </div>
 
                         {/* Icons */}
-                        <div className="flex items-center gap-1 md:gap-4">
+                        <div className="flex items-center gap-3 md:gap-5">
                             {/* Mobile/Tablet Search Toggle */}
                             <button
                                 onClick={() => toggleSearch(!isSearchOpen)}
                                 aria-label="Toggle search"
-                                className="lg:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 group transition-colors"
+                                className="lg:hidden flex flex-col items-center gap-1 group"
                             >
-                                <Search className={`w-5 h-5 transition-colors ${isSearchOpen ? 'text-white' : 'text-white/90 group-hover:text-primary'}`} />
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-white/10 transition-colors">
+                                    <Search className={`w-4.5 h-4.5 transition-colors ${isSearchOpen ? 'text-white' : 'text-white/90'}`} />
+                                </div>
+                                <span className="text-[9px] text-white/80 group-hover:text-white transition-colors">Search</span>
                             </button>
 
-                            <Link to="/notifications" aria-label="View notifications" className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-white/10 relative group transition-colors">
-                                <Bell className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
-                                <span className="absolute top-2 right-2 w-1.5 h-1.5 md:w-2 md:h-2 bg-primary rounded-full border-2 border-black"></span>
+                            <Link to="/notifications" aria-label="View notifications" className="flex flex-col items-center gap-1 group">
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-white/10 relative transition-colors">
+                                    <Bell className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 transition-colors" />
+                                    <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full border-2 border-black"></span>
+                                </div>
+                                <span className="text-[9px] text-white/80 group-hover:text-white transition-colors hidden md:block">Alerts</span>
                             </Link>
 
-                            <Link to="/stores" aria-label="Find a store" className="flex w-9 h-9 md:w-10 md:h-10 items-center justify-center rounded-full hover:bg-white/10 group transition-colors">
-                                <Store className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
+                            <Link to="/stores" aria-label="Find a store" className="flex flex-col items-center gap-1 group">
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-white/10 transition-colors">
+                                    <Store className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 transition-colors" />
+                                </div>
+                                <span className="text-[9px] text-white/80 group-hover:text-white transition-colors hidden md:block">Stores</span>
                             </Link>
 
-                            <Link to="/wishlist" aria-label="View wishlist" className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-white/10 relative group transition-colors">
-                                <Heart className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
-                                {wishlist?.length > 0 && (
-                                    <span className="absolute top-2 right-2 bg-primary text-white text-[7px] md:text-[8px] w-3 h-3 md:w-3.5 md:h-3.5 flex items-center justify-center rounded-full font-bold">
-                                        {wishlist.length}
-                                    </span>
-                                )}
+                            <Link to="/profile/history" aria-label="Recently viewed" className="flex flex-col items-center gap-1 group">
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-white/10 transition-colors">
+                                    <History className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 transition-colors" />
+                                </div>
+                                <span className="text-[9px] text-white/80 group-hover:text-white transition-colors hidden md:block">Recents</span>
                             </Link>
 
-                            <Link to="/cart" aria-label="View shopping bag" className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center hover:bg-white/10 rounded-full group transition-colors relative">
-                                <ShoppingBag className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
-                                {cart?.length > 0 && (
-                                    <span className="absolute top-2 right-2 bg-primary text-white text-[7px] md:text-[8px] w-3 h-3 md:w-3.5 md:h-3.5 flex items-center justify-center rounded-full font-bold">
-                                        {cart.length}
-                                    </span>
-                                )}
+                            <Link to="/wishlist" aria-label="View wishlist" className="flex flex-col items-center gap-1 group">
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-white/10 relative transition-colors">
+                                    <Heart className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 transition-colors" />
+                                    {wishlist?.length > 0 && (
+                                        <span className="absolute top-0 right-0 bg-primary text-white text-[8px] w-3.5 h-3.5 flex items-center justify-center rounded-full font-bold border border-black">
+                                            {wishlist.length}
+                                        </span>
+                                    )}
+                                </div>
+                                <span className="text-[9px] text-white/80 group-hover:text-white transition-colors hidden md:block">Wishlist</span>
                             </Link>
 
-                            <Link to="/profile" aria-label="View profile" className="hidden md:flex w-10 h-10 items-center justify-center rounded-full hover:bg-white/10 group transition-colors">
-                                <User className="w-5 h-5 text-white/90 group-hover:text-primary transition-colors" />
+                            <Link to="/cart" aria-label="View shopping bag" className="flex flex-col items-center gap-1 group relative">
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-white/10 transition-colors relative">
+                                    <ShoppingBag className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 transition-colors" />
+                                    {cart?.length > 0 && (
+                                        <span className="absolute top-0 right-0 bg-primary text-white text-[8px] w-3.5 h-3.5 flex items-center justify-center rounded-full font-bold border border-black">
+                                            {cart.length}
+                                        </span>
+                                    )}
+                                </div>
+                                <span className="text-[9px] text-white/80 group-hover:text-white transition-colors hidden md:block">Cart</span>
+                            </Link>
+
+                            <Link to="/profile" aria-label="View profile" className="hidden md:flex flex-col items-center gap-1 group">
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-white/10 transition-colors">
+                                    <User className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 transition-colors" />
+                                </div>
+                                <span className="text-[9px] text-white/80 group-hover:text-white transition-colors hidden md:block">Profile</span>
                             </Link>
 
                             {/* Top Hamburger Menu (Mobile) - Moved to Right */}
                             <button
                                 onClick={() => toggleMenu(!isMenuOpen)}
                                 aria-label="Toggle menu"
-                                className="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 group transition-colors"
+                                className="md:hidden flex flex-col items-center gap-1 group"
                             >
-                                <Menu className="w-5 h-5 text-white group-hover:text-primary transition-colors" />
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-white/10 transition-colors">
+                                    <Menu className="w-5 h-5 text-white transition-colors" />
+                                </div>
+                                <span className="text-[9px] text-white/80 group-hover:text-white transition-colors hidden md:block">Menu</span>
                             </button>
                         </div>
                     </div>
@@ -371,9 +402,9 @@ const Navbar = () => {
                     </AnimatePresence>
 
                     {/* 3. Secondary Navigation Links Row - Ultra Compact & Clean */}
-                    <div className="hidden md:block bg-white border-t border-gray-100 py-0.5 shadow-sm relative">
-                        <div className="container mx-auto px-6 flex justify-center items-center gap-8 font-sans">
-                            <Link to="/" className="text-[11px] font-normal uppercase text-black hover:text-primary transition-all tracking-normal border-b-2 border-transparent hover:border-primary pb-0.5">
+                    <div className="hidden md:block bg-white border-t border-gray-100 py-1 shadow-sm relative">
+                        <div className="container mx-auto px-6 flex justify-center items-center gap-6 font-serif">
+                            <Link to="/" className="text-[18px] font-semibold font-['Cormorant_Garamond',serif] text-black hover:text-primary transition-all tracking-tight border-b-2 border-transparent hover:border-primary pb-0.5">
                                 Home
                             </Link>
 
@@ -385,7 +416,7 @@ const Navbar = () => {
                                 <button
                                     aria-label="Open categories menu"
                                     onClick={() => setIsMegaOpen(!isMegaOpen)}
-                                    className="flex items-center gap-1 text-[11px] font-normal uppercase text-black hover:text-primary transition-all tracking-normal border-b-2 border-transparent hover:border-primary pb-0.5 cursor-pointer"
+                                    className="flex items-center gap-1 text-[18px] font-semibold font-['Cormorant_Garamond',serif] text-black hover:text-primary transition-all tracking-tight border-b-2 border-transparent hover:border-primary pb-0.5 cursor-pointer"
                                 >
                                     Categories
                                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isMegaOpen ? 'rotate-180' : ''}`} />
@@ -395,7 +426,7 @@ const Navbar = () => {
                                     <div className="flex flex-col min-h-[260px] w-full">
 
                                         {/* Step 1: Main Category Selection Bar - Grouped by Department */}
-                                        <div className="bg-pink-100/20 border-b border-pink-100/40 px-10 py-2.5 flex justify-center gap-16 font-mulish">
+                                        <div className="bg-pink-100/20 border-b border-pink-100/40 px-10 py-1 flex justify-center gap-16">
                                             {['Jewellery', 'Tools', 'Machines'].map((dept) => (
                                                 <button
                                                     key={dept}
@@ -407,7 +438,7 @@ const Navbar = () => {
                                                         }
                                                     }}
                                                     aria-label={`View ${dept} department`}
-                                                    className={`text-[11px] font-mulish font-bold tracking-[0.25em] uppercase transition-all pb-1 border-b-2 ${(activeMegaCategory?.department || 'Jewellery').toLowerCase() === dept.toLowerCase() ? 'text-primary border-primary' : 'text-gray-400 border-transparent hover:text-black'}`}
+                                                    className={`text-[18px] lowercase font-semibold font-['Cormorant_Garamond',serif] transition-all pb-1 border-b-2 ${(activeMegaCategory?.department || 'Jewellery').toLowerCase() === dept.toLowerCase() ? 'text-black border-black' : 'text-black border-transparent opacity-60 hover:opacity-100'}`}
                                                 >
                                                     {dept}
                                                 </button>
@@ -605,7 +636,7 @@ const Navbar = () => {
                             >
                                 <Link
                                     to="/shop?tag=coin"
-                                    className="text-[11px] font-normal uppercase text-black hover:text-[#C5A059] transition-all tracking-normal border-b-2 border-transparent hover:border-[#C5A059] pb-0.5 flex items-center gap-1 cursor-pointer"
+                                    className="text-[18px] font-semibold font-['Cormorant_Garamond',serif] text-black hover:text-[#C5A059] transition-all tracking-tight border-b-2 border-transparent hover:border-[#C5A059] pb-0.5 flex items-center gap-1 cursor-pointer"
                                 >
                                     Gold Coins
                                     <ChevronDown className={`w-3 h-3 transition-transform ${isCoinsOpen ? 'rotate-180' : ''}`} />
@@ -669,7 +700,7 @@ const Navbar = () => {
                             >
                                 <Link
                                     to="/shop?tag=gift"
-                                    className="text-[11px] font-normal uppercase text-black hover:text-[#3E2723] transition-all tracking-normal border-b-2 border-transparent hover:border-[#3E2723] pb-0.5 flex items-center gap-1 cursor-pointer"
+                                    className="text-[18px] font-semibold font-['Cormorant_Garamond',serif] text-black hover:text-[#3E2723] transition-all tracking-tight border-b-2 border-transparent hover:border-[#3E2723] pb-0.5 flex items-center gap-1 cursor-pointer"
                                 >
                                     Gifts
                                     <ChevronDown className={`w-3 h-3 transition-transform ${isGiftsOpen ? 'rotate-180' : ''}`} />
@@ -801,10 +832,9 @@ const Navbar = () => {
                                 <Link
                                     key={idx}
                                     to={nav.path}
-                                    aria-label={`Go to ${nav.name}`}
-                                    className="text-[11px] font-normal uppercase text-black hover:text-primary transition-all tracking-normal border-b-2 border-transparent hover:border-primary pb-0.5"
+                                    className="text-[18px] font-semibold font-['Cormorant_Garamond',serif] text-black hover:text-primary transition-all tracking-tight border-b-2 border-transparent hover:border-primary pb-0.5"
                                 >
-                                    {nav.name}
+                                    {nav.name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
                                 </Link>
                             ))}
                         </div>

@@ -222,7 +222,7 @@ const CatalogPage = () => {
 
             {/* PRODUCT LIST */}
             <main className="flex-1 py-4 md:py-10 px-3 md:px-12">
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 xxl:grid-cols-5 gap-3 md:gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-5">
                     {filteredProducts.map((product) => (
                         <ProductCard key={product.id} product={product} />
                     ))}

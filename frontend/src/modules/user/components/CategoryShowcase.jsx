@@ -34,18 +34,17 @@ const CategoryShowcase = () => {
     );
 
     return (
-        <section className="pt-2 md:pt-4 pb-8 md:pb-10 bg-gradient-to-b from-[#1a0507] via-[#2d0a0d] to-[#150405] overflow-hidden">
+        <section className="pt-2 pb-4 bg-gradient-to-b from-[#1a0507] via-[#2d0a0d] to-[#150405] overflow-hidden">
             <div className="container mx-auto px-4 md:px-6 lg:px-20 text-center">
 
                 {/* Refined Department Tabs - Strictly 3 */}
-                <div className="flex justify-center gap-12 md:gap-24 mb-2 md:mb-4 border-b border-white/10 pb-0.5 overflow-x-auto scrollbar-hide">
+                <div className="flex justify-center gap-6 md:gap-12 mb-2 border-b border-white/10 pb-0.5 overflow-x-auto scrollbar-hide">
                     {DEPARTMENT_TABS.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                            className={`text-[11px] md:text-sm tracking-[0.3em] uppercase transition-all duration-500 relative py-2 px-2 whitespace-nowrap ${
-                                activeTab === tab.id ? 'text-white font-black' : 'text-white/40 hover:text-white/70 font-medium'
+                            className={`text-[14px] md:text-[18px] font-['Cormorant_Garamond',serif] font-semibold tracking-wide lowercase capitalize transition-all duration-500 relative py-2 px-2 whitespace-nowrap ${
+                                activeTab === tab.id ? 'text-white' : 'text-white/60 hover:text-white/90'
                             }`}
                         >
                             {tab.name}
@@ -67,11 +66,11 @@ const CategoryShowcase = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.6 }}
-                        className="flex flex-nowrap justify-start gap-2.5 md:gap-5 pb-6 overflow-x-auto scrollbar-hide px-1 md:px-2"
+                        className="flex flex-nowrap justify-center gap-2 md:gap-4 pb-2 overflow-x-auto scrollbar-hide px-1 md:px-2"
                     >
                         {filteredCats.map((cat, index) => {
                             return (
-                                <div key={cat.id || cat._id} className="group flex flex-col items-center w-[95px] md:w-[130px] shrink-0">
+                                <div key={cat.id || cat._id} className="group flex flex-col items-center w-[75px] md:w-[100px] shrink-0">
                                     <Link to={`/collection/${cat.id || cat._id}`} className="block">
                                         <motion.div
                                             initial={{ opacity: 0, y: 20 }}
@@ -80,7 +79,7 @@ const CategoryShowcase = () => {
                                             className="flex flex-col items-center"
                                         >
                                             {/* Minimalist Circle Image */}
-                                            <div className="relative w-24 h-24 md:w-36 md:h-36 rounded-full overflow-hidden border border-white/10 p-0.5 transition-all duration-700 group-hover:border-gold/30 group-hover:shadow-[0_15px_35px_rgba(0,0,0,0.5)] group-hover:scale-[1.05]">
+                                            <div className="relative w-16 h-16 md:w-24 md:h-24 rounded-full overflow-hidden border border-white/10 p-0.5 transition-all duration-700 group-hover:border-gold/30 group-hover:shadow-[0_15px_35px_rgba(0,0,0,0.5)] group-hover:scale-[1.05]">
                                                 <div className="w-full h-full rounded-full overflow-hidden bg-white/5">
                                                     <img
                                                         src={cat.image || 'https://via.placeholder.com/400'}
@@ -91,7 +90,7 @@ const CategoryShowcase = () => {
                                             </div>
 
                                             {/* Premium Label */}
-                                            <span className="mt-4 md:mt-6 font-serif text-[8px] md:text-[10px] text-[#FAF5F6] font-bold tracking-[0.25em] uppercase text-center transition-all duration-500 group-hover:text-gold group-hover:tracking-[0.35em] whitespace-nowrap">
+                                            <span className="mt-3 md:mt-4 font-['Cormorant_Garamond',serif] text-[12px] md:text-[14px] text-[#FAF5F6] font-semibold tracking-wide lowercase capitalize text-center transition-all duration-500 group-hover:text-gold whitespace-nowrap">
                                                 {cat.name}
                                             </span>
                                         </motion.div>

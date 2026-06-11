@@ -441,7 +441,7 @@ const ProductDetailPage = () => {
 
 
     return (
-        <div className="bg-white min-h-screen font-['Inter'] pb-8">
+        <div className="bg-white min-h-screen font-['Inter'] pb-12">
             {/* Breadcrumb - Compact */}
             <div className="container mx-auto px-4 md:px-12 py-3 flex items-center gap-3">
                 <button
@@ -460,12 +460,23 @@ const ProductDetailPage = () => {
                 </div>
             </div>
 
-            <main className="container mx-auto px-4 md:px-12">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-[#2A2A2A]">
+            <main className="container mx-auto px-4 md:px-12 pt-3">
 
-                    {/* LEFT COLUMN - IMAGE */}
-                    <div className="lg:col-span-5 space-y-2">
-                        <div className="bg-white rounded-xl border border-gray-100 p-2 relative overflow-hidden group shadow-sm flex items-center justify-center h-[200px] md:h-[260px]">
+                {/* ── FULL-WIDTH PRODUCT TITLE (always above the image/details grid) ── */}
+                <div className="mb-4">
+                    <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] block mb-1">
+                        {product.brand}
+                    </span>
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-[#1a1a1a] leading-tight font-['Poppins'] tracking-tight">
+                        {product.name}
+                    </h1>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-[#2A2A2A]">
+
+                    {/* LEFT COLUMN - IMAGE (always first on mobile) */}
+                    <div className="order-1 lg:col-span-5 space-y-2">
+                        <div className="bg-white rounded-xl border border-gray-100 p-2 relative overflow-hidden group shadow-sm flex items-center justify-center h-[320px] md:h-[400px] lg:h-[420px]">
                             <motion.img
                                 key={isGroupProduct ? selectedVariant.id : product.id}
                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -513,46 +524,41 @@ const ProductDetailPage = () => {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN - DETAILS */}
-                    <div className="lg:col-span-7 lg:pl-4">
-                        <div className="mb-4 pb-4 border-b border-gray-100">
-                            {/* Brand Name */}
-                            <div className="mb-0.5">
-                                <span className="text-[9px] md:text-[10px] font-black text-gray-400 font-brand uppercase tracking-[0.2em]">
-                                    {product.brand}
-                                </span>
-                            </div>
-
-                            <h1 className="text-lg md:text-xl font-bold text-[#222] leading-tight mb-1 font-['Poppins'] tracking-tight">
-                                {product.name}
-                            </h1>
-
-                            {/* Product Description */}
-                            <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed mb-2.5 line-clamp-2">
-                                {product.description || product.shortDescription || 'Premium quality product'}
-                            </p>
-
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className="flex items-center gap-0.5 bg-primary text-white px-1.5 py-0.5 rounded text-[9px] md:text-[10px] font-bold shadow-sm">
+                    {/* RIGHT COLUMN - DETAILS (always second on mobile via order-2) */}
+                    <div className="order-2 lg:col-span-7 lg:pl-4">
+                        <div className="mb-5 pb-5 border-b border-gray-100">
+                            {/* Rating Row */}
+                            <div className="flex items-center gap-2.5 mb-3">
+                                <div className="flex items-center gap-1 bg-primary text-white px-2 py-0.5 rounded text-[10px] md:text-[11px] font-bold shadow-sm">
                                     <span>{product.rating}</span>
-                                    <Star size={8} fill="currentColor" />
+                                    <Star size={9} fill="currentColor" />
                                 </div>
-                                <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">11 reviews</span>
+                                <span className="text-[10px] md:text-xs text-gray-400 font-medium">880 Reviews</span>
+                                <span className="text-[10px] md:text-xs text-gray-300">|</span>
+                                <span className="text-[10px] md:text-xs text-gray-400 font-medium">5K+ Monthly Seekers</span>
                                 <button className="text-gray-300 hover:text-primary transition-colors ml-auto">
                                     <Share2 size={14} />
                                 </button>
                             </div>
 
-                            <div className="space-y-0.5">
-                                <div className="flex items-baseline gap-2 flex-wrap">
-                                    <span className="text-lg md:text-xl font-black text-primary">₹{currentPrice}</span>
-                                    <span className="text-xs md:text-sm text-gray-300 line-through font-medium">₹{currentMrp}</span>
-                                    <span className="bg-[#E63946] text-white text-[8px] md:text-[9px] font-bold px-1 py-0.5 rounded shadow-sm">
-                                        {currentDiscount || `${discountPercentage}% OFF`}
-                                    </span>
-                                    <span className="text-[9px] text-gray-400 font-medium ml-1">({currentUnitPrice})</span>
+                            {/* Product Short Description */}
+                            <p className="text-[11px] md:text-xs text-gray-500 leading-relaxed mb-3 line-clamp-2">
+                                {product.description || product.shortDescription || 'Premium quality product'}
+                            </p>
+
+                            {/* Price Block */}
+                            <div className="space-y-1">
+                                <div className="flex items-baseline gap-2.5 flex-wrap">
+                                    <span className="text-2xl md:text-3xl font-black text-[#1a1a1a]">₹{currentPrice?.toLocaleString('en-IN')}</span>
+                                    <span className="text-sm md:text-base text-gray-400 line-through font-medium">₹{currentMrp?.toLocaleString('en-IN')}</span>
+                                    {(currentDiscount || discountPercentage > 0) && (
+                                        <span className="bg-[#E63946] text-white text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                            {currentDiscount || `${discountPercentage}% OFF`}
+                                        </span>
+                                    )}
                                 </div>
-                                <p className="text-[9px] md:text-[10px] font-bold text-green-600">Save ₹{saveAmount} instantly</p>
+                                <p className="text-[10px] md:text-xs text-gray-500 font-medium">MRP incl. of all taxes</p>
+                                {saveAmount > 0 && <p className="text-[10px] md:text-xs font-bold text-green-600">You save ₹{saveAmount?.toLocaleString('en-IN')}</p>}
                             </div>
                         </div>
 
@@ -703,16 +709,16 @@ const ProductDetailPage = () => {
 
                         {/* Product Specifications Section */}
                         {product.specifications && product.specifications.length > 0 && (
-                            <div className="bg-white border border-gray-100 rounded-xl p-6 mb-6 shadow-sm">
-                                <h3 className="text-sm font-black text-footerBg uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    <Award size={16} className="text-gray-400" />
-                                    Product Details
+                            <div className="bg-white border border-gray-100 rounded-xl p-5 mb-5 shadow-sm">
+                                <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                    <Award size={14} className="text-gray-400" />
+                                    Technical Specifications
                                 </h3>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {product.specifications.map((spec, idx) => (
-                                        <div key={idx} className="border border-gray-100 rounded-lg p-4 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{spec.label}</p>
-                                            <p className="text-sm md:text-base font-bold text-footerBg">{spec.value}</p>
+                                        <div key={idx} className="border border-gray-100 rounded-lg p-3 bg-[#fafafa] hover:bg-gray-50 transition-colors">
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-1.5 leading-tight">{spec.label}</p>
+                                            <p className="text-sm font-semibold text-[#1a1a1a] leading-snug">{spec.value}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -721,10 +727,10 @@ const ProductDetailPage = () => {
 
                         {/* Product Description Section */}
                         {(product.description || (product.specifications && product.specifications.length > 0)) && (
-                            <div className="bg-white border border-gray-100 rounded-xl p-6 mb-6 shadow-sm">
-                                <h3 className="text-sm font-black text-footerBg uppercase tracking-widest mb-4">About This Product</h3>
+                            <div className="bg-white border border-gray-100 rounded-xl p-5 mb-5 shadow-sm">
+                                <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] mb-4">About This Product</h3>
                                 {product.description && (
-                                    <p className="text-sm text-gray-600 leading-relaxed font-medium mb-6">
+                                    <p className="text-sm text-gray-600 leading-relaxed font-medium mb-5">
                                         {product.description}
                                     </p>
                                 )}

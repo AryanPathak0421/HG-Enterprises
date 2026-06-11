@@ -69,8 +69,8 @@ const PriceRangeShowcase = () => {
                                 }}
                                 className={`relative cursor-pointer overflow-hidden transition-all duration-700 ease-in-out shrink-0 ${
                                     isActive 
-                                        ? "w-[190px] sm:w-[240px] md:w-[360px] lg:w-[440px] h-[280px] md:h-[460px] grayscale-0 opacity-100 shadow-[0_25px_60px_rgba(107,37,44,0.15)] ring-1 ring-[#6b252c]/10 rounded-tl-[2.5rem] rounded-br-[2.5rem] md:rounded-tl-[3.5rem] md:rounded-br-[3.5rem] rounded-tr-none rounded-bl-none"
-                                        : "w-[50px] sm:w-[100px] md:w-[155px] lg:w-[185px] h-[250px] md:h-[410px] grayscale opacity-45 hover:opacity-75 rounded-tl-[1.8rem] rounded-br-[1.8rem] md:rounded-tl-[2.5rem] md:rounded-br-[2.5rem] rounded-tr-none rounded-bl-none"
+                                        ? "w-[160px] sm:w-[200px] md:w-[280px] lg:w-[340px] h-[240px] md:h-[340px] grayscale-0 opacity-100 shadow-[0_25px_60px_rgba(107,37,44,0.15)] ring-1 ring-[#6b252c]/10 rounded-tl-[2rem] rounded-br-[2rem] md:rounded-tl-[3rem] md:rounded-br-[3rem] rounded-tr-none rounded-bl-none"
+                                        : "w-[45px] sm:w-[80px] md:w-[120px] lg:w-[140px] h-[210px] md:h-[300px] grayscale opacity-45 hover:opacity-75 rounded-tl-[1.5rem] rounded-br-[1.5rem] md:rounded-tl-[2rem] md:rounded-br-[2rem] rounded-tr-none rounded-bl-none"
                                 }`}
                             >
                                 {/* Image Wrapper */}
@@ -91,20 +91,20 @@ const PriceRangeShowcase = () => {
                                 </div>
 
                                 {/* Active Content Card Details */}
-                                <div className={`absolute inset-x-0 bottom-0 flex flex-col justify-end p-2.5 md:p-6 z-20 transition-all duration-500 ${
+                                <div className={`absolute inset-x-0 bottom-0 flex flex-col justify-end p-2 md:p-4 z-20 transition-all duration-500 ${
                                     isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
                                 }`}>
-                                    <div className="text-center pb-6 md:pb-12">
+                                    <div className="text-center pb-4 md:pb-8">
                                         <span className="text-[7px] md:text-[10px] font-serif text-gold uppercase tracking-[0.4em] mb-1 block">
                                             Exclusive
                                         </span>
-                                        <h3 className="text-[10px] sm:text-xs md:text-2xl font-serif font-normal text-white uppercase tracking-wider mb-2 drop-shadow-md line-clamp-1">
+                                        <h3 className="text-[10px] sm:text-xs md:text-xl font-serif font-normal text-white uppercase tracking-wider mb-2 drop-shadow-md line-clamp-1">
                                             {itemLabel}
                                         </h3>
                                     </div>
 
                                     {/* Premium Luxury Pill Button - Centered */}
-                                    <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-30">
+                                    <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-30">
                                         <Link 
                                             to={item.path} 
                                             className="bg-white text-dark px-2.5 py-1.5 md:px-5 md:py-2.5 rounded-full text-[7px] md:text-[10px] font-bold uppercase tracking-[0.2em] whitespace-nowrap shadow-md hover:bg-[#6b252c] hover:text-white transition-all duration-300"

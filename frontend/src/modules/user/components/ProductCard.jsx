@@ -1,25 +1,14 @@
 import React, { useState } from 'react';
-import { Heart, Star, ShoppingBag, Layers } from 'lucide-react';
+import { Heart, Star, ShoppingBag, Layers, Play } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 
 const ProductCard = ({ product, isWishlistPage = false }) => {
-    const { addToCart, addToWishlist, removeFromWishlist, wishlist } = useShop();
+    const { addToCart, addToWishlist, removeFromWishlist, wishlist, cart, updateQuantity, removeFromCart } = useShop();
     const [flying, setFlying] = useState(false);
     const [flyingType, setFlyingType] = useState('cart');
-    const [timeLeft, setTimeLeft] = useState({ min: 59, sec: 59 });
 
-    React.useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev.sec > 0) return { ...prev, sec: prev.sec - 1 };
-                if (prev.min > 0) return { min: prev.min - 1, sec: 59 };
-                return { min: 59, sec: 59 }; // Reset or stop
-            });
-        }, 1000);
-        return () => clearInterval(timer);
-    }, []);
+    const cartItem = cart.find(item => item.id === product.id);
 
     const isWishlisted = wishlist.some(item => item.id === product.id);
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
@@ -46,14 +35,11 @@ const ProductCard = ({ product, isWishlistPage = false }) => {
         }
     };
 
-    // Calculate primary and secondary (hover) images
     const primaryImage = product.image || (product.images && product.images[0]) || 'https://via.placeholder.com/400';
-    
-    // Use hoverImage if provided, otherwise use secondary image from array, otherwise use primary image
     const secondaryImage = product.hoverImage || (product.images && product.images[1]) || primaryImage;
 
     return (
-        <div className="group relative w-full flex flex-col transition-all duration-300">
+        <div className="group relative w-full flex flex-col bg-[#FAF8F5] rounded-xl overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-lg">
             <style>
                 {`
                     @keyframes flyToCart {
@@ -80,8 +66,8 @@ const ProductCard = ({ product, isWishlistPage = false }) => {
                 />
             )}
 
-            {/* Product Image Box with Hover Image Crossfade and Sharp Corners */}
-            <Link to={`/product/${product.id}`} className="block relative w-full aspect-square bg-white rounded-none overflow-hidden border border-[#F5E6E8]/50 shadow-sm transition-all group-hover:shadow-md">
+            {/* Image Container */}
+            <Link to={`/product/${product.id}`} className="relative w-full aspect-square bg-white overflow-hidden flex items-center justify-center">
                 
                 {/* Primary Image */}
                 <img
@@ -90,7 +76,7 @@ const ProductCard = ({ product, isWishlistPage = false }) => {
                     className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-0"
                 />
 
-                {/* Secondary Hover Image (Crossfades on hover) */}
+                {/* Secondary Hover Image */}
                 <img
                     src={secondaryImage}
                     alt={`${product.name} alternate`}
@@ -101,72 +87,88 @@ const ProductCard = ({ product, isWishlistPage = false }) => {
                     className="absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-in-out opacity-0 group-hover:opacity-100"
                 />
 
-                {/* Compact Badges */}
-                <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-20">
-                    {product.isNew && (
-                        <span className="bg-black/80 backdrop-blur-sm text-white text-[4px] md:text-[5px] font-bold uppercase tracking-widest px-1 py-0.5 rounded-none inline-block">
-                            NEW
-                        </span>
-                    )}
-                    {hasDiscount && (
-                        <span className="bg-[#8B4356] text-white text-[4px] md:text-[5px] font-bold uppercase tracking-widest px-1 py-0.5 rounded-none inline-block shadow-sm">
-                            {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                        </span>
-                    )}
-                </div>
-
-                {/* Wishlist Heart Button Overlay - Pure Floating Transparent Heart with Premium Drop Shadow */}
+                {/* Wishlist Icon (Top Left Circle) */}
                 <button
                     onClick={handleWishlist}
-                    className={`absolute top-1 right-1 z-30 w-5 h-5 flex items-center justify-center transition-all bg-transparent hover:scale-115 active:scale-90 ${isWishlisted ? 'text-red-500' : 'text-zinc-600 hover:text-red-500'}`}
+                    className="absolute top-2 left-2 md:top-3 md:left-3 z-30 w-7 h-7 md:w-8 md:h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 transition-transform hover:scale-110 active:scale-95"
                 >
-                    <Heart className={`w-3 h-3 drop-shadow-[0_2px_3px_rgba(0,0,0,0.15)] ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.8} />
+                    <Heart className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isWishlisted ? 'fill-[#124935] text-[#124935]' : 'text-gray-400 hover:text-[#124935]'}`} strokeWidth={2} />
                 </button>
-
-                {/* Rating Pill Overlay (Bottom Left with Sharp Corners) */}
-                <div className="absolute bottom-1 left-1 bg-white px-1 py-0.5 rounded-none flex items-center gap-0.5 z-20 border border-zinc-100 shadow-sm">
-                    <span className="text-[6px] md:text-[7px] font-bold text-black leading-none">{product.rating || 4.5}</span>
-                    <Star className="w-2 h-2 fill-amber-400 text-amber-400" />
-                    <span className="text-[6px] md:text-[7px] text-zinc-300 mx-0.5">|</span>
-                    <span className="text-[6px] md:text-[7px] text-zinc-500 font-medium">0</span>
-                </div>
-
-                {/* Layers Icon Overlay (Bottom Right) */}
-                <div className="absolute bottom-1 right-1 bg-black/40 backdrop-blur-sm p-1 rounded-none flex items-center justify-center z-20 border border-white/10 text-white shadow-sm">
-                    <Layers className="w-2.5 h-2.5" />
+                
+                {/* Play Icon (Top Right Circle - decorative) */}
+                <div className="absolute top-2 right-2 md:top-3 md:right-3 z-30 w-7 h-7 md:w-8 md:h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100">
+                    <Play className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 pl-0.5" strokeWidth={2} />
                 </div>
             </Link>
 
-            {/* Left Aligned Content Details - Compacted */}
-            <div className="pt-0.5 px-0.5 flex flex-col text-left">
+            {/* Content Container */}
+            <div className="p-2.5 md:p-3.5 flex flex-col bg-[#FAF8F5]">
                 
-                {/* Bold Price First */}
-                <div className="flex items-baseline gap-0.5">
-                    <span className="text-[#111111] font-bold text-[9px] md:text-[10px] tracking-tight">
-                        ₹{(product?.price || 0).toLocaleString()}
-                    </span>
-                    {hasDiscount && (
-                        <span className="text-zinc-400 line-through text-[6px] md:text-[7px] font-medium">
-                            ₹{product.originalPrice.toLocaleString()}
-                        </span>
-                    )}
+                {/* Title & Rating Row */}
+                <div className="flex justify-between items-start mb-1 md:mb-2">
+                    <h3 className="font-sans text-gray-500 text-xs md:text-sm font-medium capitalize truncate pr-2">
+                        {product.name.toLowerCase()}
+                    </h3>
+                    
+                    {/* Rating Pill */}
+                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded px-1.5 py-0.5 shadow-sm flex-shrink-0">
+                        <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                        <span className="text-[9px] md:text-[10px] font-bold text-gray-700">{product.rating || 4.5}</span>
+                    </div>
                 </div>
 
-                {/* Uppercase Product Title */}
-                <h3 className="font-serif text-[7px] md:text-[8px] uppercase text-zinc-500 tracking-[0.05em] line-clamp-1 mt-0.5 font-medium">
-                    {product.name}
-                </h3>
+                {/* Price, Offer & ADD Button Row */}
+                <div className="flex justify-between items-end mt-1">
+                    <div className="flex flex-col">
+                        <div className="flex items-end gap-1.5 mb-0.5">
+                            <span className="text-[#111111] font-bold text-sm md:text-base font-sans tracking-tight leading-none">
+                                ₹{(product?.price || 0).toLocaleString()}
+                            </span>
+                            {hasDiscount && (
+                                <span className="text-gray-400 line-through text-[10px] md:text-xs font-medium leading-none mb-0.5">
+                                    ₹{product.originalPrice.toLocaleString()}
+                                </span>
+                            )}
+                        </div>
+                        
+                        {/* Red Offer Text (Image 3 Style) */}
+                        {hasDiscount ? (
+                            <span className="text-[#ED6B5A] text-[9.5px] md:text-[11px] font-semibold mt-0.5">
+                                {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% off on Making Charges
+                            </span>
+                        ) : (
+                             <span className="text-transparent text-[9.5px] md:text-[11px] font-semibold mt-0.5">
+                                Spacer
+                             </span>
+                        )}
+                    </div>
 
-                {/* Full Width Luxury Brown Hover ADD TO CART Button - Premium Animation */}
-                <button 
-                    onClick={handleAddToCart}
-                    className="w-full h-5 md:h-6 mt-1 bg-[#FDF1F2] hover:bg-[#5C3F30] text-[#8B4356] hover:text-white text-[7px] md:text-[8px] font-bold uppercase tracking-[0.15em] transition-all duration-300 ease-out flex items-center justify-center gap-1 rounded-none hover:scale-[1.02] active:scale-[0.98] border border-[#FBE3E5]/20 shadow-sm hover:shadow-md"
-                >
-                    Add To Cart
-                </button>
+                    {/* ADD Button or Quantity Controls */}
+                    {cartItem ? (
+                        <div className="flex items-center bg-[#111111] text-white rounded text-[10px] md:text-xs font-bold overflow-hidden h-7 md:h-8 flex-shrink-0">
+                            <button 
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (cartItem.quantity === 1) removeFromCart(product.id); else updateQuantity(product.id, cartItem.quantity - 1); }} 
+                                className="px-2.5 md:px-3 hover:bg-white/20 h-full flex items-center justify-center transition-colors"
+                            >−</button>
+                            <span className="px-1 w-4 md:w-5 text-center">{cartItem.quantity}</span>
+                            <button 
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateQuantity(product.id, cartItem.quantity + 1); }} 
+                                className="px-2.5 md:px-3 hover:bg-white/20 h-full flex items-center justify-center transition-colors"
+                            >+</button>
+                        </div>
+                    ) : (
+                        <button 
+                            onClick={handleAddToCart}
+                            className="bg-white border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white rounded text-[10px] md:text-xs font-bold px-4 py-1.5 md:px-5 md:py-1.5 transition-colors flex-shrink-0 h-7 md:h-8 flex items-center justify-center"
+                        >
+                            ADD
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
 export default ProductCard;
+

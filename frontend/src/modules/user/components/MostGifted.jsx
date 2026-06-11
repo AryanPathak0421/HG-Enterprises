@@ -23,7 +23,7 @@ const MostGifted = () => {
             `}</style>
             <div className="container mx-auto px-2 md:px-4">
 
-                <div className="flex flex-col lg:flex-row gap-4 md:gap-6 h-auto lg:h-[450px]">
+                <div className="flex flex-col lg:flex-row gap-4 md:gap-6 h-auto lg:h-[300px]">
                     {/* Feature Banner - Glow in Motion */}
                     <div className="w-full lg:w-[45%] relative rounded-2xl md:rounded-[2rem] overflow-hidden group shadow-md md:shadow-[0_10px_40px_rgba(0,0,0,0.15)] transition-all duration-500 cursor-pointer h-[300px] md:h-auto">
                         <video
@@ -45,7 +45,7 @@ const MostGifted = () => {
                         {/* Content */}
                         <div className="absolute inset-0 flex flex-col justify-end md:justify-center p-6 md:p-14 z-30 pb-8 md:pb-14">
                             <span className="text-gold text-xs md:text-sm font-serif italic tracking-wide mb-2 md:mb-4 drop-shadow-md">Collection Focus</span>
-                            <h2 className="font-serif text-3xl md:text-4xl text-white mb-4 md:mb-6 leading-tight tracking-tight">
+                            <h2 className="text-2xl md:text-3xl font-serif font-normal italic tracking-wide text-white mb-4 md:mb-6 leading-tight">
                                 {sectionData?.label || "Most Gifted Items"}
                             </h2>
 

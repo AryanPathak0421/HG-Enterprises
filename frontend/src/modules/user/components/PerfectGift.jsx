@@ -21,7 +21,7 @@ const PerfectGift = () => {
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
-                        className="text-3xl md:text-4xl font-serif font-normal text-white mb-2 tracking-tight"
+                        className="luxury-heading text-white mb-2"
                     >
                         {sectionData?.label || "Find the Perfect Gift For"}
                     </motion.h2>
@@ -51,7 +51,7 @@ const PerfectGift = () => {
                             >
                                 <Link
                                     to={item.path}
-                                    className="group relative block w-full aspect-square md:aspect-[3/4] rounded-xl md:rounded-[2rem] overflow-hidden border border-gold/20 shadow-md transition-all duration-500 hover:shadow-[0_0_25px_rgba(201,162,77,0.3)] hover:border-gold/60 md:hover:-translate-y-2"
+                                    className="group relative block w-full aspect-square md:aspect-square max-w-[280px] mx-auto rounded-xl md:rounded-[1.5rem] overflow-hidden border border-gold/20 shadow-sm transition-all duration-500 hover:shadow-[0_0_15px_rgba(201,162,77,0.3)] hover:border-gold/60 md:hover:-translate-y-2"
                                 >
                                     <div className="absolute inset-0 overflow-hidden">
                                         <img
@@ -64,7 +64,7 @@ const PerfectGift = () => {
 
                                     <div className="absolute bottom-0 inset-x-0 p-1.5 md:p-6 flex flex-col items-center justify-end h-full text-center">
                                         <div className="relative z-10">
-                                            <h3 className="text-[10px] md:text-3xl font-serif text-white mb-1 md:mb-2 drop-shadow-md uppercase tracking-wider font-normal">
+                                            <h3 className="text-[10px] md:text-xl font-serif text-white mb-1 md:mb-2 drop-shadow-md uppercase tracking-wider font-normal">
                                                 {itemLabel}
                                             </h3>
                                             <div className="w-6 h-0.5 bg-gold mx-auto rounded-full md:transition-all md:duration-500 md:group-hover:w-24 md:group-hover:bg-white" />

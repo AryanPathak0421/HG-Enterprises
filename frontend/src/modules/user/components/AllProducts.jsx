@@ -42,14 +42,14 @@ const AllProducts = () => {
                     <span className="text-[#c1a05b] font-bold tracking-[0.25em] uppercase text-[10px] md:text-xs mb-1 block">
                         OUR COLLECTION
                     </span>
-                    <h2 className="text-2xl md:text-3xl font-serif font-semibold text-dark mb-2 tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                    <h2 className="luxury-heading text-dark mb-2">
                         All <span className="italic text-[#8c2a3e] font-normal">Products</span>
                     </h2>
                     <div className="h-[1px] w-12 bg-[#c1a05b] mx-auto mt-2"></div>
                 </div>
 
                 {/* Grid - Using the standard ProductCard component with tighter gaps */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-5">
                     {displayProducts.map((product) => (
                         <ProductCard key={product.id} product={product} />
                     ))}
