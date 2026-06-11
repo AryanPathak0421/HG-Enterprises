@@ -107,11 +107,10 @@ const AppContent = () => {
         <ScrollToTop />
         {!isAdminPath && (
           <>
-            <div className="fixed top-0 left-0 right-0 z-[100] w-full">
+            <div className="sticky top-0 z-[100] w-full bg-white">
               <AnnouncementBar />
               <Navbar />
             </div>
-            <div className="h-[65px] md:h-[105px] w-full bg-white"></div>
             <WhatsAppButton />
           </>
         )}
