@@ -111,7 +111,7 @@ const AppContent = () => {
               <AnnouncementBar />
               <Navbar />
             </div>
-            <div className="h-[110px] md:h-[140px] w-full"></div>
+            <div className="h-[65px] md:h-[105px] w-full bg-white"></div>
             <WhatsAppButton />
           </>
         )}
