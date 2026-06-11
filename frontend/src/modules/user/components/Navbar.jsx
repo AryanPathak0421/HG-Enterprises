@@ -272,15 +272,31 @@ const Navbar = () => {
                         </div>
 
                         {/* Centered Search Bar */}
-                        <div className="hidden lg:flex flex-1 max-w-sm relative group mx-6">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Search className="h-3 w-3 text-gray-500 group-focus-within:text-primary transition-colors" />
+                        <div className="hidden lg:flex flex-1 max-w-2xl mx-6 items-center justify-center">
+                            <div className="flex w-full max-w-xl h-[28px] md:h-[30px]">
+                                <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    className="w-full h-full bg-white border-none px-4 text-[11px] focus:outline-none text-black placeholder-gray-500 rounded-l-[4px]"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            window.location.href = `/shop?search=${e.target.value}`;
+                                        }
+                                    }}
+                                />
+                                <button 
+                                    aria-label="Search" 
+                                    className="bg-[#C9A24D] hover:bg-[#b89445] px-5 h-full flex items-center justify-center transition-colors rounded-r-[4px]"
+                                    onClick={() => {
+                                        const input = document.querySelector('input[placeholder="Search..."]');
+                                        if (input && input.value) {
+                                            window.location.href = `/shop?search=${input.value}`;
+                                        }
+                                    }}
+                                >
+                                    <Search className="h-3.5 w-3.5 text-black" />
+                                </button>
                             </div>
-                            <input
-                                type="text"
-                                placeholder="Search for jewellery..."
-                                className="w-full bg-white/90 hover:bg-white border border-transparent rounded-full py-1.5 px-4 pl-8 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all text-black placeholder-gray-500 shadow-inner"
-                            />
                         </div>
 
                         {/* Icons */}
