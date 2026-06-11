@@ -821,7 +821,7 @@ const ProductDetails = () => {
 
         // Sub-component: a single label–value row (safe, no hooks)
         const SpecRow = ({ label, value, isTotal = false }) => (
-            <div className={`grid grid-cols-2 gap-2 py-2.5 px-3 text-[11px] border-b border-zinc-100 last:border-0
+            <div className={`grid grid-cols-2 gap-2 py-1.5 px-2 text-[10.5px] border-b border-zinc-100 last:border-0
                 ${isTotal ? 'bg-[#FDF5F6]' : 'hover:bg-zinc-50/60'}
             `}>
                 <span className={`leading-snug ${isTotal ? 'text-[#8B4356] font-black' : 'text-zinc-500 font-medium'}`}>
@@ -840,7 +840,7 @@ const ProductDetails = () => {
                 <div className="border-b border-zinc-200 last:border-0">
                     <button
                         onClick={() => toggleSection(sectionKey)}
-                        className="w-full flex items-center justify-between py-3 px-3 bg-zinc-50 hover:bg-[#FDF5F6] transition-colors"
+                        className="w-full flex items-center justify-between py-2 px-2.5 bg-zinc-50 hover:bg-[#FDF5F6] transition-colors"
                     >
                         <span className="text-[10px] font-black text-[#1a1a1a] tracking-[0.2em] uppercase">{title}</span>
                         <span className={`text-[#8B4356] font-black text-base leading-none transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`}>+</span>
@@ -1033,18 +1033,18 @@ const ProductDetails = () => {
                         </div>
 
                         {/* Seeker's Guide - Beautiful Trust badging card under image gallery */}
-                        <div className="pt-5 px-4 lg:px-0">
-                            <h4 className="text-[10px] font-black uppercase tracking-[.4em] text-[#8B4356]/60 mb-3 flex items-center gap-3">Seeker's Guide <div className="h-[1px] flex-grow bg-zinc-150"></div></h4>
-                            <div className="bg-[#FFF9F6]/40 p-4.5 rounded-none border border-[#F5E6E8]/40 space-y-3.5 shadow-sm">
-                                <ul className="space-y-3">
+                        <div className="pt-3 px-4 lg:px-0">
+                            <h4 className="text-[10px] font-black uppercase tracking-[.4em] text-[#8B4356]/60 mb-2 flex items-center gap-3">Seeker's Guide <div className="h-[1px] flex-grow bg-zinc-150"></div></h4>
+                            <div className="bg-[#FFF9F6]/40 p-3 rounded-none border border-[#F5E6E8]/40 space-y-2 shadow-sm">
+                                <ul className="space-y-1.5">
                                     {(product.benefits && product.benefits.length > 0 ? product.benefits : [
                                         "BIS Hallmarked Gold: 100% certified pure metal.",
                                         "Hand-Set Settings: Exquisite craftsmanship.",
                                         "Complimentary Resizing: Free forever on all rings.",
                                         "Insured Shipping: Secure delivery to your doorstep."
                                     ]).map((point, pIdx) => (
-                                        <li key={pIdx} className="flex gap-3 text-[10px] md:text-[11px] leading-relaxed text-zinc-500 font-medium">
-                                            <div className="shrink-0 w-1.5 h-1.5 rounded-none bg-[#8B4356] mt-1.5 opacity-40"></div>
+                                        <li key={pIdx} className="flex gap-2 text-[10px] md:text-[10.5px] leading-snug text-zinc-500 font-medium">
+                                            <div className="shrink-0 w-1 h-1 rounded-none bg-[#8B4356] mt-1.5 opacity-40"></div>
                                             {point}
                                         </li>
                                     ))}
@@ -1054,7 +1054,7 @@ const ProductDetails = () => {
                     </div>
 
                     {/* 3. Right Column: Product Detail Info - Sticky Details Flow */}
-                    <div className="px-5 lg:px-0 lg:pt-0 lg:col-span-7 lg:-ml-16 space-y-4 w-full">
+                    <div className="px-5 lg:px-0 lg:pt-0 lg:col-span-7 space-y-4 w-full">
                         <div className="space-y-3">
 
                             <div className="flex items-center gap-3">
