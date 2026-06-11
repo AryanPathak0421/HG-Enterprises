@@ -476,49 +476,49 @@ const Navbar = () => {
                                                                  >
                                                                      {/* Column 1: Popular Types */}
                                                                      <div>
-                                                                         <h4 className="text-[11px] font-mulish font-black uppercase tracking-[0.2em] text-primary mb-4 pb-2 border-b border-pink-100">
+                                                                         <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.15em] text-primary mb-3 pb-1.5 border-b border-pink-100">
                                                                              Popular {hoveredSubCat} Types
                                                                          </h4>
-                                                                         <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
+                                                                         <div className="grid grid-cols-2 gap-y-2 gap-x-4">
                                                                              {getPopularTypes(hoveredSubCat).map((type, idx) => (
                                                                                  <Link
                                                                                      key={idx}
                                                                                      to={`/shop?category=${hoveredSubCat}&subcategory=${type}`}
                                                                                      onClick={() => setIsMegaOpen(false)}
-                                                                                     className="text-[11px] text-gray-600 hover:text-primary hover:underline transition-colors leading-relaxed"
+                                                                                     className="text-[10.5px] text-gray-600 hover:text-primary hover:underline transition-colors leading-normal"
                                                                                  >
                                                                                      {type}
                                                                                  </Link>
                                                                              ))}
                                                                          </div>
                                                                          {hoveredSubCat?.toLowerCase() === 'rings' && (
-                                                                             <div className="mt-6">
+                                                                             <div className="mt-4">
                                                                                  <Link
                                                                                      to="/shop?category=RINGS"
                                                                                      onClick={() => setIsMegaOpen(false)}
-                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-4 py-2 font-mulish text-[10px] font-bold uppercase tracking-wider transition-all"
+                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-3 py-1.5 font-mulish text-[9px] font-bold uppercase tracking-wider transition-all"
                                                                                  >
                                                                                      VIEW ALL {products?.filter(p => p.category?.toLowerCase() === 'rings').length || '2303'} RING DESIGNS
                                                                                  </Link>
                                                                              </div>
                                                                          )}
                                                                          {(hoveredSubCat?.toLowerCase() === 'hand tools' || hoveredSubCat?.toLowerCase() === 'jewellery-tools' || hoveredSubCat?.toLowerCase() === 'tools') && (
-                                                                             <div className="mt-6">
+                                                                             <div className="mt-4">
                                                                                  <Link
                                                                                      to="/shop?category=Tools"
                                                                                      onClick={() => setIsMegaOpen(false)}
-                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-4 py-2 font-mulish text-[10px] font-bold uppercase tracking-wider transition-all"
+                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-3 py-1.5 font-mulish text-[9px] font-bold uppercase tracking-wider transition-all"
                                                                                  >
                                                                                      VIEW ALL PRECISION TOOLS
                                                                                  </Link>
                                                                              </div>
                                                                          )}
                                                                          {(hoveredSubCat?.toLowerCase() === 'laser machines' || hoveredSubCat?.toLowerCase() === 'laser-machines' || hoveredSubCat?.toLowerCase() === 'machines') && (
-                                                                             <div className="mt-6">
+                                                                             <div className="mt-4">
                                                                                  <Link
                                                                                      to="/shop?category=Machines"
                                                                                      onClick={() => setIsMegaOpen(false)}
-                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-4 py-2 font-mulish text-[10px] font-bold uppercase tracking-wider transition-all"
+                                                                                     className="inline-block border border-black text-black hover:bg-black hover:text-white px-3 py-1.5 font-mulish text-[9px] font-bold uppercase tracking-wider transition-all"
                                                                                  >
                                                                                      VIEW ALL SMART MACHINES
                                                                                  </Link>
@@ -528,16 +528,16 @@ const Navbar = () => {
 
                                                                      {/* Column 2: Price Range */}
                                                                      <div>
-                                                                         <h4 className="text-[11px] font-mulish font-black uppercase tracking-[0.2em] text-primary mb-4 pb-2 border-b border-pink-100">
+                                                                         <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.15em] text-primary mb-3 pb-1.5 border-b border-pink-100">
                                                                              By Price Range
                                                                          </h4>
-                                                                         <div className="flex flex-col gap-2.5">
+                                                                         <div className="flex flex-col gap-2">
                                                                              {getPriceRanges(hoveredSubCat).map((range, idx) => (
                                                                                  <Link
                                                                                      key={idx}
                                                                                      to={`/shop?category=${hoveredSubCat}&minPrice=${range.min}&maxPrice=${range.max}`}
                                                                                      onClick={() => setIsMegaOpen(false)}
-                                                                                     className="text-[11px] text-gray-600 hover:text-primary hover:underline transition-colors leading-relaxed"
+                                                                                     className="text-[10.5px] text-gray-600 hover:text-primary hover:underline transition-colors leading-normal"
                                                                                  >
                                                                                      {range.label}
                                                                                  </Link>
@@ -547,10 +547,10 @@ const Navbar = () => {
 
                                                                      {/* Column 3: Metals & Stones / Materials & Tech */}
                                                                      <div>
-                                                                         <h4 className="text-[11px] font-mulish font-black uppercase tracking-[0.2em] text-primary mb-4 pb-2 border-b border-pink-100">
+                                                                         <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.15em] text-primary mb-3 pb-1.5 border-b border-pink-100">
                                                                              By Build & Tech
                                                                          </h4>
-                                                                         <div className="flex flex-col gap-3">
+                                                                         <div className="flex flex-col gap-2.5">
                                                                              {getMetalsAndStones(hoveredSubCat).map((item, idx) => (
                                                                                  <Link
                                                                                      key={idx}
@@ -558,11 +558,11 @@ const Navbar = () => {
                                                                                      onClick={() => setIsMegaOpen(false)}
                                                                                      className="group flex flex-col gap-0.5"
                                                                                  >
-                                                                                     <span className="text-[11px] font-semibold text-gray-800 group-hover:text-primary transition-colors font-bold">
+                                                                                     <span className="text-[10.5px] font-semibold text-gray-800 group-hover:text-primary transition-colors font-bold">
                                                                                          {item.label}
                                                                                      </span>
                                                                                      {item.starting && (
-                                                                                         <span className="text-[9px] text-gray-400 group-hover:text-primary/70 italic transition-colors">
+                                                                                         <span className="text-[8.5px] text-gray-400 group-hover:text-primary/70 italic transition-colors">
                                                                                              Starting at {item.starting}
                                                                                          </span>
                                                                                      )}
@@ -574,28 +574,28 @@ const Navbar = () => {
                                                                      {/* Column 4: Browse Collections */}
                                                                      <div className="flex flex-col justify-between">
                                                                          <div>
-                                                                             <div className="flex justify-between items-center mb-4 pb-2 border-b border-pink-100">
-                                                                                 <h4 className="text-[11px] font-mulish font-black uppercase tracking-[0.2em] text-primary">
+                                                                             <div className="flex justify-between items-center mb-3 pb-1.5 border-b border-pink-100">
+                                                                                 <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.15em] text-primary">
                                                                                      Browse Collections
                                                                                  </h4>
                                                                                  <Link
                                                                                      to={`/shop?category=${hoveredSubCat}`}
                                                                                      onClick={() => setIsMegaOpen(false)}
-                                                                                     className="text-[9px] font-bold text-primary hover:underline uppercase tracking-wider"
+                                                                                     className="text-[8.5px] font-bold text-primary hover:underline uppercase tracking-wider"
                                                                                  >
                                                                                      View All &gt;&gt;
                                                                                  </Link>
                                                                              </div>
-                                                                             <div className="relative aspect-[1.5] rounded-xl overflow-hidden shadow-md group/banner border border-pink-100">
+                                                                             <div className="relative aspect-[1.8] rounded-lg overflow-hidden shadow-md group/banner border border-pink-100">
                                                                                  <img
                                                                                      src={getCollectionImage(hoveredSubCat)}
                                                                                      alt="Collection Banner"
                                                                                      className="w-full h-full object-cover transform transition-transform duration-700 group-hover/banner:scale-110"
                                                                                      crossOrigin="anonymous"
                                                                                  />
-                                                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
-                                                                                     <span className="text-[9px] font-bold text-primary tracking-widest uppercase mb-0.5">Featured Edit</span>
-                                                                                     <h5 className="text-white font-mulish italic text-base leading-tight font-medium">
+                                                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-3">
+                                                                                     <span className="text-[8px] font-bold text-primary tracking-widest uppercase mb-0.5">Featured Edit</span>
+                                                                                     <h5 className="text-white font-mulish italic text-sm leading-tight font-medium">
                                                                                          {getCollectionTitle(hoveredSubCat)}
                                                                                      </h5>
                                                                                  </div>
@@ -621,7 +621,7 @@ const Navbar = () => {
                             >
                                 <Link
                                     to="/shop?tag=coin"
-                                    className="text-[11px] font-normal uppercase text-black hover:text-[#C5A059] transition-all tracking-normal border-b-2 border-transparent hover:border-[#C5A059] pb-0.5 flex items-center gap-1 cursor-pointer"
+                                    className="text-[11px] font-normal uppercase text-black hover:text-primary transition-all tracking-normal border-b-2 border-transparent hover:border-primary pb-0.5 flex items-center gap-1 cursor-pointer"
                                 >
                                     Gold Coins
                                     <ChevronDown className={`w-3 h-3 transition-transform ${isCoinsOpen ? 'rotate-180' : ''}`} />
@@ -637,7 +637,7 @@ const Navbar = () => {
                                         >
                                             {/* Column 1: 24 Kt */}
                                             <div>
-                                                <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-[#C5A059] mb-3 pb-1 border-b border-pink-100">
+                                                <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-primary mb-3 pb-1 border-b border-pink-100">
                                                     24 Kt (995)
                                                 </h4>
                                                 <div className="flex flex-col gap-2">
@@ -646,7 +646,7 @@ const Navbar = () => {
                                                             key={weight}
                                                             to={`/shop?tag=coin&weight=${weight.replace(' gram', 'g')}`}
                                                             onClick={() => setIsCoinsOpen(false)}
-                                                            className="text-[10.5px] text-gray-600 hover:text-[#C5A059] transition-all font-medium font-mulish"
+                                                            className="text-[10.5px] text-gray-600 hover:text-primary transition-all font-medium font-mulish"
                                                         >
                                                             {weight}
                                                         </Link>
@@ -656,7 +656,7 @@ const Navbar = () => {
 
                                             {/* Column 2: 22 Kt */}
                                             <div>
-                                                <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-[#C5A059] mb-3 pb-1 border-b border-pink-100">
+                                                <h4 className="text-[10px] font-mulish font-black uppercase tracking-[0.2em] text-primary mb-3 pb-1 border-b border-pink-100">
                                                     22 Kt (916)
                                                 </h4>
                                                 <div className="flex flex-col gap-2">
@@ -665,7 +665,7 @@ const Navbar = () => {
                                                             key={weight}
                                                             to={`/shop?tag=coin&weight=${weight.replace(' gram', 'g')}`}
                                                             onClick={() => setIsCoinsOpen(false)}
-                                                            className="text-[10.5px] text-gray-600 hover:text-[#C5A059] transition-all font-medium font-mulish"
+                                                            className="text-[10.5px] text-gray-600 hover:text-primary transition-all font-medium font-mulish"
                                                         >
                                                             {weight}
                                                         </Link>
