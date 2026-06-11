@@ -364,7 +364,8 @@ const Shop = () => {
         if (selectedToolType !== 'All') {
             result = result.filter(p => 
                 (p.toolType?.toLowerCase() === selectedToolType.toLowerCase()) ||
-                (p.subcategory?.toLowerCase() === selectedToolType.toLowerCase())
+                (p.subcategory?.toLowerCase() === selectedToolType.toLowerCase()) ||
+                (p.category?.toLowerCase() === selectedToolType.toLowerCase())
             );
         }
 
@@ -478,6 +479,26 @@ const Shop = () => {
                         { name: 'Traditional', image: catRings },
                         { name: 'Gemstone', image: catRingsRuby },
                         { name: 'Diamond', image: diamondSolitaire }
+                    ]
+                };
+            } else if (catNameLower.includes('tool') && (!cat.subcategories || cat.subcategories.length === 0)) {
+                return {
+                    ...cat,
+                    subcategories: [
+                        { name: 'Measurement & Calibration', image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=600&auto=format&fit=crop' },
+                        { name: 'Precision Cutting & Piercing', image: 'https://images.unsplash.com/photo-1534224039826-c7a0eda0e6b3?q=80&w=600&auto=format&fit=crop' },
+                        { name: 'Polishing & Refinement', image: 'https://images.unsplash.com/photo-1581092162384-8987c1d64718?q=80&w=600&auto=format&fit=crop' },
+                        { name: 'Setting & Forging', image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?q=80&w=600&auto=format&fit=crop' }
+                    ]
+                };
+            } else if (catNameLower.includes('machine') && (!cat.subcategories || cat.subcategories.length === 0)) {
+                return {
+                    ...cat,
+                    subcategories: [
+                        { name: 'Laser Welding Systems', image: 'https://images.unsplash.com/photo-1581092162384-8987c1d64718?q=80&w=600&auto=format&fit=crop' },
+                        { name: 'Fiber Laser Engravers', image: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?q=80&w=600&auto=format&fit=crop' },
+                        { name: 'Induction Casting Units', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=600&auto=format&fit=crop' },
+                        { name: '3D Wax Printing', image: 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?q=80&w=600&auto=format&fit=crop' }
                     ]
                 };
             }
