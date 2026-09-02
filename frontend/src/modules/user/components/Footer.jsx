@@ -24,6 +24,7 @@ const Footer = () => {
         footerColumn3Title: 'Our World',
 
         footerExperienceLinks: [
+            { name: "Our Services", path: "/services" },
             { name: "Easy Returns", path: "/returns" },
             { name: "Contact Us", path: "/contact" },
             { name: "FAQs", path: "/help" },

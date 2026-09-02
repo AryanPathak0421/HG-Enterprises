@@ -5,6 +5,8 @@ import { useShop } from '../../../context/ShopContext';
 import hgLogo from '../assets/hg_logo_gold.png';
 import hgLogoPremium from '../assets/logo_final.jpg';
 import { motion, AnimatePresence } from 'framer-motion';
+import RecentlyViewedDropdown from './RecentlyViewedDropdown';
+import PopularSearchTags from './PopularSearchTags';
 
 // Premium menu banners and fallbacks
 import proposalBanner from '../assets/proposal_banner.png';
@@ -142,6 +144,13 @@ const getCollectionTitle = (hoveredSubCat) => {
     return 'Bridal Heritage - Complete Sets';
 };
 
+const getMegaMenuDepartment = (activeMegaCategory) => {
+    const dept = (activeMegaCategory?.department || 'Jewellery').toLowerCase();
+    if (dept === 'machines' || dept === 'machine') return 'machines';
+    if (dept === 'tools' || dept === 'tool') return 'tools';
+    return 'jewellery';
+};
+
 const Navbar = () => {
     const { cart, wishlist, user, userNotifications, isMenuOpen, toggleMenu, isSearchOpen, toggleSearch, categories, settings, products } = useShop();
     const location = useLocation();
@@ -207,7 +216,7 @@ const Navbar = () => {
 
     return (
         <>
-            <div className="w-full bg-white z-[100] relative">
+            <div className="w-full bg-white z-[100] relative" data-site-header>
                 {/* 1. Top Utility Header - Even more compact */}
                 <div className="hidden md:block bg-gray-50/50 border-b border-gray-100 py-0.5">
                     <div className="container mx-auto px-6 flex justify-between items-center text-[10px] font-normal text-gray-400 uppercase tracking-widest">
@@ -307,20 +316,22 @@ const Navbar = () => {
                                 aria-label="Toggle search"
                                 className="lg:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 group transition-colors"
                             >
-                                <Search className={`w-5 h-5 transition-colors ${isSearchOpen ? 'text-white' : 'text-white/90 group-hover:text-primary'}`} />
+                                <Search className={`w-5 h-5 transition-colors ${isSearchOpen ? 'text-white' : 'text-white/90 group-hover:text-[#EBCDD0]'}`} />
                             </button>
 
+                            <RecentlyViewedDropdown />
+
                             <Link to="/notifications" aria-label="View notifications" className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-white/10 relative group transition-colors">
-                                <Bell className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
+                                <Bell className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-[#EBCDD0] transition-colors" />
                                 <span className="absolute top-2 right-2 w-1.5 h-1.5 md:w-2 md:h-2 bg-primary rounded-full border-2 border-black"></span>
                             </Link>
 
                             <Link to="/stores" aria-label="Find a store" className="flex w-9 h-9 md:w-10 md:h-10 items-center justify-center rounded-full hover:bg-white/10 group transition-colors">
-                                <Store className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
+                                <Store className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-[#EBCDD0] transition-colors" />
                             </Link>
 
                             <Link to="/wishlist" aria-label="View wishlist" className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-white/10 relative group transition-colors">
-                                <Heart className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
+                                <Heart className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-[#EBCDD0] transition-colors" />
                                 {wishlist?.length > 0 && (
                                     <span className="absolute top-2 right-2 bg-primary text-white text-[7px] md:text-[8px] w-3 h-3 md:w-3.5 md:h-3.5 flex items-center justify-center rounded-full font-bold">
                                         {wishlist.length}
@@ -329,7 +340,7 @@ const Navbar = () => {
                             </Link>
 
                             <Link to="/cart" aria-label="View shopping bag" className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center hover:bg-white/10 rounded-full group transition-colors relative">
-                                <ShoppingBag className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-primary transition-colors" />
+                                <ShoppingBag className="w-4.5 h-4.5 md:w-5 md:h-5 text-white/90 group-hover:text-[#EBCDD0] transition-colors" />
                                 {cart?.length > 0 && (
                                     <span className="absolute top-2 right-2 bg-primary text-white text-[7px] md:text-[8px] w-3 h-3 md:w-3.5 md:h-3.5 flex items-center justify-center rounded-full font-bold">
                                         {cart.length}
@@ -338,7 +349,7 @@ const Navbar = () => {
                             </Link>
 
                             <Link to="/profile" aria-label="View profile" className="hidden md:flex w-10 h-10 items-center justify-center rounded-full hover:bg-white/10 group transition-colors">
-                                <User className="w-5 h-5 text-white/90 group-hover:text-primary transition-colors" />
+                                <User className="w-5 h-5 text-white/90 group-hover:text-[#EBCDD0] transition-colors" />
                             </Link>
 
                             {/* Top Hamburger Menu (Mobile) - Moved to Right */}
@@ -347,7 +358,7 @@ const Navbar = () => {
                                 aria-label="Toggle menu"
                                 className="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 group transition-colors"
                             >
-                                <Menu className="w-5 h-5 text-white group-hover:text-primary transition-colors" />
+                                <Menu className="w-5 h-5 text-white group-hover:text-[#EBCDD0] transition-colors" />
                             </button>
                         </div>
                     </div>
@@ -609,6 +620,14 @@ const Navbar = () => {
                                                 </motion.div>
                                             </AnimatePresence>
                                         </div>
+
+                                        {/* Explore guide — popular tags + explore links */}
+                                        <PopularSearchTags
+                                            variant="mega"
+                                            department={getMegaMenuDepartment(activeMegaCategory)}
+                                            subCategory={hoveredSubCat}
+                                            onLinkClick={() => setIsMegaOpen(false)}
+                                        />
                                     </div>
                                 </div>
                             </div>

@@ -109,7 +109,8 @@ const settingsSchema = new mongoose.Schema({
             'most-gifted': { id: 'most-gifted', label: 'Most Gifted Items', items: [] },
             'proposal-rings': { id: 'proposal-rings', label: 'Proposal Rings', items: [] },
             'curated-for-you': { id: 'curated-for-you', label: 'Curated For You', items: [] },
-            'style-it-your-way': { id: 'style-it-your-way', label: 'Style It Your Way', items: [] }
+            'style-it-your-way': { id: 'style-it-your-way', label: 'Style It Your Way', items: [] },
+            'services': { id: 'services', label: 'Our Services', subtitle: 'Expert care for your machines & precious jewelry', groups: [] }
         }
     },
 

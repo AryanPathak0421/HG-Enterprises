@@ -15,25 +15,30 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import watermarkLogo from '../../../assets/WhatsApp_Image_2026-03-12_at_1.38.09_PM__1_-removebg-preview.png';
+import PopularSearchTags from '../components/PopularSearchTags';
+import { getProductDepartment, buildPopularSearchLink, parseTagsString, getDepartmentLabel, resolveDepartmentFromCategory } from '../data/popularSearchData';
 
 const ProductDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { products, addToCart, wishlist, addToWishlist, removeFromWishlist, showNotification, coupons } = useShop();
+    const { products, addToCart, wishlist, addToWishlist, removeFromWishlist, showNotification, coupons, addToRecentlyViewed } = useShop();
     const product = products.find(p => p.id === id || p._id === id);
     const [appliedCoupon, setAppliedCoupon] = useState(null);
 
-    const categoryName = (product?.category?.name || product?.category || '').toString().toLowerCase();
-    const isJewelleryProduct = !categoryName.includes('tool') &&
-        !categoryName.includes('machine') &&
-        !categoryName.includes('measurement') &&
-        !categoryName.includes('optics') &&
-        !categoryName.includes('cutting') &&
-        !categoryName.includes('polishing') &&
-        !categoryName.includes('forging') &&
-        !categoryName.includes('setting') &&
-        !categoryName.includes('machinery');
+    const categoryName = (product?.category?.name || product?.category || '').toString();
+    const categoryNameLower = categoryName.toLowerCase();
+
+    const productDepartment = product?.department
+        ? resolveDepartmentFromCategory(product.department, null)
+        : getProductDepartment(categoryNameLower);
+
+    const isJewelleryProduct = productDepartment === 'jewellery';
+
+    const departmentLabel = getDepartmentLabel(productDepartment);
+    const departmentShopLink = `/shop?category=${encodeURIComponent(departmentLabel)}`;
+    const productCategoryLabel = categoryName || product?.subCategory || product?.subcategory || 'Collection';
+    const productSubCategory = product?.subcategory || product?.subCategory || product?.type || null;
 
     // Reviews states & handlers
     const [reviews, setReviews] = useState([]);
@@ -170,6 +175,12 @@ const ProductDetails = () => {
             fetchReviews();
         }
     }, [id]);
+
+    useEffect(() => {
+        if (product?.id || product?._id) {
+            addToRecentlyViewed(product.id || product._id);
+        }
+    }, [product?.id, product?._id, addToRecentlyViewed]);
 
     const handleAddReview = async (e) => {
         e.preventDefault();
@@ -856,7 +867,21 @@ const ProductDetails = () => {
                             >
                                 {isTagSection ? (
                                     <div className="px-3 py-3 text-[10.5px] text-[#2C6E9E] font-medium leading-relaxed tracking-wide">
-                                        {items[0]?.value}
+                                        {parseTagsString(items[0]?.value).length > 0 ? (
+                                            parseTagsString(items[0]?.value).map((tag, i, arr) => (
+                                                <span key={`${tag}-${i}`}>
+                                                    <Link
+                                                        to={buildPopularSearchLink(productDepartment, tag, productSubCategory ? { subcategory: productSubCategory } : {})}
+                                                        className="hover:underline"
+                                                    >
+                                                        {tag}
+                                                    </Link>
+                                                    {i < arr.length - 1 && ', '}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            items[0]?.value
+                                        )}
                                     </div>
                                 ) : (
                                     <div>
@@ -939,9 +964,14 @@ const ProductDetails = () => {
                     <div className="flex flex-wrap items-center gap-1.5 text-[9.5px] md:text-[10px] uppercase tracking-[0.18em] font-normal font-assistant text-[#709dbd]">
                         <Link to="/" className="hover:text-[#8B4356] transition-colors">Home</Link>
                         <span className="opacity-50">/</span>
-                        <Link to="/shop" className="hover:text-[#8B4356] transition-colors">Jewellery</Link>
+                        <Link to={departmentShopLink} className="hover:text-[#8B4356] transition-colors">{departmentLabel}</Link>
                         <span className="opacity-50">/</span>
-                        <span className="text-black/60 font-assistant">{product.subCategory || product.subcategory || product.category || 'Rings'}</span>
+                        <Link
+                            to={`/shop?category=${encodeURIComponent(productCategoryLabel)}`}
+                            className="hover:text-[#8B4356] transition-colors"
+                        >
+                            {productCategoryLabel}
+                        </Link>
                         <span className="opacity-50">/</span>
                         <span className="text-black font-assistant">{product.name}</span>
                     </div>
@@ -961,12 +991,13 @@ const ProductDetails = () => {
 
                     {/* 2. Left Column: Image Gallery - Sticky & Sharp Corners */}
                     <div className="lg:col-span-5 lg:sticky lg:top-20 w-full space-y-1.5 lg:pl-6">
+                        <div className="lg:pl-10 xl:pl-14">
                         <div className="px-4 lg:px-0">
                             <div
                                 onClick={() => setIsZoomed(!isZoomed)}
                                 onMouseMove={handleMouseMove}
                                 onMouseLeave={() => setIsZoomed(false)}
-                                className={`aspect-[1/1] bg-white rounded-[36px_4px_36px_4px] overflow-hidden shadow-sm relative group border border-[#F5E6E8]/30 max-h-[350px] mx-auto lg:ml-0 ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                                className={`aspect-[1/1] bg-white rounded-[36px_4px_36px_4px] overflow-hidden shadow-sm relative group border border-[#F5E6E8]/30 max-h-[350px] mx-auto lg:mx-0 ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
                             >
                                 <motion.img
                                     key={selectedImgIdx}
@@ -1030,6 +1061,7 @@ const ProductDetails = () => {
                                     <span className={`text-[5.5px] font-black uppercase tracking-widest transition-colors ${selectedImgIdx === (idx % productImages.length) ? 'text-[#8B4356]' : 'text-zinc-300'}`}>{label}</span>
                                 </button>
                             ))}
+                        </div>
                         </div>
 
                         {/* Seeker's Guide - Beautiful Trust badging card under image gallery */}
@@ -1647,6 +1679,14 @@ const ProductDetails = () => {
 
                     </div>
                 </div>
+
+                    {/* Popular search tags — jewellery, tools & machines */}
+                    <div className="mt-6 px-4 lg:px-0">
+                        <PopularSearchTags
+                            department={productDepartment}
+                            subCategory={productSubCategory}
+                        />
+                    </div>
 
                     {/* Related Products Section - Compact Gallery */}
                     <div className="mt-8 px-4 lg:px-0 mb-8">

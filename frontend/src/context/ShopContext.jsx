@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { Check } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from './AuthContext';
+import { mergeHomepageSections } from '../modules/user/data/homepageSectionDefaults';
 
 const ShopContext = createContext();
 
@@ -30,6 +31,10 @@ export const ShopProvider = ({ children }) => {
     });
     const [wishlist, setWishlist] = useState(() => {
         const saved = localStorage.getItem('hg_wishlist');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [recentlyViewedIds, setRecentlyViewedIds] = useState(() => {
+        const saved = localStorage.getItem('hg_recently_viewed');
         return saved ? JSON.parse(saved) : [];
     });
 
@@ -98,9 +103,7 @@ export const ShopProvider = ({ children }) => {
                 setCoupons(coupRes.data);
                 setBanners(normalizedBanners);
                 setSettings(setRes.data);
-                if (setRes.data?.homepageSections) {
-                    setHomepageSections(setRes.data.homepageSections);
-                }
+                setHomepageSections(mergeHomepageSections(setRes.data?.homepageSections || {}));
             } catch (error) {
                 console.error("Error fetching data:", error);
             } finally {
@@ -530,6 +533,21 @@ export const ShopProvider = ({ children }) => {
         showNotification("Notification removed");
     };
 
+    const addToRecentlyViewed = useCallback((productId) => {
+        if (!productId) return;
+        setRecentlyViewedIds((prev) => {
+            const next = [productId, ...prev.filter((id) => id !== productId)].slice(0, 12);
+            localStorage.setItem('hg_recently_viewed', JSON.stringify(next));
+            return next;
+        });
+    }, []);
+
+    const getRecentlyViewed = useCallback(() => {
+        return recentlyViewedIds
+            .map((pid) => products.find((p) => p.id === pid || p._id === pid))
+            .filter(Boolean);
+    }, [recentlyViewedIds, products]);
+
     return (
         <ShopContext.Provider value={{
             products, categories, packs, coupons, banners, cart, wishlist, orders, addresses, supportTickets,
@@ -545,7 +563,8 @@ export const ShopProvider = ({ children }) => {
             createCoupon, updateCoupon, deleteCoupon, deleteProduct, toggleProductStatus,
             getProductById, addProduct, updateProduct,
             getOrderById, updateOrderStatus, getReturns, userReviews,
-            refreshOrders: fetchPrivateData
+            refreshOrders: fetchPrivateData,
+            addToRecentlyViewed, getRecentlyViewed, recentlyViewedIds
         }}>
             {children}
             {/* Custom Toast Notification */}

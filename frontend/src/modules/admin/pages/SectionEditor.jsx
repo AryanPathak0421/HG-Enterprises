@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../../../context/ShopContext';
 import PageHeader from '../components/common/PageHeader';
+import { DEFAULT_HOMEPAGE_SECTIONS } from '../../../modules/user/data/homepageSectionDefaults';
 import CategoryShowcaseEditor from '../components/editors/CategoryShowcaseEditor';
+import CraftsmanshipEditor from '../components/editors/CraftsmanshipEditor';
+import AdvantageEditor from '../components/editors/AdvantageEditor';
+import ServicesEditor from '../components/editors/ServicesEditor';
 
 const SectionEditor = () => {
     const { id } = useParams();
@@ -14,8 +18,9 @@ const SectionEditor = () => {
     useEffect(() => {
         if (homepageSections && homepageSections[id]) {
             setSectionData(homepageSections[id]);
+        } else if (DEFAULT_HOMEPAGE_SECTIONS[id]) {
+            setSectionData(DEFAULT_HOMEPAGE_SECTIONS[id]);
         } else {
-            // Keep sectionData minimally populated so editor can start empty
             setSectionData({ label: id, items: [] });
         }
     }, [id, homepageSections]);
@@ -43,6 +48,12 @@ const SectionEditor = () => {
             case 'curated-for-you':
             case 'style-it-your-way':
                 return <CategoryShowcaseEditor sectionData={sectionData} onSave={handleSave} defaultItems={[]} />;
+            case 'design-craftsmanship':
+                return <CraftsmanshipEditor sectionData={sectionData} onSave={handleSave} />;
+            case 'hg-advantage':
+                return <AdvantageEditor sectionData={sectionData} onSave={handleSave} />;
+            case 'services':
+                return <ServicesEditor sectionData={sectionData} onSave={handleSave} />;
             default:
                 return (
                     <div className="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-300">

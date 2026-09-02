@@ -115,11 +115,24 @@ const UserDetailPage = () => {
                                 </div>
                                 <div className="flex items-center gap-4 text-left">
                                     <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
+                                        <UserIcon size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Gender</p>
+                                        <p className="text-sm font-bold text-footerBg">{user.gender || 'Not specified'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4 text-left">
+                                    <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
                                         <Calendar size={18} />
                                     </div>
                                     <div>
                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Member Since</p>
-                                        <p className="text-sm font-bold text-footerBg">Jan 2024</p>
+                                        <p className="text-sm font-bold text-footerBg">
+                                            {user.createdAt
+                                                ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+                                                : 'N/A'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>

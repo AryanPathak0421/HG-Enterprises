@@ -5,6 +5,10 @@ import { useShop } from '../../../context/ShopContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import CategoryShowcase from '../components/CategoryShowcase';
+import OfferBannerCarousel from '../components/OfferBannerCarousel';
+import HandpickedForYou from '../components/HandpickedForYou';
+import RecommendedForYou from '../components/RecommendedForYou';
+import GoldMinePlanBanner from '../components/GoldMinePlanBanner';
 import PriceRangeShowcase from '../components/PriceRangeShowcase';
 import PerfectGift from '../components/PerfectGift';
 import NewLaunchSection from '../components/NewLaunchSection';
@@ -19,6 +23,9 @@ import BrandPromises from '../components/BrandPromises';
 import HGPromise from '../components/HGPromise';
 import FAQSection from '../components/FAQSection';
 import ChitChatSection from '../components/ChitChatSection';
+import TestimonialSection from '../components/TestimonialSection';
+import HGAdvantageSection from '../components/HGAdvantageSection';
+import ServicesSection from '../components/ServicesSection';
 
 import spotlightMain from '../assets/spotlight_silver_main.png';
 import spotlightHover from '../assets/spotlight_silver_hover.png';
@@ -206,11 +213,23 @@ const Home = () => {
             {/* CATEGORY SHOWCASE - Replaces Mobile Stories */}
             <CategoryShowcase />
 
+            {/* OFFER BANNERS - BlueStone-style carousel */}
+            <OfferBannerCarousel />
+
             {/* PRICE RANGE SHOWCASE - Luxury Within Reach */}
             <PriceRangeShowcase />
 
             {/* NEW LAUNCH / LIMITED EDITION SECTION */}
             <NewLaunchSection />
+
+            {/* HANDPICKED FOR YOU - BlueStone product grid with category tabs */}
+            <HandpickedForYou />
+
+            {/* RECOMMENDED FOR YOU - BlueStone horizontal product row */}
+            <RecommendedForYou />
+
+            {/* GOLD MINE 10+1 MONTHLY PLAN BANNER */}
+            <GoldMinePlanBanner />
 
             {/* PERFECT GIFT SECTION */}
             <PerfectGift />
@@ -239,8 +258,17 @@ const Home = () => {
             {/* ALL PRODUCTS SECTION */}
             <AllProducts />
 
+            {/* SERVICES — Machine & Jewelry */}
+            <ServicesSection />
+
+            {/* THE HG ADVANTAGE — compact BlueStone-style mosaic grid */}
+            <HGAdvantageSection />
+
             {/* BRAND PROMISES SECTION (Why Choose Us) */}
             <BrandPromises />
+
+            {/* CUSTOMER STORIES - BlueStone #HGAndMe clothesline */}
+            <TestimonialSection />
 
             {/* HG PROMISE SECTION */}
             <HGPromise />

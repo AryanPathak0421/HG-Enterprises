@@ -11,6 +11,7 @@ import CollectionSubcategories from './modules/user/pages/CollectionSubcategorie
 import Cart from './modules/user/pages/Cart';
 import ProductDetails from './modules/user/pages/ProductDetails';
 import Login from './modules/user/pages/Login';
+import ServicesPage from './modules/user/pages/ServicesPage';
 import Wishlist from './modules/user/pages/Wishlist';
 import Profile from './modules/user/pages/Profile';
 import AdminDashboard from './modules/admin/pages/Dashboard';
@@ -25,6 +26,7 @@ import Notifications from './modules/user/pages/Notifications';
 import AnnouncementBar from './modules/user/components/AnnouncementBar';
 import BlogsPage from './modules/user/pages/BlogsPage';
 import OffersPage from './modules/user/pages/OffersPage';
+import OfferLandingPage from './modules/user/pages/OfferLandingPage';
 import SmoothScroll from './components/SmoothScroll';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
@@ -140,6 +142,8 @@ const AppContent = () => {
             <Route path="/warranty-info" element={<WarrantyInfo />} />
             <Route path="/customization" element={<CustomizationPage />} />
             <Route path="/stores" element={<StoreLocator />} />
+            <Route path="/services/:category/:slug" element={<ServicesPage />} />
+            <Route path="/services" element={<ServicesPage />} />
             <Route path="/craft" element={<CraftsmanshipPage />} />
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -147,6 +151,7 @@ const AppContent = () => {
             <Route path="/trending" element={<Shop />} />
             <Route path="/category/:category" element={<Shop />} />
             <Route path="/blogs" element={<BlogsPage />} />
+            <Route path="/offers/:slug" element={<OfferLandingPage />} />
             <Route path="/offers" element={<OffersPage />} />
 
             {/* Admin Routes */}

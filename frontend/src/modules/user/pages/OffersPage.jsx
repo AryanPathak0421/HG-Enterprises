@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Tag, Clock, ArrowRight, Sparkles, Percent, Gift, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../../utils/api';
+import { DEFAULT_BANNER_OFFERS, getOfferLink } from '../data/offerLandingData';
 
 const CountdownTimer = ({ expiryDate }) => {
     const [timeLeft, setTimeLeft] = useState({
@@ -112,7 +113,37 @@ const OffersPage = () => {
                         </button>
                     ))}
                 </div>
-            </div>            {/* Offers Grid - Compact Cards */}
+            </div>
+
+            {/* Featured offer banners */}
+            <div className="container mx-auto px-4 py-8 md:py-10">
+                <h2 className="font-serif text-xl md:text-2xl text-[#1e3a5f] text-center mb-6">
+                    Featured Offers
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+                    {DEFAULT_BANNER_OFFERS.map((banner) => (
+                        <Link
+                            key={banner.id}
+                            id={`offer-card-${banner.id}`}
+                            to={getOfferLink(banner.id)}
+                            className="group block rounded-[18px] overflow-hidden border border-[#e8e0d5] shadow-sm hover:shadow-lg transition-shadow bg-white"
+                        >
+                            <img
+                                src={banner.image}
+                                alt={banner.alt}
+                                className="w-full h-36 md:h-40 object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                            />
+                            <div className="p-3 text-center">
+                                <span className="text-[10px] uppercase tracking-widest text-[#1e3a5f]/60 font-bold">
+                                    View Offer Details
+                                </span>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            </div>
+
+            {/* Offers Grid - Compact Cards */}
             <div className="container mx-auto px-4 py-8 md:py-12">
                 <AnimatePresence mode="popLayout">
                     {filteredDeals.length > 0 ? (
@@ -244,4 +275,3 @@ const OffersPage = () => {
 };
 
 export default OffersPage;
-;

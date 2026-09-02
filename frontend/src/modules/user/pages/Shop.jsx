@@ -3,11 +3,19 @@ import ProductCard from '../components/ProductCard';
 import { useShop } from '../../../context/ShopContext';
 import {
     UserCircle, ChevronRight, Search, X, SlidersHorizontal, Check,
-    Image as ImageLucide
+    Image as ImageLucide, MapPin
 } from 'lucide-react';
+import {
+    getCityFromPincode,
+    isProductAvailableInPincode,
+    getStoreAreaLabel,
+    isValidPincodeInput,
+} from '../data/storeLocatorData';
 import { useLocation, useNavigate, Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FILTER_CATEGORIES, MACHINE_FILTERS, TOOL_FILTERS } from '../data/filterData';
+import PopularSearchTags from '../components/PopularSearchTags';
+import { getProductDepartment, resolveDepartmentFromCategory, getDepartmentLabel } from '../data/popularSearchData';
 
 // Premium banner asset
 import proposalBanner from '../assets/proposal_banner.png';
@@ -65,6 +73,12 @@ const Shop = () => {
     const [sortBy, setSortBy] = useState('POPULAR');
     const [priceRange, setPriceRange] = useState({ min: 0, max: 500000 }); // Dual price slider support
     const [expandedCategory, setExpandedCategory] = useState(null);
+
+    // Designs in Store — pincode filter
+    const [productViewMode, setProductViewMode] = useState('all'); // 'all' | 'inStore'
+    const [storePincodeInput, setStorePincodeInput] = useState('');
+    const [appliedStorePincode, setAppliedStorePincode] = useState('');
+    const [pincodeError, setPincodeError] = useState('');
     
     // Customization Box States
     const [showCustomization, setShowCustomization] = useState(true);
@@ -166,9 +180,22 @@ const Shop = () => {
         // URL Parameter Filters (from Offers Page)
         const showOnlyOffers = searchParams.get('offers') === 'true';
         const tagFilter = searchParams.get('tag');
+        const searchQuery = searchParams.get('search');
 
         if (showOnlyOffers) {
             result = result.filter(p => p.originalPrice && p.originalPrice > p.price);
+        }
+
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(p =>
+                (p.name && p.name.toLowerCase().includes(q)) ||
+                (p.category && p.category.toString().toLowerCase().includes(q)) ||
+                ((p.subcategory || p.subCategory) && (p.subcategory || p.subCategory).toString().toLowerCase().includes(q)) ||
+                (p.type && p.type.toLowerCase().includes(q)) ||
+                (p.tag && p.tag.toLowerCase().includes(q)) ||
+                (p.collection && p.collection.toLowerCase().includes(q))
+            );
         }
 
         if (tagFilter) {
@@ -385,6 +412,10 @@ const Shop = () => {
         // Price Filter
         result = result.filter(p => p.price >= priceRange.min && p.price <= priceRange.max);
 
+        if (productViewMode === 'inStore' && appliedStorePincode) {
+            result = result.filter((p) => isProductAvailableInPincode(p, appliedStorePincode));
+        }
+
         if (sortBy === 'PRICE LOW TO HIGH') result.sort((a, b) => a.price - b.price);
         else if (sortBy === 'PRICE HIGH TO LOW') result.sort((a, b) => b.price - a.price);
         else if (sortBy === 'POPULAR') result.sort((a, b) => b.rating - a.rating);
@@ -392,11 +423,132 @@ const Shop = () => {
         else if (sortBy === 'DISCOUNT') result.sort((a, b) => (b.discount || 0) - (a.discount || 0));
 
         return result;
-    }, [selectedCategory, selectedSubCategory, selectedType, selectedGender, selectedMetal, selectedOffers, selectedGoldPurity, selectedStones, selectedOccasion, selectedNumOfStones, selectedDesign, selectedStoneColor, selectedZodiac, selectedStoneShape, selectedCollections, selectedTanmaniya, selectedCharacteristics, selectedMachineType, selectedCondition, selectedCountry, selectedOperation, selectedHorsepower, selectedPhase, selectedBrand, selectedToolType, selectedSubTool, selectedToolBrand, priceRange, sortBy, location.search]);
+    }, [selectedCategory, selectedSubCategory, selectedType, selectedGender, selectedMetal, selectedOffers, selectedGoldPurity, selectedStones, selectedOccasion, selectedNumOfStones, selectedDesign, selectedStoneColor, selectedZodiac, selectedStoneShape, selectedCollections, selectedTanmaniya, selectedCharacteristics, selectedMachineType, selectedCondition, selectedCountry, selectedOperation, selectedHorsepower, selectedPhase, selectedBrand, selectedToolType, selectedSubTool, selectedToolBrand, priceRange, sortBy, location.search, products, productViewMode, appliedStorePincode]);
 
     const pageTitle = useMemo(() => {
         return selectedSubCategory || selectedCategory || 'Categories Master';
     }, [selectedCategory, selectedSubCategory]);
+
+    const shopDepartment = useMemo(() => {
+        const catData = categories.find(
+            (c) => c.name?.toLowerCase() === (openCategory || selectedCategory || '').toLowerCase()
+        );
+        return resolveDepartmentFromCategory(openCategory || selectedCategory || '', catData);
+    }, [openCategory, selectedCategory, categories]);
+
+    const activeFilters = useMemo(() => {
+        const chips = [];
+        const addChip = (label, clear) => {
+            if (label && label !== 'All') chips.push({ id: label, label, clear });
+        };
+
+        if (selectedSubCategory) {
+            addChip(selectedSubCategory, () => {
+                setSelectedSubCategory(null);
+                setSelectedType('All');
+            });
+        }
+        if (selectedType && selectedType !== 'All' && selectedType !== selectedSubCategory) {
+            addChip(selectedType, () => setSelectedType('All'));
+        }
+        if (selectedMetal !== 'All') addChip(selectedMetal, () => setSelectedMetal('All'));
+        if (selectedGender !== 'All') addChip(selectedGender, () => setSelectedGender('All'));
+        if (selectedOffers !== 'All') addChip(selectedOffers, () => setSelectedOffers('All'));
+        if (selectedGoldPurity !== 'All') addChip(selectedGoldPurity, () => setSelectedGoldPurity('All'));
+        if (selectedStones !== 'All') addChip(selectedStones, () => setSelectedStones('All'));
+        if (selectedOccasion !== 'All') addChip(selectedOccasion, () => setSelectedOccasion('All'));
+        if (selectedNumOfStones !== 'All') addChip(selectedNumOfStones, () => setSelectedNumOfStones('All'));
+        if (selectedDesign !== 'All') addChip(selectedDesign, () => setSelectedDesign('All'));
+        if (selectedStoneColor !== 'All') addChip(selectedStoneColor, () => setSelectedStoneColor('All'));
+        if (selectedZodiac !== 'All') addChip(selectedZodiac, () => setSelectedZodiac('All'));
+        if (selectedStoneShape !== 'All') addChip(selectedStoneShape, () => setSelectedStoneShape('All'));
+        if (selectedCollections !== 'All') addChip(selectedCollections, () => setSelectedCollections('All'));
+        if (selectedTanmaniya !== 'All') addChip(selectedTanmaniya, () => setSelectedTanmaniya('All'));
+        if (selectedCharacteristics !== 'All') addChip(selectedCharacteristics, () => setSelectedCharacteristics('All'));
+        if (selectedMachineType !== 'All') addChip(selectedMachineType, () => setSelectedMachineType('All'));
+        if (selectedCondition !== 'All') addChip(selectedCondition, () => setSelectedCondition('All'));
+        if (selectedCountry !== 'All') addChip(selectedCountry, () => setSelectedCountry('All'));
+        if (selectedOperation !== 'All') addChip(selectedOperation, () => setSelectedOperation('All'));
+        if (selectedHorsepower !== 'All') addChip(selectedHorsepower, () => setSelectedHorsepower('All'));
+        if (selectedPhase !== 'All') addChip(selectedPhase, () => setSelectedPhase('All'));
+        if (selectedBrand !== 'All') addChip(selectedBrand, () => setSelectedBrand('All'));
+        if (selectedToolType !== 'All') addChip(selectedToolType, () => setSelectedToolType('All'));
+        if (selectedSubTool !== 'All') addChip(selectedSubTool, () => setSelectedSubTool('All'));
+        if (selectedToolBrand !== 'All') addChip(selectedToolBrand, () => setSelectedToolBrand('All'));
+
+        const searchQuery = searchParams.get('search');
+        if (searchQuery) {
+            chips.push({
+                id: `search-${searchQuery}`,
+                label: searchQuery,
+                clear: () => {
+                    const params = new URLSearchParams(location.search);
+                    params.delete('search');
+                    navigate(`/shop?${params.toString()}`);
+                },
+            });
+        }
+
+        if (priceRange.min > 0 || priceRange.max < 500000) {
+            chips.push({
+                id: 'price-range',
+                label: `₹${priceRange.min.toLocaleString('en-IN')} – ₹${priceRange.max.toLocaleString('en-IN')}`,
+                clear: () => setPriceRange({ min: 0, max: 500000 }),
+            });
+        }
+
+        if (productViewMode === 'inStore' && appliedStorePincode) {
+            const areaLabel = getStoreAreaLabel(appliedStorePincode);
+            chips.push({
+                id: 'store-pincode',
+                label: areaLabel ? `In Store: ${areaLabel}` : `Pincode: ${appliedStorePincode}`,
+                clear: () => {
+                    setAppliedStorePincode('');
+                    setStorePincodeInput('');
+                    setPincodeError('');
+                },
+            });
+        }
+
+        return chips;
+    }, [
+        selectedSubCategory, selectedType, selectedMetal, selectedGender, selectedOffers,
+        selectedGoldPurity, selectedStones, selectedOccasion, selectedNumOfStones, selectedDesign,
+        selectedStoneColor, selectedZodiac, selectedStoneShape, selectedCollections, selectedTanmaniya,
+        selectedCharacteristics, selectedMachineType, selectedCondition, selectedCountry,
+        selectedOperation, selectedHorsepower, selectedPhase, selectedBrand, selectedToolType,
+        selectedSubTool, selectedToolBrand, priceRange, location.search, navigate,
+        productViewMode, appliedStorePincode,
+    ]);
+
+    const handleApplyStorePincode = () => {
+        const trimmed = storePincodeInput.trim();
+        if (!trimmed) {
+            setPincodeError('Please enter your 6-digit pincode');
+            return;
+        }
+        if (!isValidPincodeInput(trimmed)) {
+            setPincodeError('No HG store found in this area. Try Mumbai, Delhi, Pune, etc.');
+            return;
+        }
+        setPincodeError('');
+        setAppliedStorePincode(trimmed);
+        console.log('[Shop] Designs in Store — showing designs near', getStoreAreaLabel(trimmed));
+    };
+
+    const handleSelectAllProducts = () => {
+        setProductViewMode('all');
+        setAppliedStorePincode('');
+        setStorePincodeInput('');
+        setPincodeError('');
+    };
+
+    const handleSelectDesignsInStore = () => {
+        setProductViewMode('inStore');
+        setPincodeError('');
+    };
+
+    const storeAreaLabel = appliedStorePincode ? getStoreAreaLabel(appliedStorePincode) : null;
 
     const enhancedCategories = useMemo(() => {
         return categories.map(cat => {
@@ -516,32 +668,26 @@ const Shop = () => {
 
     const SidebarContent = () => {
         const currentCatData = enhancedCategories.find(c => c.name?.toLowerCase() === openCategory?.toLowerCase());
-        const catNameLower = openCategory?.toLowerCase() || '';
         
-        // Robust department detection
-        let department = 'jewellery';
-        if (currentCatData?.department) {
-            department = currentCatData.department.toLowerCase();
-        } else if (['machines', 'machine', 'laser'].some(k => catNameLower.includes(k))) {
-            department = 'machines';
-        } else if (['tools', 'tool', 'equipment', 'industrial'].some(k => catNameLower.includes(k))) {
-            department = 'tools';
-        }
-        
-        // Normalize department names
-        if (department === 'machine') department = 'machines';
-        if (department === 'tool') department = 'tools';
+        // Robust department detection — Tools/Machines tabs must not show Jewellery
+        let department = resolveDepartmentFromCategory(openCategory || selectedCategory || '', currentCatData);
 
         const isJewelry = department === 'jewellery';
         const isMachine = department === 'machines';
         const isTool = department === 'tools';
 
-        // Filter the main categories list to only show categories from the current department
+        // Filter categories — when browsing a department (Tools/Machines), show all in that dept
         const departmentCategories = enhancedCategories.filter(cat => {
-            const catDept = (cat.department || 'Jewellery').toLowerCase();
-            const normalizedCatDept = catDept === 'machine' ? 'machines' : (catDept === 'tool' ? 'tools' : catDept);
-            return normalizedCatDept === department;
+            const catDept = resolveDepartmentFromCategory(cat.name, cat);
+            return catDept === department;
         });
+
+        const sidebarCategoryHeading =
+            department === 'machines'
+                ? 'Machine Categories'
+                : department === 'tools'
+                  ? 'Tool Categories'
+                  : 'Jewellery Categories';
 
         const jewelryFilterGroups = [
             { id: 'price', label: 'Price', type: 'price' },
@@ -596,7 +742,7 @@ const Shop = () => {
                     {/* Categories (Filtered by Department) */}
                     <div className="border-b border-gray-100 pb-3">
                         <h4 className="text-xs font-bold text-gray-800 mb-2 uppercase tracking-tight">
-                            {department === 'machines' ? 'Machine Categories' : (department === 'tools' ? 'Tool Categories' : 'Jewellery Categories')}
+                            {sidebarCategoryHeading}
                         </h4>
                         <div className="flex flex-col gap-0.5">
                             {departmentCategories.map(cat => (
@@ -625,6 +771,10 @@ const Shop = () => {
                                                                 setSelectedType(newVal || 'All');
                                                                 if (isMachine) setSelectedMachineType(newVal || 'All');
                                                                 if (isTool) setSelectedToolType(newVal || 'All');
+                                                                const params = new URLSearchParams();
+                                                                params.set('category', selectedCategory || getDepartmentLabel(department));
+                                                                if (newVal) params.set('subcategory', newVal);
+                                                                navigate(`/shop?${params.toString()}`);
                                                             }}
                                                             className={`flex flex-col items-center gap-0.5 p-1 rounded transition-all duration-300 ${selectedSubCategory === sub.name ? 'bg-white shadow-sm ring-1 ring-blue-600' : 'bg-transparent hover:bg-gray-100'}`}
                                                         >
@@ -722,10 +872,33 @@ const Shop = () => {
                     <Link to="/" className="hover:text-[#337ab7] transition-colors">Home</Link>
                     <span className="opacity-20">/</span>
                     <Link to="/shop" className="hover:text-[#337ab7] transition-colors text-zinc-400">Categories</Link>
-                    {selectedCategory !== 'All' && (
+                    {selectedCategory && selectedCategory !== 'All' && (
                         <React.Fragment>
                             <span className="opacity-20">/</span>
-                            <Link to={`/shop?category=${selectedCategory}`} className="hover:text-[#337ab7] transition-colors text-[#337ab7]/60 tracking-[0.2em]">{selectedCategory}</Link>
+                            {['Tools', 'Machines', 'Jewellery'].includes(selectedCategory) ? (
+                                <Link
+                                    to={`/shop?category=${encodeURIComponent(selectedCategory)}`}
+                                    className="hover:text-[#337ab7] transition-colors text-[#337ab7]/60 tracking-[0.2em]"
+                                >
+                                    {selectedCategory}
+                                </Link>
+                            ) : (
+                                <React.Fragment>
+                                    <Link
+                                        to={`/shop?category=${encodeURIComponent(getDepartmentLabel(shopDepartment))}`}
+                                        className="hover:text-[#337ab7] transition-colors text-[#337ab7]/60 tracking-[0.2em]"
+                                    >
+                                        {getDepartmentLabel(shopDepartment)}
+                                    </Link>
+                                    <span className="opacity-20">/</span>
+                                    <Link
+                                        to={`/shop?category=${encodeURIComponent(selectedCategory)}`}
+                                        className="hover:text-[#337ab7] transition-colors text-[#337ab7]/60 tracking-[0.2em]"
+                                    >
+                                        {selectedCategory}
+                                    </Link>
+                                </React.Fragment>
+                            )}
                         </React.Fragment>
                     )}
                     {selectedSubCategory && (
@@ -751,37 +924,152 @@ const Shop = () => {
                     </button>
                 </div>
 
-                {/* Pink Bar (Options) */}
-                <div className="bg-[#fff0f2] p-2 flex items-center justify-between gap-4 mb-2 text-xs overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                    <div className="flex gap-2 shrink-0">
-                        <button className="bg-[#337ab7] text-white px-3 py-1 rounded-sm uppercase text-[10px] shrink-0">All</button>
-                        <button className="bg-white text-gray-700 px-3 py-1 rounded-sm border border-gray-200 uppercase text-[10px] shrink-0">Designs in Store</button>
-                    </div>
-                    <div className="flex gap-2 items-center shrink-0">
-                        <button 
-                            onClick={() => {
-                                const pincode = prompt("Enter your Pincode:");
-                                if (pincode) {
-                                    alert(`Pincode set to ${pincode}`);
-                                }
-                            }}
-                            className="bg-[#337ab7] text-white px-3 py-1 rounded-sm text-[10px] flex items-center gap-1 shrink-0"
-                        >
-                            <span className="icon">📍</span> Pincode
-                        </button>
-                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-sm px-2 py-0.5 shrink-0">
-                            <span className="text-[9px] font-bold uppercase text-gray-400 whitespace-nowrap">Sort By:</span>
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                className="bg-transparent border-none text-[10px] font-bold uppercase text-[#337ab7] focus:ring-0 cursor-pointer p-0 min-w-[75px]"
+                {/* Active sidebar filters */}
+                {activeFilters.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 mb-2 px-1">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 shrink-0">
+                            Selected:
+                        </span>
+                        {activeFilters.map((chip) => (
+                            <button
+                                key={chip.id}
+                                type="button"
+                                onClick={chip.clear}
+                                className="inline-flex items-center gap-1.5 bg-[#eef6fc] text-[#337ab7] border border-[#337ab7]/20 px-2.5 py-1 rounded-sm text-[10px] font-medium uppercase tracking-wide hover:bg-[#337ab7] hover:text-white transition-colors"
                             >
-                                {["WHAT'S NEW", "POPULAR", "PRICE LOW TO HIGH", "PRICE HIGH TO LOW", "DISCOUNT"].map(opt => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                            </select>
+                                {chip.label}
+                                <X className="w-3 h-3" />
+                            </button>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedSubCategory(null);
+                                setSelectedType('All');
+                                setSelectedMetal('All');
+                                setSelectedGender('All');
+                                setSelectedOffers('All');
+                                setSelectedGoldPurity('All');
+                                setSelectedStones('All');
+                                setSelectedOccasion('All');
+                                setSelectedNumOfStones('All');
+                                setSelectedDesign('All');
+                                setSelectedStoneColor('All');
+                                setSelectedZodiac('All');
+                                setSelectedStoneShape('All');
+                                setSelectedCollections('All');
+                                setSelectedTanmaniya('All');
+                                setSelectedCharacteristics('All');
+                                setSelectedMachineType('All');
+                                setSelectedCondition('All');
+                                setSelectedCountry('All');
+                                setSelectedOperation('All');
+                                setSelectedHorsepower('All');
+                                setSelectedPhase('All');
+                                setSelectedBrand('All');
+                                setSelectedToolType('All');
+                                setSelectedSubTool('All');
+                                setSelectedToolBrand('All');
+                                setPriceRange({ min: 0, max: 500000 });
+                                setProductViewMode('all');
+                                setAppliedStorePincode('');
+                                setStorePincodeInput('');
+                                setPincodeError('');
+                            }}
+                            className="text-[9px] font-bold uppercase tracking-wider text-gray-400 hover:text-[#337ab7] underline"
+                        >
+                            Clear all
+                        </button>
+                    </div>
+                )}
+
+                {/* Pink Bar (Options) */}
+                <div className="bg-[#fff0f2] p-2 flex flex-col gap-2 mb-2 text-xs">
+                    <div className="flex items-center justify-between gap-4 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        <div className="flex gap-2 shrink-0 items-center">
+                            <button
+                                type="button"
+                                onClick={handleSelectAllProducts}
+                                className={`px-3 py-1 rounded-sm uppercase text-[10px] shrink-0 transition-colors ${
+                                    productViewMode === 'all'
+                                        ? 'bg-[#337ab7] text-white'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:border-[#337ab7]/40'
+                                }`}
+                            >
+                                All
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSelectDesignsInStore}
+                                className={`px-3 py-1 rounded-sm uppercase text-[10px] shrink-0 transition-colors ${
+                                    productViewMode === 'inStore'
+                                        ? 'bg-[#337ab7] text-white'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:border-[#337ab7]/40'
+                                }`}
+                            >
+                                Designs in Store
+                            </button>
+                        </div>
+                        <div className="flex gap-2 items-center shrink-0">
+                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-sm px-2 py-0.5 shrink-0">
+                                <span className="text-[9px] font-bold uppercase text-gray-400 whitespace-nowrap">Sort By:</span>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="bg-transparent border-none text-[10px] font-bold uppercase text-[#337ab7] focus:ring-0 cursor-pointer p-0 min-w-[75px]"
+                                >
+                                    {["WHAT'S NEW", "POPULAR", "PRICE LOW TO HIGH", "PRICE HIGH TO LOW", "DISCOUNT"].map(opt => (
+                                        <option key={opt} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
+
+                    {productViewMode === 'inStore' && (
+                        <div className="flex flex-wrap items-center gap-2 px-0.5">
+                            <div className={`flex items-center bg-white border rounded-sm overflow-hidden h-8 flex-1 min-w-[200px] max-w-md ${
+                                pincodeError ? 'border-red-300' : 'border-gray-200'
+                            }`}>
+                                <MapPin className="w-3.5 h-3.5 text-[#337ab7] ml-2 shrink-0" strokeWidth={2} />
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    placeholder="Enter your pincode"
+                                    value={storePincodeInput}
+                                    onChange={(e) => {
+                                        setStorePincodeInput(e.target.value.replace(/\D/g, '').slice(0, 6));
+                                        if (pincodeError) setPincodeError('');
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleApplyStorePincode();
+                                    }}
+                                    className="flex-1 bg-transparent border-none focus:ring-0 text-[11px] font-medium px-2 text-zinc-700 placeholder:text-zinc-300 min-w-0"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleApplyStorePincode}
+                                    className="h-full px-3 bg-[#337ab7] text-white text-[9px] font-black uppercase tracking-wider hover:bg-[#2a6496] transition-colors shrink-0"
+                                >
+                                    Apply
+                                </button>
+                            </div>
+                            {storeAreaLabel && !pincodeError && (
+                                <span className="text-[10px] text-[#337ab7] font-medium">
+                                    Showing designs in stores near <strong>{storeAreaLabel}</strong>
+                                </span>
+                            )}
+                            {!appliedStorePincode && !pincodeError && (
+                                <span className="text-[10px] text-gray-400">
+                                    Enter pincode to see designs available in your nearby HG stores
+                                </span>
+                            )}
+                            {pincodeError && (
+                                <span className="text-[10px] text-red-500 font-medium w-full">{pincodeError}</span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -803,7 +1091,11 @@ const Shop = () => {
                                     <Search className="w-10 h-10 text-[#337ab7]/30" />
                                 </div>
                                 <h3 className="text-3xl font-serif font-bold text-black mb-5">Choice Not Found</h3>
-                                <p className="text-zinc-400 font-serif italic mb-10 max-w-sm mx-auto text-base">We couldn't match your discovery parameters.</p>
+                                <p className="text-zinc-400 font-serif italic mb-10 max-w-sm mx-auto text-base">
+                                    {productViewMode === 'inStore' && appliedStorePincode
+                                        ? `No designs are currently available in HG stores near ${getStoreAreaLabel(appliedStorePincode) || appliedStorePincode}. Try another pincode or view all designs.`
+                                        : "We couldn't match your discovery parameters."}
+                                </p>
                                 <button
                                     onClick={() => {
                                         setSelectedCategory('Jewellery');
@@ -833,6 +1125,12 @@ const Shop = () => {
                                 </button>
                             </div>
                         )}
+
+                        <PopularSearchTags
+                            department={shopDepartment}
+                            subCategory={selectedSubCategory}
+                            className="mt-2 md:mt-4"
+                        />
                     </div>
                 </main>
             </div>

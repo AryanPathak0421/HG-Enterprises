@@ -30,8 +30,8 @@ const AllProducts = () => {
         );
     }
 
-    // Show 4 rows of 4 products (16 total)
-    const displayProducts = products.slice(0, 16);
+    // 3 full rows on lg (5 cols) — avoid a lone card leaving empty space
+    const displayProducts = products.slice(0, 15);
 
     return (
         <section className="pt-0 md:pt-2 pb-2 md:pb-4 bg-white overflow-hidden">
@@ -56,7 +56,7 @@ const AllProducts = () => {
                 </div>
 
                 {/* Subtle View All Link at Bottom */}
-                <div className="mt-8 md:mt-16 flex justify-center">
+                <div className="mt-6 md:mt-8 flex justify-center">
                     <Link
                         to="/shop"
                         className="group flex items-center gap-3 text-sm font-medium text-primary transition-all"

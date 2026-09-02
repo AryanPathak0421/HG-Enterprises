@@ -5,7 +5,11 @@ const jwt = require('jsonwebtoken');
 // User Registration
 exports.signup = async (req, res) => {
     try {
-        const { name, email, password, phone } = req.body;
+        const { name, email, password, phone, gender } = req.body;
+
+        if (!gender || !['Female', 'Male', 'Other'].includes(gender)) {
+            return res.status(400).json({ message: 'Please select a valid gender option' });
+        }
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
@@ -17,9 +21,10 @@ exports.signup = async (req, res) => {
         // Create user
         const user = await User.create({
             name,
-            email,
+            email: email.trim().toLowerCase(),
             password: hashedPassword,
             phone,
+            gender,
             role: 'user'
         });
 
@@ -28,7 +33,7 @@ exports.signup = async (req, res) => {
 
         res.status(201).json({
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone }
+            user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, gender: user.gender }
         });
     } catch (error) {
         res.status(500).json({ message: 'Signup failed', error: error.message });
@@ -53,7 +58,7 @@ exports.login = async (req, res) => {
 
         res.status(200).json({
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, addresses: user.addresses }
+            user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, gender: user.gender, addresses: user.addresses }
         });
     } catch (error) {
         res.status(500).json({ message: 'Login failed', error: error.message });
@@ -113,7 +118,7 @@ exports.sendOTP = async (req, res) => {
 // 2. Verify OTP & Login/Signup
 exports.verifyOTP = async (req, res) => {
     try {
-        const { phone, otp, name, email } = req.body;
+        const { phone, otp, name, email, gender } = req.body;
 
         // Master OTP bypass as requested
         if (otp !== '123456') {
@@ -130,13 +135,29 @@ exports.verifyOTP = async (req, res) => {
 
         // If user not found and it's a signup attempt
         if (!user && name) {
+            if (!email?.trim()) {
+                return res.status(400).json({ message: 'Email address is required' });
+            }
+            if (!gender || !['Female', 'Male', 'Other'].includes(gender)) {
+                return res.status(400).json({ message: 'Please select your gender' });
+            }
+
+            const normalizedEmail = email.trim().toLowerCase();
+            const existingEmail = await User.findOne({ email: normalizedEmail });
+            if (existingEmail) {
+                return res.status(400).json({ message: 'This email is already registered. Please login instead.' });
+            }
+
             user = await User.create({
                 phone,
-                name: name || `User ${phone.slice(-4)}`,
-                email: email || `${phone}@hg.com`,
+                name: name.trim(),
+                email: normalizedEmail,
+                gender,
                 role: 'user',
                 password: await bcrypt.hash(Math.random().toString(36), 10)
             });
+
+            console.log(`[AUTH] New customer registered: ${user.name} | ${user.email} | +91 ${user.phone} | ${user.gender}`);
         }
 
         // Generate token
@@ -144,7 +165,7 @@ exports.verifyOTP = async (req, res) => {
 
         res.status(200).json({
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, addresses: user.addresses }
+            user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, gender: user.gender, addresses: user.addresses }
         });
     } catch (error) {
         res.status(500).json({ message: 'Verification failed', error: error.message });
@@ -169,10 +190,14 @@ exports.removeAddress = async (req, res) => {
 // Update Profile (Protected)
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, email, phone, bankDetails } = req.body;
+        const { name, email, phone, bankDetails, gender } = req.body;
+        const updateData = { name, email, phone, bankDetails };
+        if (gender && ['Female', 'Male', 'Other'].includes(gender)) {
+            updateData.gender = gender;
+        }
         const user = await User.findByIdAndUpdate(
             req.user.id,
-            { name, email, phone, bankDetails },
+            updateData,
             { new: true, runValidators: true }
         ).select('-password');
 

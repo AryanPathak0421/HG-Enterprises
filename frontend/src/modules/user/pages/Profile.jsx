@@ -590,6 +590,7 @@ const Profile = () => {
         lastName: user?.name ? user.name.split(' ').slice(1).join(' ') : '',
         email: user?.email || '',
         phone: user?.phone || '',
+        gender: user?.gender || '',
         bankDetails: {
             holderName: user?.bankDetails?.holderName || '',
             accountNumber: user?.bankDetails?.accountNumber || '',
@@ -639,6 +640,7 @@ const Profile = () => {
                 name: `${formData.firstName} ${formData.lastName}`.trim(),
                 email: formData.email,
                 phone: formData.phone,
+                gender: formData.gender || undefined,
                 bankDetails: formData.bankDetails
             };
             const res = await api.put('/auth/profile', updatedData);
@@ -808,6 +810,23 @@ const Profile = () => {
                                                             className="w-full bg-gray-50/50 border-b-2 border-transparent focus:border-black focus:bg-white text-base font-serif italic p-4 transition-all outline-none rounded-t-2xl"
                                                         />
                                                     </div>
+                                                    <div className="space-y-2 md:col-span-2">
+                                                        <label className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] px-1">Gender</label>
+                                                        <div className="flex flex-wrap gap-4 px-1 py-2">
+                                                            {['Female', 'Male', 'Other'].map((option) => (
+                                                                <label key={option} className="flex items-center gap-2 cursor-pointer">
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="profile-gender"
+                                                                        checked={formData.gender === option}
+                                                                        onChange={() => setFormData({ ...formData, gender: option })}
+                                                                        className="accent-[#8B4356]"
+                                                                    />
+                                                                    <span className="text-sm font-serif text-black">{option}</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 md:gap-y-12">
@@ -822,6 +841,10 @@ const Profile = () => {
                                                     <div className="px-1 md:px-2">
                                                         <span className="text-[8px] md:text-[9px] font-bold text-zinc-300 uppercase tracking-[0.3em] block mb-1 md:mb-2 text-wrap">Secretariat Phone</span>
                                                         <p className="text-base md:text-xl font-sans font-semibold text-black tracking-wider">+91 {user.phone}</p>
+                                                    </div>
+                                                    <div className="px-1 md:px-2">
+                                                        <span className="text-[8px] md:text-[9px] font-bold text-zinc-300 uppercase tracking-[0.3em] block mb-1 md:mb-2">Gender</span>
+                                                        <p className="text-base md:text-xl font-sans font-semibold text-black">{user.gender || 'Not specified'}</p>
                                                     </div>
                                                     <div className="px-1 md:px-2">
                                                         <span className="text-[8px] md:text-[9px] font-bold text-zinc-300 uppercase tracking-[0.3em] block mb-1 md:mb-2">Security Status</span>
