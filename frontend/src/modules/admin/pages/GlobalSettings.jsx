@@ -16,7 +16,6 @@ import api from '../../../utils/api';
 import toast from 'react-hot-toast';
 import PageHeader from '../components/common/PageHeader';
 import { useShop } from '../../../context/ShopContext';
-import api from '../../../utils/api';
 
 
 const GlobalSettings = () => {

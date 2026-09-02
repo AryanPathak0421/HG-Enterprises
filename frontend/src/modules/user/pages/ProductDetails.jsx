@@ -956,17 +956,6 @@ const ProductDetails = () => {
         );
     };
 
-    const getDiscountedPrice = () => {
-        if (!appliedCoupon) return currentPrice;
-        if (appliedCoupon.type === 'percent') {
-            return currentPrice - (currentPrice * appliedCoupon.value / 100);
-        } else {
-            return Math.max(0, currentPrice - appliedCoupon.value);
-        }
-    };
-
-    const finalPrice = getDiscountedPrice();
-
     return (
         <div className="min-h-screen bg-[#FDF5F6] font-body text-[#1A1A1A] pb-12 selection:bg-[#8B4356] selection:text-white overflow-x-hidden">
             <main className="w-full px-3 lg:px-6 pt-4 lg:pt-6">
