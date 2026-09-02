@@ -10,6 +10,9 @@ import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
+import api from '../../../../utils/api';
+import toast from 'react-hot-toast';
+
 const InventoryReportsPage = () => {
     const [activeTab, setActiveTab] = useState('category'); // 'category' or 'sales'
     const [loading, setLoading] = useState(true);

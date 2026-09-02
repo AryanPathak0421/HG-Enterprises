@@ -467,6 +467,34 @@ const ItemEditor = () => {
                                         ]}
                                         disabled={isViewMode}
                                     />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Select
+                                            label="Main Category"
+                                            value={formData.categories?.[0]?.category || ''}
+                                            onChange={(e) => handleCategoryChange(formData.categories?.[0]?.id, 'category', e.target.value)}
+                                            options={[
+                                                { label: 'Select Category', value: '' },
+                                                ...Object.keys(CATEGORY_HIERARCHY).map(cat => ({
+                                                    label: cat.toUpperCase(),
+                                                    value: cat
+                                                }))
+                                            ]}
+                                            disabled={isViewMode}
+                                        />
+                                        <Select
+                                            label="Sub-Category"
+                                            value={formData.categories?.[0]?.subcategory || ''}
+                                            onChange={(e) => handleCategoryChange(formData.categories?.[0]?.id, 'subcategory', e.target.value)}
+                                            options={[
+                                                { label: 'Select Sub-Category', value: '' },
+                                                ...(CATEGORY_HIERARCHY[formData.categories?.[0]?.category] || []).map(sub => ({
+                                                    label: sub,
+                                                    value: sub
+                                                }))
+                                            ]}
+                                            disabled={isViewMode || !formData.categories[0]?.category}
+                                        />
+                                    </div>
                                 </div>
                             )}
 

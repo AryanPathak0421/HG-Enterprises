@@ -154,6 +154,7 @@ const Login = () => {
         }
     };
 
+
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return;
         const newOtp = [...otp];

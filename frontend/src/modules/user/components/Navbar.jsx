@@ -210,6 +210,13 @@ const Navbar = () => {
         }
     }, [categories]);
 
+    // Sync activeMegaCategory when categories load from the API
+    useEffect(() => {
+        if (categories.length > 0 && !activeMegaCategory) {
+            setActiveMegaCategory(categories[0]);
+        }
+    }, [categories]);
+
     const toggleSection = (section) => {
         setOpenSection(openSection === section ? null : section);
     };

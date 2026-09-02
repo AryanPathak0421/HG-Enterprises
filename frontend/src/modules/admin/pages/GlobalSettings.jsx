@@ -15,6 +15,9 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../utils/api';
 import toast from 'react-hot-toast';
 import PageHeader from '../components/common/PageHeader';
+import { useShop } from '../../../context/ShopContext';
+import api from '../../../utils/api';
+
 
 const GlobalSettings = () => {
     const { user, setUser } = useAuth();
@@ -85,6 +88,30 @@ const GlobalSettings = () => {
         } finally {
             setIsChangingPassword(false);
         }
+    };
+
+    // Dashboard Layout Handlers
+    const moveSection = (index, direction) => {
+        if (!settings.dashboardLayout) return;
+        const newLayout = [...settings.dashboardLayout];
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= newLayout.length) return;
+
+        [newLayout[index], newLayout[newIndex]] = [newLayout[newIndex], newLayout[index]];
+
+        // Update orders
+        const finalLayout = newLayout.map((s, i) => ({ ...s, order: i + 1 }));
+        setSettings(prev => ({ ...prev, dashboardLayout: finalLayout }));
+    };
+
+    const toggleSection = (id) => {
+        if (!settings.dashboardLayout) return;
+        setSettings(prev => ({
+            ...prev,
+            dashboardLayout: prev.dashboardLayout.map(s =>
+                s.id === id ? { ...s, enabled: !s.enabled } : s
+            )
+        }));
     };
 
     return (
