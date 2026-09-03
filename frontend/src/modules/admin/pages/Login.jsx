@@ -116,7 +116,7 @@ const AdminLogin = () => {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="admin@hgjewels.com"
+                                    placeholder="hgenterprises@gmail.com"
                                     className="w-full bg-gray-50/50 py-3.5 pl-11 pr-4 text-xs font-bold text-gray-800 outline-none placeholder:text-gray-300"
                                 />
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors" />
@@ -151,7 +151,7 @@ const AdminLogin = () => {
                             <div className="bg-[#FCFAF8] p-3 rounded-2xl border border-[#EEE6DE] inline-block w-full">
                                 <p className="text-[8px] text-gray-400 uppercase tracking-widest mb-1 font-bold">Encrypted Credentials</p>
                                 <p className="text-[10px] font-mono text-[#5D4037] font-black tracking-tight">
-                                    admin@hgenterprises.com / admin123
+                                    hgenterprises@gmail.com / admin12345
                                 </p>
                             </div>
                         </div>

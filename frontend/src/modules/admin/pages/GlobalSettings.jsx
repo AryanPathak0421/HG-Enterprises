@@ -164,7 +164,7 @@ const GlobalSettings = () => {
                                             value={profileData.email}
                                             onChange={(e) => setProfileData({...profileData, email: e.target.value})}
                                             className="w-full pl-12 pr-4 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-[#3E2723]/5 focus:border-[#3E2723]/20 transition-all"
-                                            placeholder="admin@example.com"
+                                            placeholder="hgenterprises@gmail.com"
                                         />
                                     </div>
                                 </div>

@@ -77,7 +77,7 @@ const SettingsPage = () => {
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Support Email</label>
-                                        <input type="email" defaultValue="admin@farmlyf.com" className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-sm font-bold outline-none focus:bg-white focus:border-primary transition-all" />
+                                        <input type="email" defaultValue="hgenterprises@gmail.com" className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-sm font-bold outline-none focus:bg-white focus:border-primary transition-all" />
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Currency</label>
@@ -179,7 +179,7 @@ const SettingsPage = () => {
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
-                                                <input type="email" defaultValue="admin@farmlyf.com" className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-sm font-bold outline-none focus:bg-white focus:border-primary transition-all" />
+                                                <input type="email" defaultValue="hgenterprises@gmail.com" className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-sm font-bold outline-none focus:bg-white focus:border-primary transition-all" />
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Role</label>

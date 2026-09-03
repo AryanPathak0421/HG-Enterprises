@@ -225,15 +225,15 @@ const seed = async () => {
 
         // Seed a sample Admin User
         const bcrypt = require('bcryptjs');
-        const hashedPassword = await bcrypt.hash('admin123', 10);
+        const hashedPassword = await bcrypt.hash('admin12345', 10);
         await User.create({
             name: 'Super Admin',
-            email: 'admin@hgenterprises.com',
+            email: 'hgenterprises@gmail.com',
             password: hashedPassword,
             phone: '1234567890',
             role: 'admin'
         });
-        console.log('Admin user seeded.');
+        console.log('Admin user seeded (hgenterprises@gmail.com).');
 
         console.log('Seeding completed successfully!');
         process.exit();

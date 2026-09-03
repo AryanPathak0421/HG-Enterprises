@@ -36,7 +36,7 @@ const settingsSchema = new mongoose.Schema({
     // Contact Info
     address: { type: String, default: '45/2, Golden Plaza, Business District, Jaipur' },
     phone: { type: String, default: '+91 91234 56789' },
-    email: { type: String, default: 'admin@hgenterprises.com' },
+    email: { type: String, default: 'hgenterprises@gmail.com' },
     website: { type: String, default: 'www.hgenterprises.com' },
 
     // Footer Config

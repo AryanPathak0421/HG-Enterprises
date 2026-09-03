@@ -27,5 +27,5 @@ const promoteToAdmin = async (email) => {
 };
 
 // Replace with your login email
-const targetEmail = process.argv[2] || 'admin@hg.com';
+const targetEmail = process.argv[2] || 'hgenterprises@gmail.com';
 promoteToAdmin(targetEmail);
