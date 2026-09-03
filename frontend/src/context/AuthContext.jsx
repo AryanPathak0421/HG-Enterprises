@@ -69,8 +69,14 @@ export const AuthProvider = ({ children }) => {
             const res = await api.post('/auth/otp/send', { phone });
             return { success: true, exists: res.data.exists };
         } catch (error) {
-            console.error("OTP Send Error:", error);
-            return { success: false, message: error.response?.data?.message || 'Failed to send OTP' };
+            console.error('OTP Send Error:', error);
+            const isNetwork = !error.response;
+            return {
+                success: false,
+                message: isNetwork
+                    ? 'Cannot reach server. Please try again in a moment.'
+                    : (error.response?.data?.message || 'Failed to send OTP'),
+            };
         }
     };
 
@@ -83,8 +89,14 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
             return { success: true };
         } catch (error) {
-            console.error("OTP Verify Error:", error);
-            return { success: false, message: error.response?.data?.message || 'Invalid OTP' };
+            console.error('OTP Verify Error:', error);
+            const isNetwork = !error.response;
+            return {
+                success: false,
+                message: isNetwork
+                    ? 'Cannot reach server. Please try again in a moment.'
+                    : (error.response?.data?.message || 'Invalid OTP'),
+            };
         }
     };
 

@@ -99,19 +99,24 @@ exports.addAddress = async (req, res) => {
 // 1. Send OTP (Mock)
 exports.sendOTP = async (req, res) => {
     try {
-        const { phone } = req.body;
-        if (!phone || phone.length !== 10) return res.status(400).json({ message: 'Invalid phone number' });
+        const phone = String(req.body?.phone || '').replace(/\D/g, '').slice(-10);
+        if (!phone || phone.length !== 10) {
+            return res.status(400).json({ message: 'Invalid phone number' });
+        }
 
         const user = await User.findOne({ phone });
 
         console.log(`[AUTH] Mock OTP sent to +91 ${phone}: 123456`);
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             message: 'OTP sent successfully (Testing Mode)',
-            exists: !!user
+            exists: !!user,
+            // Testing helper — frontend already uses master OTP 123456
+            otpHint: '123456'
         });
     } catch (error) {
-        res.status(500).json({ message: 'Failed to send OTP', error: error.message });
+        console.error('[AUTH] sendOTP error:', error);
+        return res.status(500).json({ message: 'Failed to send OTP', error: error.message });
     }
 };
 
@@ -138,9 +143,9 @@ exports.verifyOTP = async (req, res) => {
             if (!email?.trim()) {
                 return res.status(400).json({ message: 'Email address is required' });
             }
-            if (!gender || !['Female', 'Male', 'Other'].includes(gender)) {
-                return res.status(400).json({ message: 'Please select your gender' });
-            }
+
+            const allowedGenders = ['Female', 'Male', 'Other'];
+            const resolvedGender = allowedGenders.includes(gender) ? gender : 'Other';
 
             const normalizedEmail = email.trim().toLowerCase();
             const existingEmail = await User.findOne({ email: normalizedEmail });
@@ -152,7 +157,7 @@ exports.verifyOTP = async (req, res) => {
                 phone,
                 name: name.trim(),
                 email: normalizedEmail,
-                gender,
+                gender: resolvedGender,
                 role: 'user',
                 password: await bcrypt.hash(Math.random().toString(36), 10)
             });

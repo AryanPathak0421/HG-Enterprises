@@ -10,23 +10,35 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 const allowedOrigins = [
+    'https://hgenterprises.vercel.app',
     'https://hg-enterprises.vercel.app',
+    'https://www.hgenterprises.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3002',
-    'http://localhost:5173', // Common Vite port
+    'http://localhost:5173',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true;
+    if (allowedOrigins.includes(origin)) return true;
+    // Vercel preview / production aliases
+    try {
+        const host = new URL(origin).hostname;
+        if (host.endsWith('.vercel.app') && host.includes('hgenterprises')) return true;
+        if (host.endsWith('.vercel.app') && host.includes('hg-enterprises')) return true;
+    } catch (_) {
+        return false;
+    }
+    return false;
+};
+
 app.use(cors({
     origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
+        if (isAllowedOrigin(origin)) return callback(null, true);
+        console.warn(`[CORS] Blocked origin: ${origin}`);
+        return callback(null, false);
     },
     credentials: true
 }));
