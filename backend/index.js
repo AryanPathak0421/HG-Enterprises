@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 const allowedOrigins = [
     'https://hgenterprises.vercel.app',
+    'https://hgenterprisesnew.vercel.app',
     'https://hg-enterprises.vercel.app',
     'https://www.hgenterprises.vercel.app',
     'http://localhost:3000',
